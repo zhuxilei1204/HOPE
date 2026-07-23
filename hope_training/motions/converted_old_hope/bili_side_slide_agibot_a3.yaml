@@ -1,0 +1,79 @@
+name: bili_side_slide_agibot_a3
+swing_side: 1
+fps: 50.0
+frame_count: 797
+frame_time_s: 0.02
+duration_s: 15.94
+strike_frame: 398
+strike_phase: 0.5
+ready_interval_frames:
+- 0
+- 119
+follow_through_end_frame: 597
+recover_end_frame: 796
+joint_order:
+- waist_yaw_joint
+- waist_roll_joint
+- waist_pitch_joint
+- head_yaw_joint
+- head_pitch_joint
+- left_shoulder_pitch_joint
+- left_shoulder_roll_joint
+- left_shoulder_yaw_joint
+- left_elbow_joint
+- left_wrist_roll_joint
+- left_wrist_pitch_joint
+- left_wrist_yaw_joint
+- right_shoulder_pitch_joint
+- right_shoulder_roll_joint
+- right_shoulder_yaw_joint
+- right_elbow_joint
+- right_wrist_roll_joint
+- right_wrist_pitch_joint
+- right_wrist_yaw_joint
+- left_hip_pitch_joint
+- left_hip_roll_joint
+- left_hip_yaw_joint
+- left_knee_joint
+- left_ankle_pitch_joint
+- left_ankle_roll_joint
+- right_hip_pitch_joint
+- right_hip_roll_joint
+- right_hip_yaw_joint
+- right_knee_joint
+- right_ankle_pitch_joint
+- right_ankle_roll_joint
+tracked_bodies:
+- pelvis_link
+- left_hip_roll_Link
+- left_knee_Link
+- left_ankle_roll_Link
+- right_hip_roll_Link
+- right_knee_Link
+- right_ankle_roll_Link
+- torso_Link
+- left_shoulder_roll_Link
+- left_elbow_Link
+- left_wrist_yaw_Link
+- right_shoulder_roll_Link
+- right_elbow_Link
+- right_wrist_yaw_Link
+anchor_body: torso_Link
+root_body: pelvis_link
+racket_link: right_wrist_yaw_Link
+racket_body: pingpang_red_Link
+mount_offset_xyz:
+- 0.21
+- 0.032
+- 0.032
+blade_normal_axis: y
+blade_normal_sign: +1 (red/forehand face)
+source:
+  schema: old_hope_articulation_31j_full_32b
+  file: /mnt/ssd/zxl/HOPE/hope_training/whole_body_tracking/sample_motions/bili_side_slide_agibot_a3.npz
+  joint_reorder: old articulation -> canonical using CANONICAL_TO_ARTICULATION
+  body_crop: old 32 articulation bodies -> current 14 tracked bodies
+manual_review:
+  phase_annotation_needed: true
+  note: Generated strike/phase fields are midpoint heuristics; review before long
+    training.

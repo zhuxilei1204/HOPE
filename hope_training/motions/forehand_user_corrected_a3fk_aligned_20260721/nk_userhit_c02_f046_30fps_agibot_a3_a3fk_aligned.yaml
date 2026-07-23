@@ -1,0 +1,111 @@
+name: nk_userhit_c02_f046_30fps_agibot_a3_a3fk_aligned
+swing_side: 1
+fps: 50.0
+frame_count: 44
+frame_time_s: 0.02
+duration_s: 0.88
+strike_frame: 23
+strike_phase: 0.5348837209302325
+ready_interval_frames:
+- 0
+- 12
+follow_through_end_frame: 37
+recover_end_frame: 43
+joint_order:
+- waist_yaw_joint
+- waist_roll_joint
+- waist_pitch_joint
+- head_yaw_joint
+- head_pitch_joint
+- left_shoulder_pitch_joint
+- left_shoulder_roll_joint
+- left_shoulder_yaw_joint
+- left_elbow_joint
+- left_wrist_roll_joint
+- left_wrist_pitch_joint
+- left_wrist_yaw_joint
+- right_shoulder_pitch_joint
+- right_shoulder_roll_joint
+- right_shoulder_yaw_joint
+- right_elbow_joint
+- right_wrist_roll_joint
+- right_wrist_pitch_joint
+- right_wrist_yaw_joint
+- left_hip_pitch_joint
+- left_hip_roll_joint
+- left_hip_yaw_joint
+- left_knee_joint
+- left_ankle_pitch_joint
+- left_ankle_roll_joint
+- right_hip_pitch_joint
+- right_hip_roll_joint
+- right_hip_yaw_joint
+- right_knee_joint
+- right_ankle_pitch_joint
+- right_ankle_roll_joint
+tracked_bodies:
+- pelvis_link
+- left_hip_roll_Link
+- left_knee_Link
+- left_ankle_roll_Link
+- right_hip_roll_Link
+- right_knee_Link
+- right_ankle_roll_Link
+- torso_Link
+- left_shoulder_roll_Link
+- left_elbow_Link
+- left_wrist_yaw_Link
+- right_shoulder_roll_Link
+- right_elbow_Link
+- right_wrist_yaw_Link
+anchor_body: torso_Link
+root_body: pelvis_link
+racket_link: right_wrist_yaw_Link
+racket_body: pingpang_red_Link
+mount_offset_xyz:
+- 0.21
+- 0.032
+- 0.032
+blade_normal_axis: y
+blade_normal_sign: +1 (red/forehand face)
+source:
+  schema: old_hope_articulation_31j_full_32b
+  file: /mnt/ssd/zxl/HOPE_latest_20260721/data/motion_pipeline/backhand_hunt_20260721/npz_old_schema_user_corrected_static/nk_userhit_c02_f046_30fps_agibot_a3.npz
+  joint_reorder: old articulation -> canonical using CANONICAL_TO_ARTICULATION
+  body_crop: old 32 articulation bodies -> current 14 tracked bodies
+  video_url: https://www.bilibili.com/video/BV1aW411r7Wd/
+  raw_video: /mnt/ssd/zxl/HOPE_latest_20260721/data/motion_pipeline/backhand_hunt_20260721/raw/bili_nk_penhold_training_BV1aW411r7Wd.mp4
+  segment_video: /mnt/ssd/zxl/HOPE_latest_20260721/data/motion_pipeline/backhand_hunt_20260721/clips/user_corrected_single_hits/nk_userhit_c02_f046_30fps.mp4
+  segment_sheet: /mnt/ssd/zxl/HOPE_latest_20260721/data/motion_pipeline/backhand_hunt_20260721/clip_sheets/user_corrected_single_hits/nk_userhit_c02_f046_sheet.jpg
+  clip_start_s: 1.0666666666666667
+  clip_end_s: 2.0
+  start_frame_30fps: 32
+  end_frame_30fps_exclusive: 60
+manual_review:
+  phase_annotation_needed: false
+  note: User-corrected contact frame; duplicate overlapping segment annotations were
+    clustered into one unique contact.
+  contact_frame_needs_manual_verification: false
+  contact_annotation_source: user_corrected_20260721
+  source_annotation_members: seg1:hit2:35-38@g45.50
+  strike_global_frame_30fps: 45.5
+  strike_global_time_s: 1.5166666666666666
+  segment_local_strike_frame_30fps_center: 13.5
+  segment_local_strike_frame_30fps: 14
+  converted_strike_frame_50fps: 23
+action_label: forehand_real_ball_rally
+alignment:
+  method: a3_fk_ground_scale_root_v1
+  source_motion: /mnt/ssd/zxl/HOPE_latest_20260721/hope_training/motions/backhand_hunt_20260721_user_corrected/nk_userhit_c02_f046_30fps_agibot_a3.npz
+  dataset_vertical_scale: 1.4640813431216337
+  target_ground_z: 0.008768368512392044
+  default_root_xy:
+  - -0.004967689514160156
+  - 0.0343480110168457
+  ready_frames: 10
+  regenerated_fields:
+  - body_pos_w
+  - body_quat_w
+  - body_lin_vel_w
+  - body_ang_vel_w
+  - joint_vel

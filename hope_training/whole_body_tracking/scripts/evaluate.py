@@ -34,6 +34,9 @@ import os
 import pathlib
 import sys
 
+import yaml
+from omegaconf import OmegaConf
+
 
 def _repo_root() -> pathlib.Path:
     here = pathlib.Path(__file__).resolve()
@@ -62,6 +65,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--json-out", default=None, help="Also write {'success_rate': ...} to this file.")
     parser.add_argument("--experiment-name", default="hope_pingpong", help="rsl_rl experiment name.")
     parser.add_argument(
+        "--task-yaml",
+        default="HOPEPingPong.yaml",
+        help="Task YAML whose overrides should be applied for eval (name under cfg/task or a path).",
+    )
+    parser.add_argument(
         "--motion-file", default="hope_training/motions/preprocessed/hope_forehand.npz", help="Forehand clip."
     )
     parser.add_argument(
@@ -81,6 +89,61 @@ def _first_attr(obj, names):
         if hasattr(obj, name):
             return getattr(obj, name)
     return None
+
+
+def _resolve_task_yaml(task_yaml: str) -> pathlib.Path:
+    path = pathlib.Path(str(task_yaml)).expanduser()
+    if path.is_file():
+        return path.resolve()
+    if path.suffix != ".yaml":
+        path = path.with_suffix(".yaml")
+    rooted = pathlib.Path(__file__).resolve().parents[1] / "cfg" / "task" / path.name
+    return rooted.resolve()
+
+
+def _load_task_yaml_with_defaults(task_yaml_path: pathlib.Path, seen: set[pathlib.Path] | None = None):
+    """Load a task YAML and recursively merge simple Hydra-style defaults."""
+    seen = set() if seen is None else seen
+    task_yaml_path = task_yaml_path.resolve()
+    if task_yaml_path in seen:
+        raise ValueError(f"cyclic task YAML defaults include {task_yaml_path}")
+    seen.add(task_yaml_path)
+    with task_yaml_path.open("r", encoding="utf-8") as fh:
+        task_doc = yaml.safe_load(fh) or {}
+
+    merged = OmegaConf.create({})
+    defaults = task_doc.get("defaults") or []
+    for item in defaults:
+        if item == "_self_" or item is None:
+            continue
+        if isinstance(item, str):
+            parent_name = item
+        elif isinstance(item, dict) and len(item) == 1:
+            _, parent_name = next(iter(item.items()))
+        else:
+            continue
+        if parent_name in (None, "_self_"):
+            continue
+        parent_path = _resolve_task_yaml(str(parent_name))
+        if parent_path.is_file():
+            merged = OmegaConf.merge(merged, _load_task_yaml_with_defaults(parent_path, seen))
+
+    task_doc = dict(task_doc)
+    task_doc.pop("defaults", None)
+    return OmegaConf.merge(merged, OmegaConf.create(task_doc))
+
+
+def _apply_training_task_overrides(env_cfg, task_yaml: str) -> list[str]:
+    """Apply the same task YAML overrides used by train.py for comparable fast eval rollouts."""
+    task_yaml_path = _resolve_task_yaml(task_yaml)
+    if not task_yaml_path.is_file():
+        return []
+    cfg = OmegaConf.create({"task": _load_task_yaml_with_defaults(task_yaml_path)})
+    from train import _apply_task_overrides
+
+    applied: list[str] = []
+    _apply_task_overrides(env_cfg, cfg, applied)
+    return applied
 
 
 def main() -> int:
@@ -115,9 +178,13 @@ def main() -> int:
         from train import _apply_motion_metadata, _resolve_motion_plan
 
         env_cfg = parse_env_cfg(args.task, device=args.device, num_envs=args.num_envs)
+        applied = _apply_training_task_overrides(env_cfg, args.task_yaml)
         clips, motion_metadata = _resolve_motion_plan(args)
         env_cfg.commands.motion.motion_file = clips if len(clips) > 1 else clips[0]
-        _apply_motion_metadata(env_cfg, clips, motion_metadata, [])
+        _apply_motion_metadata(env_cfg, clips, motion_metadata, applied)
+        print(f"[evaluate.py] applied {len(applied)} task override(s):", file=sys.stderr, flush=True)
+        for line in applied:
+            print(f"[evaluate.py]     {line}", file=sys.stderr, flush=True)
 
         env = gym.make(args.task, cfg=env_cfg, render_mode=None)
         base_env = env.unwrapped
@@ -152,10 +219,13 @@ def main() -> int:
         table_half_w = 0.5 * float(table.width)
 
         def read_state():
-            target_pos = _first_attr(cmd, ["racket_target_pos_w", "target_pos_w", "racket_target_w"])
+            # For robust planner training the actor-visible racket target may be intentionally
+            # perturbed.  Evaluate the hidden true ball task when available, so Isaac eval matches
+            # Metrics/racket_target/return_success from training.
+            target_pos = _first_attr(cmd, ["ball_strike_pos_w", "racket_target_pos_w", "target_pos_w", "racket_target_w"])
             racket_pos = _first_attr(cmd, ["racket_pos_w", "achieved_racket_pos_w", "current_racket_pos_w"])
             racket_vel = _first_attr(cmd, ["racket_lin_vel_w", "racket_vel_w", "achieved_racket_vel_w"])
-            tts = _first_attr(cmd, ["time_to_strike", "tts"])
+            tts = _first_attr(cmd, ["true_time_to_strike", "time_to_strike", "tts"])
             swing = _first_attr(cmd, ["swing_side", "swing_sign"])
             missing = [n for n, v in [
                 ("racket_target_pos_w", target_pos), ("racket_pos_w", racket_pos),
@@ -180,6 +250,8 @@ def main() -> int:
 
         obs, _ = env.get_observations()
         prev_tts = read_state()[3].clone()
+        task_counts = {"contact": 0, "net_cross": 0, "opponent_bounce": 0}
+        analytic_accumulator = SuccessRate()
         for _ in range(args.num_steps):
             with torch.inference_mode():
                 actions = policy(obs)
@@ -196,10 +268,26 @@ def main() -> int:
                 rp = to_table_frame(racket_pos[e], e)
                 rv = racket_vel[e].cpu().numpy().astype(float)  # achieved racket velocity at strike
                 outcome = evaluate_return(tp, rp, rv, physics, table, contact_radius=args.contact_radius)
-                accumulator.add(outcome)
+                analytic_accumulator.add(outcome)
+                if all(hasattr(cmd, name) for name in ("ball_contact", "ball_net_cross", "ball_on_opponent")):
+                    task_counts["contact"] += int(bool(cmd.ball_contact[e].item()))
+                    task_counts["net_cross"] += int(bool(cmd.ball_net_cross[e].item()))
+                    task_counts["opponent_bounce"] += int(bool(cmd.ball_on_opponent[e].item()))
+                    accumulator.add_bool(bool(cmd.ball_on_opponent[e].item()))
+                else:
+                    accumulator.add(outcome)
             prev_tts = tts.clone()
 
         result = accumulator.as_dict()
+        if accumulator.attempts:
+            result.update(
+                {
+                    "task_contact_rate": task_counts["contact"] / accumulator.attempts,
+                    "task_net_cross_rate": task_counts["net_cross"] / accumulator.attempts,
+                    "task_opponent_bounce_rate": task_counts["opponent_bounce"] / accumulator.attempts,
+                    "analytic_success_rate": analytic_accumulator.value,
+                }
+            )
         print(json.dumps(result))
         if args.json_out:
             with open(args.json_out, "w", encoding="utf-8") as f:

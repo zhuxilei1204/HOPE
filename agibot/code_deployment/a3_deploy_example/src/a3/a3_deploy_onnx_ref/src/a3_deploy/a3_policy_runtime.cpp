@@ -110,16 +110,20 @@ class OrtCpuPolicyRuntime final : public A3PolicyRuntime {
       auto input_name =
           session_->GetInputNameAllocated(0, allocator_);
       input_name_ = input_name.get();
-      if (input_name_ != "obs_dict") {
-        std::cerr << "A3 policy input tensor must be 'obs_dict', got '"
+      if (!options.input_tensor_name.empty() &&
+          input_name_ != options.input_tensor_name) {
+        std::cerr << "policy input tensor must be '"
+                  << options.input_tensor_name << "', got '"
                   << input_name_ << "'\n";
         return false;
       }
       auto output_name =
           session_->GetOutputNameAllocated(0, allocator_);
       output_name_ = output_name.get();
-      if (output_name_ != "action") {
-        std::cerr << "A3 policy output tensor must be 'action', got '"
+      if (!options.output_tensor_name.empty() &&
+          output_name_ != options.output_tensor_name) {
+        std::cerr << "policy output tensor must be '"
+                  << options.output_tensor_name << "', got '"
                   << output_name_ << "'\n";
         return false;
       }
@@ -128,7 +132,8 @@ class OrtCpuPolicyRuntime final : public A3PolicyRuntime {
       const auto input_info = input_type_info.GetTensorTypeAndShapeInfo();
       if (input_info.GetElementType() !=
           ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT) {
-        std::cerr << "A3 policy input 'obs_dict' must be float32\n";
+        std::cerr << "policy input '" << input_name_
+                  << "' must be float32\n";
         return false;
       }
       input_shape_ = input_info.GetShape();
@@ -140,7 +145,8 @@ class OrtCpuPolicyRuntime final : public A3PolicyRuntime {
       const auto output_info = output_type_info.GetTensorTypeAndShapeInfo();
       if (output_info.GetElementType() !=
           ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT) {
-        std::cerr << "A3 policy output 'action' must be float32\n";
+        std::cerr << "policy output '" << output_name_
+                  << "' must be float32\n";
         return false;
       }
       output_shape_ = output_info.GetShape();
@@ -417,13 +423,15 @@ class RknnPolicyRuntime final : public A3PolicyRuntime {
 
       input_name_ = input_attr_.name;
       output_name_ = output_attr_.name;
-      if (input_name_ != "obs_dict") {
-        std::cerr << "A3 RKNN policy input tensor name is '" << input_name_
-                  << "'; expected exported ONNX name 'obs_dict'\n";
+      if (!options.input_tensor_name.empty() &&
+          input_name_ != options.input_tensor_name) {
+        std::cerr << "RKNN policy input tensor name is '" << input_name_
+                  << "'; expected '" << options.input_tensor_name << "'\n";
       }
-      if (output_name_ != "action") {
-        std::cerr << "A3 RKNN policy output tensor name is '" << output_name_
-                  << "'; expected exported ONNX name 'action'\n";
+      if (!options.output_tensor_name.empty() &&
+          output_name_ != options.output_tensor_name) {
+        std::cerr << "RKNN policy output tensor name is '" << output_name_
+                  << "'; expected '" << options.output_tensor_name << "'\n";
       }
       input_dim_ = input_attr_.n_elems;
       action_dim_ = output_attr_.n_elems;

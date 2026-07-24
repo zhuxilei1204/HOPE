@@ -253,6 +253,76 @@ def _apply_domain_rand(env_cfg, dr, applied: list) -> None:
     )
 
 
+def _as_float_tuple(value, *, size: int, key: str) -> tuple[float, ...]:
+    values = tuple(float(v) for v in value)
+    if len(values) != size:
+        raise ValueError(f"terrain.{key} must contain exactly {size} values; got {value!r}.")
+    return values
+
+
+def _apply_terrain(env_cfg, terrain, applied: list) -> None:
+    """Apply optional terrain overrides that need IsaacLab cfg objects, not only dotted values."""
+    if terrain is None:
+        return
+    terrain = OmegaConf.to_container(terrain, resolve=True)
+    scene = getattr(env_cfg, "scene", None)
+    terrain_cfg = getattr(scene, "terrain", None) if scene is not None else None
+    if terrain_cfg is None:
+        print("[train.py] WARNING: terrain block provided but env_cfg.scene.terrain does not exist; skipped.", flush=True)
+        return
+
+    terrain_type = str(terrain.get("type", "plane"))
+    if terrain_type in ("plane", "flat"):
+        terrain_cfg.terrain_type = "plane"
+        terrain_cfg.terrain_generator = None
+        applied.append("scene.terrain = plane")
+    elif terrain_type in ("low_rough", "random_rough"):
+        from isaaclab.terrains import HfRandomUniformTerrainCfg, TerrainGeneratorCfg
+
+        size = _as_float_tuple(terrain.get("size", (4.0, 4.0)), size=2, key="size")
+        noise_range = _as_float_tuple(terrain.get("noise_range", (-0.015, 0.02)), size=2, key="noise_range")
+        terrain_cfg.terrain_type = "generator"
+        terrain_cfg.terrain_generator = TerrainGeneratorCfg(
+            seed=terrain.get("seed", None),
+            size=size,
+            border_width=float(terrain.get("generator_border_width", 0.0)),
+            num_rows=int(terrain.get("num_rows", 2)),
+            num_cols=int(terrain.get("num_cols", 4)),
+            horizontal_scale=float(terrain.get("horizontal_scale", 0.08)),
+            vertical_scale=float(terrain.get("vertical_scale", 0.005)),
+            slope_threshold=terrain.get("slope_threshold", 0.75),
+            sub_terrains={
+                "random_rough": HfRandomUniformTerrainCfg(
+                    proportion=1.0,
+                    noise_range=noise_range,
+                    noise_step=float(terrain.get("noise_step", 0.005)),
+                    downsampled_scale=terrain.get("downsampled_scale", 0.25),
+                    border_width=float(terrain.get("border_width", 0.25)),
+                )
+            },
+        )
+        terrain_cfg.max_init_terrain_level = terrain.get("max_init_terrain_level", None)
+        applied.append(
+            "scene.terrain = low_rough "
+            f"size={size} noise_range={noise_range} rows={terrain_cfg.terrain_generator.num_rows} "
+            f"cols={terrain_cfg.terrain_generator.num_cols}"
+        )
+    else:
+        raise ValueError(f"Unsupported terrain.type: {terrain_type!r}. Use 'plane' or 'low_rough'.")
+
+    material = getattr(terrain_cfg, "physics_material", None)
+    if material is not None:
+        if terrain.get("static_friction") is not None:
+            material.static_friction = float(terrain.get("static_friction"))
+            applied.append(f"scene.terrain.physics_material.static_friction = {material.static_friction}")
+        if terrain.get("dynamic_friction") is not None:
+            material.dynamic_friction = float(terrain.get("dynamic_friction"))
+            applied.append(f"scene.terrain.physics_material.dynamic_friction = {material.dynamic_friction}")
+    if terrain.get("debug_vis") is not None and hasattr(terrain_cfg, "debug_vis"):
+        terrain_cfg.debug_vis = bool(terrain.get("debug_vis"))
+        applied.append(f"scene.terrain.debug_vis = {terrain_cfg.debug_vis}")
+
+
 def _expand_two_side_boxes(boxes, sides: list[float]) -> tuple | None:
     if boxes is None:
         return None
@@ -333,6 +403,8 @@ def _apply_task_overrides(env_cfg, cfg, applied: list) -> None:
         )
     # domain randomization.
     _apply_domain_rand(env_cfg, task.get("domain_rand"), applied)
+    # terrain generation / friction overrides.
+    _apply_terrain(env_cfg, task.get("terrain"), applied)
     # generic overrides map (dotted attribute paths -> value).
     overrides = task.get("overrides")
     if overrides:

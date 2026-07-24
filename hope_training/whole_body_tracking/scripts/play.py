@@ -54,14 +54,22 @@ def _run(cfg, simulation_app):
     num_envs = int(cfg.num_envs)
 
     env_cfg = parse_env_cfg(task_id, device=str(cfg.device), num_envs=num_envs)
+    applied: list = []
+    try:
+        from train import _apply_task_overrides
+
+        _apply_task_overrides(env_cfg, cfg, applied)
+    except Exception as exc:
+        print(f"[play.py] WARNING: could not apply task overrides: {exc}", flush=True)
     motion_files, motion_metadata = _resolve_motion_sources(cfg)
     if motion_files:
         env_cfg.commands.motion.motion_file = motion_files if len(motion_files) > 1 else motion_files[0]
         from train import _apply_motion_metadata
 
-        _apply_motion_metadata(env_cfg, motion_files, motion_metadata, [])
-    if cfg.task.get("motion") is not None and cfg.task.motion.get("wrap_teleport") is not None:
-        env_cfg.commands.motion.wrap_teleport = bool(cfg.task.motion.wrap_teleport)
+        _apply_motion_metadata(env_cfg, motion_files, motion_metadata, applied)
+    print(f"[play.py] applied {len(applied)} task override(s):", flush=True)
+    for line in applied:
+        print(f"[play.py]     {line}", flush=True)
 
     # resolve the checkpoint: explicit path, else latest local checkpoint under logs/rsl_rl/<exp>/.
     experiment_name = str(cfg.task.experiment_name)

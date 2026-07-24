@@ -1,0 +1,127 @@
+# =============================================================================
+# Lower-body stability branch on top of the four user-recorded motions.
+#
+# The collision hit objective is inherited unchanged from
+# HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotion. This branch only increases
+# post-strike / ready-state pressure on base angular velocity and waist-leg smoothness, so it can
+# test whether the current continuous-rally bottleneck is lower-body recovery rather than hit skill.
+# =============================================================================
+
+defaults:
+  - HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotion
+  - _self_
+
+name: HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionLowerStable
+
+overrides:
+  # Keep strike exploration open; only make recovery/hold calmer.
+  rewards.action_rate.weight: -0.004
+  rewards.phase_action_rate.weight: -0.38
+  rewards.phase_action_rate.params:
+    command_name: racket_target
+    pre_strike_scale: 0.020
+    strike_scale: 0.004
+    recovery_scale: 0.090
+    hold_scale: 0.130
+
+  # The last four-motion run was upright with good foot contact, but base angular velocity stayed high.
+  rewards.recovery_health.weight: 1.55
+  rewards.recovery_health.params:
+    command_name: racket_target
+    height_std: 0.10
+    upright_std: 0.26
+    lin_vel_std: 0.24
+    ang_vel_std: 0.62
+    station_std: 0.21
+
+  rewards.next_ball_readiness.weight: 1.85
+  rewards.next_ball_readiness.params:
+    command_name: racket_target
+    height_std: 0.095
+    upright_std: 0.25
+    lin_vel_std: 0.22
+    ang_vel_std: 0.60
+    station_std: 0.20
+    racket_vel_std: 0.68
+    arm_pos_std: 0.35
+    arm_ori_std: 0.80
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    early_prestrike_window_steps: 18
+
+  rewards.next_swing_ready_bonus.weight: 2.00
+  rewards.next_swing_ready_bonus.params:
+    command_name: racket_target
+    window_steps: 14
+    height_std: 0.09
+    upright_std: 0.23
+    lin_vel_std: 0.20
+    ang_vel_std: 0.56
+    station_std: 0.18
+    racket_vel_std: 0.62
+    arm_pos_std: 0.32
+    arm_ori_std: 0.75
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+
+  rewards.post_contact_recovery_ready.weight: 1.55
+  rewards.post_contact_recovery_ready.params:
+    command_name: racket_target
+    outcome: contact
+    height_std: 0.095
+    upright_std: 0.25
+    lin_vel_std: 0.22
+    ang_vel_std: 0.60
+    station_std: 0.20
+    racket_vel_std: 0.68
+    arm_pos_std: 0.35
+    arm_ori_std: 0.80
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    start_step: 0
+    warmup_steps: 5000
+    start_scale: 0.35
+
+  rewards.cycle_net_ready.weight: 2.10
+  rewards.cycle_return_ready.weight: 3.70
+
+  rewards.post_strike_base_ang_vel.weight: 1.10
+  rewards.post_strike_base_ang_vel.params:
+    command_name: racket_target
+    std: 0.55
+    include_hold: true
+    early_prestrike_window_steps: 18
+    start_step: 0
+    warmup_steps: 4000
+    start_scale: 0.35
+
+  rewards.post_strike_lower_body_action_rate.weight: -0.12
+  rewards.post_strike_lower_body_action_rate.params:
+    command_name: racket_target
+    joint_names:
+      - waist_yaw_joint
+      - waist_roll_joint
+      - waist_pitch_joint
+      - left_hip_pitch_joint
+      - left_hip_roll_joint
+      - left_hip_yaw_joint
+      - left_knee_joint
+      - left_ankle_pitch_joint
+      - left_ankle_roll_joint
+      - right_hip_pitch_joint
+      - right_hip_roll_joint
+      - right_hip_yaw_joint
+      - right_knee_joint
+      - right_ankle_pitch_joint
+      - right_ankle_roll_joint
+    include_hold: true
+    early_prestrike_window_steps: 18
+    start_step: 0
+    warmup_steps: 4000
+    start_scale: 0.30

@@ -32,7 +32,7 @@ def base_forward_xy(env: ManagerBasedRLEnv, command_name: str) -> torch.Tensor:
 
 
 def fixed_station_error_xy(env: ManagerBasedRLEnv, command_name: str) -> torch.Tensor:
-    """Fixed startup station XY minus current base XY, world frame (2). In-place recentring feedback."""
+    """Current station XY minus current base XY, world frame (2)."""
     return _cmd(env, command_name).fixed_station_error_xy()
 
 

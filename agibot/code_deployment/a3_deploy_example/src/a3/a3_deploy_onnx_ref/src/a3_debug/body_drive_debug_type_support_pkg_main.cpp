@@ -3,6 +3,7 @@
 #include "aimrt_type_support_pkg_c_interface/type_support_pkg_main.h"
 #include "aimrt_module_ros2_interface/util/ros2_type_support.h"
 
+#include "geometry_msgs/msg/pose_stamped.hpp"
 #include "joint_msgs/msg/joint_command.hpp"
 #include "joint_msgs/msg/joint_state.hpp"
 #include "sensor_msgs/msg/imu.hpp"
@@ -11,6 +12,7 @@ static const aimrt_type_support_base_t* type_support_array[]{
     aimrt::GetRos2MessageTypeSupport<joint_msgs::msg::JointState>(),
     aimrt::GetRos2MessageTypeSupport<joint_msgs::msg::JointCommand>(),
     aimrt::GetRos2MessageTypeSupport<sensor_msgs::msg::Imu>(),
+    aimrt::GetRos2MessageTypeSupport<geometry_msgs::msg::PoseStamped>(),
 };
 
 extern "C" {

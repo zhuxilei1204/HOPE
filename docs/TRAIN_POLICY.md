@@ -15,9 +15,9 @@ There is a single Gym task, `HOPE-PingPong-AgibotA3-v0` (`task=HOPEPingPong`), d
   across a batch. The lower body is free to balance and recentre.
 - **A racket-target goal** (`RacketTargetCommand`): a sampled racket target position, target
   velocity, and time-to-strike, plus the `swing_side`, all fed to the actor.
-- **A fixed station**: a startup-constant base target. The observation carries
-  `fixed_station_error_xy` (station minus current base XY) so the policy learns to recentre in place
-  as it drifts over a rally. The station never moves — there is no station or footstep planning.
+- **A station target**: fixed-station runs use a startup ready station; dynamic-station runs expose
+  a per-swing base target before impact and recover to the ready station afterward. The observation
+  slot remains `fixed_station_error_xy` for 111-D layout compatibility.
 - **Continuous rallies**: `wrap_teleport = false`. Robot state, joint state, and `last_action` carry
   across swings; the environment only resets on the fixed episode timeout or a physical fall (an
   ordinary lifecycle event, not a gate).

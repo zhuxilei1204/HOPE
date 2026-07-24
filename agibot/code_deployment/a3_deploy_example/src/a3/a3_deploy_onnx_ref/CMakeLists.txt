@@ -98,6 +98,8 @@ list(REMOVE_ITEM PROJECT_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/src/a3_deploy/main.cpp
 list(REMOVE_ITEM PROJECT_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/src/a3_deploy/a3_policy_runtime_probe.cpp)
 list(REMOVE_ITEM PROJECT_SRCS
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/a3_deploy/hope_pingpong_body_drive.cpp)
+list(REMOVE_ITEM PROJECT_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/src/a3_debug/body_drive_debug_record_main.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/a3_debug/body_drive_debug_type_support_pkg_main.cpp)
 
@@ -160,8 +162,9 @@ if(ENABLE_A3_ROS_MSGS)
   )
   find_package(ament_cmake QUIET)
   find_package(rosidl_default_generators QUIET)
+  find_package(geometry_msgs CONFIG QUIET)
   find_package(sensor_msgs CONFIG QUIET)
-  if(ament_cmake_FOUND AND rosidl_default_generators_FOUND AND sensor_msgs_FOUND)
+  if(ament_cmake_FOUND AND rosidl_default_generators_FOUND AND geometry_msgs_FOUND AND sensor_msgs_FOUND)
     # Build vendored joint_msgs. rosidl_generate_interfaces (inside the
     # nested CMakeLists) emits raw targets like joint_msgs__rosidl_generator_cpp;
     # the package only aliases the two typesupport_cpp variants itself, so we
@@ -201,13 +204,14 @@ if(ENABLE_A3_ROS_MSGS)
     endforeach()
 
     message(STATUS
-      "✅ A3 ROS msgs: ENABLED (joint_msgs vendored under thirdparty/, sensor_msgs found)")
+      "✅ A3 ROS msgs: ENABLED (joint_msgs vendored under thirdparty/, geometry_msgs/sensor_msgs found)")
     set(A3_ROS_MSGS_AVAILABLE TRUE)
   else()
     message(WARNING
       "A3 ROS msgs: DISABLED "
       "(ament_cmake_FOUND=${ament_cmake_FOUND} "
       "rosidl_default_generators_FOUND=${rosidl_default_generators_FOUND} "
+      "geometry_msgs_FOUND=${geometry_msgs_FOUND} "
       "sensor_msgs_FOUND=${sensor_msgs_FOUND}); "
       "did you `source /opt/ros/humble/setup.bash` before cmake? "
       "subscriber code will compile without HAS_A3_ROS_MSGS — "
@@ -228,6 +232,10 @@ if(A3_ROS_MSGS_AVAILABLE)
     sensor_msgs::sensor_msgs__rosidl_typesupport_cpp
     sensor_msgs::sensor_msgs__rosidl_typesupport_fastrtps_cpp
     sensor_msgs::sensor_msgs__rosidl_typesupport_introspection_cpp
+    geometry_msgs::geometry_msgs__rosidl_generator_cpp
+    geometry_msgs::geometry_msgs__rosidl_typesupport_cpp
+    geometry_msgs::geometry_msgs__rosidl_typesupport_fastrtps_cpp
+    geometry_msgs::geometry_msgs__rosidl_typesupport_introspection_cpp
   )
 endif()
 
@@ -547,10 +555,13 @@ endif()
 # List of libs to link for both the main executable and the tests
 set(EXE_LIBS
   a3_deploy_shared
-  unitree_sdk2 ZLIB::ZLIB
+  ZLIB::ZLIB
   onnxruntime::onnxruntime
   ${ZMQ_LIBRARY}
 )
+if(TARGET unitree_sdk2)
+  list(APPEND EXE_LIBS unitree_sdk2)
+endif()
 
 if(ENABLE_TRT_INFERENCE)
   list(APPEND EXE_LIBS
@@ -581,10 +592,12 @@ add_executable(${A3_EXECUTABLE_NAME}
 target_sources(${A3_EXECUTABLE_NAME} PRIVATE ${ROBOT_IO_SOURCES})
 target_include_directories(${A3_EXECUTABLE_NAME}
   PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include/ ${PROJECT_SOURCE_DIR}/src)
-target_include_directories(${A3_EXECUTABLE_NAME} BEFORE PRIVATE
-  ${PROJECT_SOURCE_DIR}/thirdparty/unitree_sdk2/include
-  ${PROJECT_SOURCE_DIR}/thirdparty/unitree_sdk2/thirdparty/include
-  ${PROJECT_SOURCE_DIR}/thirdparty/unitree_sdk2/thirdparty/include/ddscxx)
+if(TARGET unitree_sdk2)
+  target_include_directories(${A3_EXECUTABLE_NAME} BEFORE PRIVATE
+    ${PROJECT_SOURCE_DIR}/thirdparty/unitree_sdk2/include
+    ${PROJECT_SOURCE_DIR}/thirdparty/unitree_sdk2/thirdparty/include
+    ${PROJECT_SOURCE_DIR}/thirdparty/unitree_sdk2/thirdparty/include/ddscxx)
+endif()
 target_link_directories(${A3_EXECUTABLE_NAME} PRIVATE ${CUDA_LINK_DIRS})
 target_link_libraries(${A3_EXECUTABLE_NAME} PRIVATE ${PROJECT_NAME}
   ${EXE_LIBS})
@@ -669,14 +682,73 @@ if(ENABLE_RKNN_INFERENCE)
     COMMENT "Copying bundled RKNN runtime library to probe output dir")
 endif()
 
+set(HOPE_BODY_DRIVE_NAME hope_pingpong_body_drive)
+add_executable(${HOPE_BODY_DRIVE_NAME}
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/a3_deploy/hope_pingpong_body_drive.cpp)
+target_sources(${HOPE_BODY_DRIVE_NAME} PRIVATE ${ROBOT_IO_SOURCES})
+target_include_directories(${HOPE_BODY_DRIVE_NAME}
+  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include/ ${PROJECT_SOURCE_DIR}/src)
+if(TARGET unitree_sdk2)
+  target_include_directories(${HOPE_BODY_DRIVE_NAME} BEFORE PRIVATE
+    ${PROJECT_SOURCE_DIR}/thirdparty/unitree_sdk2/include
+    ${PROJECT_SOURCE_DIR}/thirdparty/unitree_sdk2/thirdparty/include
+    ${PROJECT_SOURCE_DIR}/thirdparty/unitree_sdk2/thirdparty/include/ddscxx)
+endif()
+target_link_directories(${HOPE_BODY_DRIVE_NAME} PRIVATE ${CUDA_LINK_DIRS})
+target_link_libraries(${HOPE_BODY_DRIVE_NAME} PRIVATE ${PROJECT_NAME}
+  ${EXE_LIBS})
+
+if(A3_AIMRT_BACKEND_AVAILABLE)
+  target_compile_definitions(${HOPE_BODY_DRIVE_NAME}
+    PRIVATE ENABLE_A3_AIMRT_BACKEND=1)
+  target_link_libraries(${HOPE_BODY_DRIVE_NAME}
+    PRIVATE ${A3_AIMRT_BACKEND_LIBS})
+endif()
+
+if(rclcpp_FOUND AND std_msgs_FOUND)
+  target_include_directories(${HOPE_BODY_DRIVE_NAME}
+    PRIVATE ${MSGPACK_INCLUDE_DIRS})
+  target_link_libraries(${HOPE_BODY_DRIVE_NAME}
+    PRIVATE ${ROS2_LIBS} pthread)
+  target_compile_definitions(${HOPE_BODY_DRIVE_NAME} PRIVATE HAS_ROS2=1)
+else()
+  target_compile_definitions(${HOPE_BODY_DRIVE_NAME} PRIVATE HAS_ROS2=0)
+endif()
+
+set_target_properties(${HOPE_BODY_DRIVE_NAME}
+  PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${GS_RUNTIME_OUTPUT_DIR}"
+             OUTPUT_NAME ${HOPE_BODY_DRIVE_NAME}
+             CXX_STANDARD 20
+             CXX_STANDARD_REQUIRED ON
+             CXX_EXTENSIONS OFF
+             BUILD_WITH_INSTALL_RPATH TRUE
+             BUILD_RPATH "$ORIGIN;/opt/ros/jazzy/lib;/opt/ros/humble/lib"
+             INSTALL_RPATH "$ORIGIN;/opt/ros/jazzy/lib;/opt/ros/humble/lib")
+
+if(ENABLE_RKNN_INFERENCE)
+  add_custom_command(TARGET ${HOPE_BODY_DRIVE_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+      $<TARGET_FILE:rknnrt::rknnrt>
+      "${GS_RUNTIME_OUTPUT_DIR}"
+    COMMENT "Copying bundled RKNN runtime library to hope body-drive output dir")
+endif()
+
 # Copy AimRT iceoryx plugin .so next to the a3 binary so dlopen finds it
 # via the $ORIGIN RPATH set above — no LD_LIBRARY_PATH needed.
-if(A3_AIMRT_BACKEND_AVAILABLE)
-  add_custom_command(TARGET ${A3_EXECUTABLE_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-      $<TARGET_FILE:aimrt_plugins_iceoryx_plugin>
-      "${GS_RUNTIME_OUTPUT_DIR}"
-    COMMENT "Copying libaimrt_iceoryx_plugin.so to runtime output dir")
+if(A3_AIMRT_BACKEND_AVAILABLE AND TARGET aimrt_plugins_iceoryx_plugin)
+  foreach(_a3_runtime_copy_target
+      ${A3_EXECUTABLE_NAME}
+      ${HOPE_BODY_DRIVE_NAME})
+    add_custom_command(TARGET ${_a3_runtime_copy_target} POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        $<TARGET_FILE:aimrt_plugins_iceoryx_plugin>
+        "${GS_RUNTIME_OUTPUT_DIR}"
+      COMMENT "Copying libaimrt_iceoryx_plugin.so to runtime output dir")
+  endforeach()
+elseif(A3_AIMRT_BACKEND_AVAILABLE)
+  message(WARNING
+    "AimRT iceoryx plugin target is missing; "
+    "body-drive iceoryx runtime configs will not start until the plugin builds.")
 endif()
 
 # Copy AimRT ROS2 plugin .so as an optional fallback. The A3 default config in
@@ -686,11 +758,15 @@ if(A3_AIMRT_BACKEND_AVAILABLE AND TARGET aimrt_plugins_ros2_plugin)
     BUILD_WITH_INSTALL_RPATH TRUE
     BUILD_RPATH "$ORIGIN;/opt/ros/jazzy/lib;/opt/ros/humble/lib"
     INSTALL_RPATH "$ORIGIN;/opt/ros/jazzy/lib;/opt/ros/humble/lib")
-  add_custom_command(TARGET ${A3_EXECUTABLE_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-      $<TARGET_FILE:aimrt_plugins_ros2_plugin>
-      "${GS_RUNTIME_OUTPUT_DIR}"
-    COMMENT "Copying libaimrt_ros2_plugin.so to runtime output dir")
+  foreach(_a3_runtime_copy_target
+      ${A3_EXECUTABLE_NAME}
+      ${HOPE_BODY_DRIVE_NAME})
+    add_custom_command(TARGET ${_a3_runtime_copy_target} POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        $<TARGET_FILE:aimrt_plugins_ros2_plugin>
+        "${GS_RUNTIME_OUTPUT_DIR}"
+      COMMENT "Copying libaimrt_ros2_plugin.so to runtime output dir")
+  endforeach()
 
   foreach(_ros2_proto_copy_target
       ros2_plugin_proto__rosidl_generator_c
@@ -705,11 +781,15 @@ if(A3_AIMRT_BACKEND_AVAILABLE AND TARGET aimrt_plugins_ros2_plugin)
         BUILD_WITH_INSTALL_RPATH TRUE
         BUILD_RPATH "$ORIGIN;/opt/ros/jazzy/lib;/opt/ros/humble/lib"
         INSTALL_RPATH "$ORIGIN;/opt/ros/jazzy/lib;/opt/ros/humble/lib")
-      add_custom_command(TARGET ${A3_EXECUTABLE_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-          $<TARGET_FILE:${_ros2_proto_copy_target}>
-          "${GS_RUNTIME_OUTPUT_DIR}"
-        COMMENT "Copying ${_ros2_proto_copy_target}.so to runtime output dir")
+      foreach(_a3_runtime_copy_target
+          ${A3_EXECUTABLE_NAME}
+          ${HOPE_BODY_DRIVE_NAME})
+        add_custom_command(TARGET ${_a3_runtime_copy_target} POST_BUILD
+          COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:${_ros2_proto_copy_target}>
+            "${GS_RUNTIME_OUTPUT_DIR}"
+          COMMENT "Copying ${_ros2_proto_copy_target}.so to runtime output dir")
+      endforeach()
     endif()
   endforeach()
 endif()
@@ -734,11 +814,15 @@ if(A3_ROS_MSGS_AVAILABLE)
         BUILD_WITH_INSTALL_RPATH TRUE
         BUILD_RPATH "$ORIGIN;/opt/ros/jazzy/lib;/opt/ros/humble/lib"
         INSTALL_RPATH "$ORIGIN;/opt/ros/jazzy/lib;/opt/ros/humble/lib")
-      add_custom_command(TARGET ${A3_EXECUTABLE_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-          $<TARGET_FILE:${_jm_copy_target}>
-          "${GS_RUNTIME_OUTPUT_DIR}"
-        COMMENT "Copying ${_jm_copy_target}.so to runtime output dir")
+      foreach(_a3_runtime_copy_target
+          ${A3_EXECUTABLE_NAME}
+          ${HOPE_BODY_DRIVE_NAME})
+        add_custom_command(TARGET ${_a3_runtime_copy_target} POST_BUILD
+          COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:${_jm_copy_target}>
+            "${GS_RUNTIME_OUTPUT_DIR}"
+          COMMENT "Copying ${_jm_copy_target}.so to runtime output dir")
+      endforeach()
     endif()
   endforeach()
 endif()
@@ -853,6 +937,7 @@ if(A3_AIMRT_BACKEND_AVAILABLE AND A3_ROS_MSGS_AVAILABLE)
 
   foreach(_a3_debug_cfg
       ${CMAKE_CURRENT_SOURCE_DIR}/config/a3_body_drive_debug_record.iceoryx.yaml
+      ${CMAKE_CURRENT_SOURCE_DIR}/config/a3_body_drive_debug_record.iceoryx_ros2_sim.yaml
       ${CMAKE_CURRENT_SOURCE_DIR}/config/a3_body_drive_debug_record.ros2.yaml
       ${CMAKE_CURRENT_SOURCE_DIR}/config/a3_body_drive_debug.layout.json)
     if(EXISTS "${_a3_debug_cfg}")

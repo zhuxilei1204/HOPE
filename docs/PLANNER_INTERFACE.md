@@ -1,9 +1,11 @@
 # Planner interface
 
 The planner turns a stream of motion-capture ball positions into a per-strike racket target
-for the policy. It is a no-spin, continuous, fixed-station planner: it predicts where the
-incoming ball crosses a fixed strike plane, chooses forehand or backhand, and publishes a
-racket target position, velocity, time-to-strike, and swing side.
+for the policy. It is a no-spin, continuous planner: it predicts where the incoming ball
+crosses a strike plane, chooses forehand or backhand, and publishes a racket target
+position, velocity, time-to-strike, and swing side. Dynamic-station policies additionally
+derive the base station from the strike target and motion metadata; the public
+`RacketCommand` fields stay unchanged.
 
 ## Data flow
 

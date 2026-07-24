@@ -8,6 +8,8 @@ namespace a3_deploy {
 
 struct A3PolicyRuntimeOptions {
   std::string backend{"ort_cpu"};
+  std::string input_tensor_name{"obs_dict"};
+  std::string output_tensor_name{"action"};
   bool use_fp16{false};
   int intra_op_num_threads{1};
   int inter_op_num_threads{1};

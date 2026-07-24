@@ -12,6 +12,10 @@ set(aimrt_DOWNLOAD_URL_HASH
     "SHA256=f9ee3c3d70dd987f2170aa9325e5fc431b979a861f451b42c86d77f53e53de99"
     CACHE STRING "AimRT source archive SHA256.")
 
+option(AIMRT_MUJOCO_SIM_BUILD_NET_PLUGIN
+       "Build AimRT net plugin for MuJoCo sim"
+       ON)
+
 if(aimrt_LOCAL_SOURCE)
   FetchContent_Declare(
     aimrt
@@ -40,7 +44,9 @@ function(get_aimrt)
       set(AIMRT_BUILD_WITH_ROS2 OFF)
     endif()
 
-    set(AIMRT_BUILD_NET_PLUGIN ON)
+    set(AIMRT_BUILD_NET_PLUGIN
+        ${AIMRT_MUJOCO_SIM_BUILD_NET_PLUGIN}
+        CACHE BOOL "Build AimRT net plugin" FORCE)
     set(AIMRT_BUILD_ICEORYX_PLUGIN ON)
     if(AIMRT_MUJOCO_SIM_BUILD_WITH_ROS2)
       set(AIMRT_BUILD_ROS2_PLUGIN ON)

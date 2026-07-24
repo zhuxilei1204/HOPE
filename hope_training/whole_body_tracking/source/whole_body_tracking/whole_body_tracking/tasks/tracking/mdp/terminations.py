@@ -10,6 +10,7 @@ from isaaclab.assets import Articulation
 from isaaclab.managers import SceneEntityCfg
 
 from whole_body_tracking.tasks.tracking.mdp.commands import MotionCommand
+from whole_body_tracking.tasks.tracking.mdp.hope_commands import RacketTargetCommand
 from whole_body_tracking.tasks.tracking.mdp.rewards import _get_body_indexes
 
 if TYPE_CHECKING:
@@ -89,3 +90,57 @@ def bad_motion_body_pos_z_only(
     error = torch.abs(command.body_pos_relative_w[:, idx, -1] - command.robot_body_pos_w[:, idx, -1])
     bad = torch.any(error > threshold, dim=-1)
     return bad & _past_grace_steps(env, command, min_steps) & (~command.in_hold)
+
+
+def _racket_table_points(command: RacketTargetCommand, body_names: list[str] | None, include_racket: bool):
+    points = []
+    motion = command._motion()
+    if body_names:
+        ids = [motion.cfg.body_names.index(name) for name in body_names if name in motion.cfg.body_names]
+        if ids:
+            idx = torch.tensor(ids, dtype=torch.long, device=command.device)
+            points.append(motion.robot_body_pos_w[:, idx])
+    if include_racket:
+        points.append(command.racket_pos_w.unsqueeze(1))
+    if not points:
+        return None
+    return torch.cat(points, dim=1)
+
+
+def body_inside_table_zone(
+    env: ManagerBasedRLEnv,
+    command_name: str,
+    body_names: list[str] | None = None,
+    include_racket: bool = True,
+    x_margin: float = 0.04,
+    y_margin: float = 0.04,
+    below_surface_margin: float = 0.08,
+    above_surface_margin: float = 0.04,
+    min_steps: int = 0,
+    enabled: bool = False,
+) -> torch.Tensor:
+    """True when monitored points enter the analytic table-top no-touch volume."""
+    command: RacketTargetCommand = env.command_manager.get_term(command_name)
+    if not enabled:
+        return torch.zeros(command.num_envs, dtype=torch.bool, device=command.device)
+    points_w = _racket_table_points(command, body_names, include_racket)
+    if points_w is None:
+        return torch.zeros(command.num_envs, dtype=torch.bool, device=command.device)
+
+    origins = env.scene.env_origins
+    points_l = points_w - origins.unsqueeze(1)
+    x = points_l[..., 0]
+    y = points_l[..., 1]
+    z = points_l[..., 2]
+
+    center_y = command.fixed_station_w[:, 1] - origins[:, 1]
+    half_width = 0.5 * float(command.cfg.table_width)
+    x_min = x.new_tensor(float(command.cfg.table_near_x) - float(x_margin))
+    x_max = x.new_tensor(float(command.cfg.table_near_x) + float(command.cfg.table_length) + float(x_margin))
+    y_min = center_y.unsqueeze(1) - half_width - float(y_margin)
+    y_max = center_y.unsqueeze(1) + half_width + float(y_margin)
+    z_min = z.new_tensor(float(command.cfg.table_surface_z) - float(below_surface_margin))
+    z_max = z.new_tensor(float(command.cfg.table_surface_z) + float(above_surface_margin))
+
+    inside = (x >= x_min) & (x <= x_max) & (y >= y_min) & (y <= y_max) & (z >= z_min) & (z <= z_max)
+    return inside.any(dim=1) & _past_episode_steps(env, min_steps)

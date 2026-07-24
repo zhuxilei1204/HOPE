@@ -31,7 +31,7 @@ Assembled in this exact order every tick:
 | `[65:96]`   | `last_action`            | 31 | raw | The action **applied** on the previous tick: `raw_action` with the passive head columns (idx 3, 4) zeroed. |
 | `[96:99]`   | `projected_gravity`      | 3  | base frame, unit | Gravity direction in the base frame (IMU). |
 | `[99:101]`  | `base_forward_xy`        | 2  | world xy, unit | Base forward unit vector projected to world XY (from IMU yaw). |
-| `[101:103]` | `fixed_station_error_xy` | 2  | world xy, m | Fixed station position (a startup constant) minus current base XY. |
+| `[101:103]` | `fixed_station_error_xy` | 2  | world xy, m | Current station position minus current base XY. |
 | `[103:106]` | `racket_target_rel_base` | 3  | world, m | Target racket position minus base position. |
 | `[106:109]` | `racket_target_vel_w`    | 3  | world, m/s | Target racket velocity. |
 | `[109:110]` | `time_to_strike`         | 1  | s | Time remaining until the strike. |
@@ -40,9 +40,9 @@ Assembled in this exact order every tick:
 Total: `3 + 31 + 31 + 31 + 3 + 2 + 2 + 3 + 3 + 1 + 1 = 111`.
 
 Notes:
-- `fixed_station_error_xy` is **not** constant zero. The station target is fixed at startup,
-  but the robot base drifts over a rally; these two dims give the policy in-place recentring
-  feedback. This is balance feedback, not station planning — the station never moves.
+- `fixed_station_error_xy` keeps its historical name for layout compatibility. Fixed-station
+  policies use the startup ready station; dynamic-station policies may use a per-swing station
+  before impact and return to the ready station during recovery.
 - `swing_side` is a formal input, chosen once per incoming ball by the planner and held for
   the whole strike. The planner also carries it in `RacketCommand`
   (see [PLANNER_INTERFACE.md](PLANNER_INTERFACE.md)).

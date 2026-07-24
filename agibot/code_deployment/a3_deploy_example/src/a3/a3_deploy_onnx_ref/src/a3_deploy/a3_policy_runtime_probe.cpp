@@ -20,6 +20,8 @@ namespace {
 struct ProbeOptions {
   std::string backend{"ort_cpu"};
   std::string model_path;
+  std::string input_name{"obs_dict"};
+  std::string output_name{"action"};
   std::string rknn_core_mask{"auto"};
   std::size_t expected_input_dim{0};
   std::size_t expected_action_dim{29};
@@ -34,6 +36,8 @@ void PrintUsage(const char* prog) {
       << "Usage: " << prog
       << " --backend ort_cpu|rknn --model PATH [options]\n"
       << "\nOptions:\n"
+      << "  --input-name NAME    Expected input tensor name; default obs_dict.\n"
+      << "  --output-name NAME   Expected output tensor name; default action.\n"
       << "  --input-dim N        Expected input dimension; 0 disables check.\n"
       << "  --action-dim N       Expected action dimension; default 29.\n"
       << "  --warmup N           Warmup inference runs; default 5.\n"
@@ -104,6 +108,14 @@ bool ParseArgs(int argc, char** argv, ProbeOptions& opts) {
       const char* value = require_value("--model");
       if (!value) return false;
       opts.model_path = value;
+    } else if (arg == "--input-name") {
+      const char* value = require_value("--input-name");
+      if (!value) return false;
+      opts.input_name = value;
+    } else if (arg == "--output-name") {
+      const char* value = require_value("--output-name");
+      if (!value) return false;
+      opts.output_name = value;
     } else if (arg == "--input-dim") {
       const char* value = require_value("--input-dim");
       if (!value || !ParseSize(value, opts.expected_input_dim)) {
@@ -214,6 +226,8 @@ int main(int argc, char** argv) {
 
   a3_deploy::A3PolicyRuntimeOptions runtime_options;
   runtime_options.backend = opts.backend;
+  runtime_options.input_tensor_name = opts.input_name;
+  runtime_options.output_tensor_name = opts.output_name;
   runtime_options.rknn_core_mask = opts.rknn_core_mask;
 
   auto runtime = a3_deploy::CreateA3PolicyRuntime(runtime_options);

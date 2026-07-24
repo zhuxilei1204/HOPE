@@ -24,6 +24,7 @@ class MujocoSimModule : public aimrt::ModuleBase {
  public:
   struct Options {
     std::string simulation_model_path;
+    bool headless = false;
     std::string sim_executor;
     std::string gui_executor;
     std::string default_free_camera_focus_body;
@@ -69,6 +70,7 @@ class MujocoSimModule : public aimrt::ModuleBase {
 
   aimrt::co::Task<void> GuiLoop();
   aimrt::co::Task<void> SimLoop();
+  aimrt::co::Task<void> HeadlessSimLoop();
 
  private:
   aimrt::CoreRef core_;

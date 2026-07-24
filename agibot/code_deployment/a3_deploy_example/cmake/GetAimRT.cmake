@@ -22,6 +22,10 @@ if(NOT DEFINED aimrt_DOWNLOAD_URL_HASH)
 endif()
 message(STATUS "AimRT download URL: ${aimrt_DOWNLOAD_URL}")
 
+option(ENABLE_AIMRT_RECORD_PLAYBACK_PLUGIN
+       "Build AimRT record/playback plugin; requires MCAP/LZ4/Zstd"
+       ON)
+
 set(aimrt_PATCH_DIR "${CMAKE_CURRENT_LIST_DIR}/aimrt_patches")
 set(aimrt_PATCH_SCRIPT "${aimrt_PATCH_DIR}/ApplyAimRTPatches.cmake")
 
@@ -50,7 +54,9 @@ function(get_aimrt)
     set(AIMRT_BUILD_WITH_ROS2 ON)
     set(AIMRT_BUILD_ROS2_PLUGIN ON)
     set(AIMRT_BUILD_ICEORYX_PLUGIN ON)
-    set(AIMRT_BUILD_RECORD_PLAYBACK_PLUGIN ON)
+    set(AIMRT_BUILD_RECORD_PLAYBACK_PLUGIN
+        ${ENABLE_AIMRT_RECORD_PLAYBACK_PLUGIN}
+        CACHE BOOL "Build AimRT record/playback plugin" FORCE)
     if(CMAKE_CROSSCOMPILING)
       find_program(_gs_host_protoc protoc REQUIRED)
       set(AIMRT_USE_LOCAL_PROTOC_COMPILER

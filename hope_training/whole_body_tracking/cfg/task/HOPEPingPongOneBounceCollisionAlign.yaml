@@ -1,0 +1,105 @@
+# =============================================================================
+# Collision-alignment branch from the cycle-closed-loop policy.
+#
+# Goal: reduce the MuJoCo gap where the racket contacts the ball but the outgoing
+# ball is too low/slow to clear the net.  This branch emphasizes actual racket
+# velocity projection, blade direction, and predicted outgoing forward/lift.
+# =============================================================================
+
+defaults:
+  - HOPEPingPongOneBounceCycleClosedLoop
+  - _self_
+
+name: HOPEPingPongOneBounceCollisionAlign
+
+motion:
+  wrap_teleport: false
+
+overrides:
+  # Keep the same true one-bounce task but ask the impact planner for slightly more reachable
+  # speed/arc headroom.  The new reward terms below decide whether the policy can actually realize it.
+  commands.racket_target.impact_inverse_racket_speed_scale: 1.18
+  commands.racket_target.impact_inverse_racket_speed_bias: 0.10
+  commands.racket_target.impact_inverse_max_racket_speed: 3.35
+  commands.racket_target.target_outgoing_vel_scale: 1.04
+  commands.racket_target.target_outgoing_vel_z_bias: 0.26
+  commands.racket_target.net_margin: 0.06
+
+  # Allow the racket wrist a bit more correction near impact, but keep a non-zero motion prior.
+  rewards.racket_wrist_motion_pos.weight: 0.25
+  rewards.racket_wrist_motion_pos.params:
+    motion_command_name: motion
+    racket_command_name: racket_target
+    std: 0.70
+    body_names:
+      - right_wrist_yaw_Link
+    release_window_s: 0.24
+    release_scale: 0.25
+  rewards.racket_wrist_motion_ori.weight: 0.14
+  rewards.racket_wrist_motion_ori.params:
+    motion_command_name: motion
+    racket_command_name: racket_target
+    std: 1.05
+    body_names:
+      - right_wrist_yaw_Link
+    release_window_s: 0.24
+    release_scale: 0.25
+
+  # Position contact is already high in MuJoCo; shift more learning pressure to velocity/face/outgoing.
+  rewards.racket_position.weight: 4.5
+  rewards.racket_position.params:
+    command_name: racket_target
+    std: 0.24
+  rewards.racket_velocity.weight: 2.4
+  rewards.racket_velocity.params:
+    command_name: racket_target
+    std: 1.15
+  rewards.racket_velocity_projection.weight: 2.2
+  rewards.racket_velocity_projection.params:
+    command_name: racket_target
+    min_speed_ratio: 0.84
+    speed_std: 0.30
+    lateral_std: 0.65
+    start_step: 0
+    warmup_steps: 4000
+    start_scale: 0.45
+  rewards.impact_forward_lift.weight: 2.5
+  rewards.impact_forward_lift.params:
+    command_name: racket_target
+    min_forward_speed: 2.10
+    min_upward_speed: 1.15
+    speed_std: 0.40
+    start_step: 0
+    warmup_steps: 4000
+    start_scale: 0.45
+  rewards.impact_outgoing_velocity.weight: 4.6
+  rewards.impact_outgoing_velocity.params:
+    command_name: racket_target
+    std: 1.45
+    start_step: 0
+    warmup_steps: 6000
+    start_scale: 0.45
+  rewards.blade_direction.weight: 2.4
+  rewards.blade_direction.params:
+    command_name: racket_target
+    std: 0.42
+    start_step: 0
+    warmup_steps: 6000
+    start_scale: 0.55
+  rewards.net_cross.weight: 3.8
+  rewards.opponent_bounce.weight: 4.2
+
+  # Preserve but do not over-dominate recovery while this branch explores harder contact.
+  rewards.follow_through_recovery.weight: 0.9
+  rewards.recovery_health.weight: 1.0
+  rewards.next_ball_readiness.weight: 0.9
+  rewards.next_swing_ready_bonus.weight: 0.9
+  rewards.cycle_net_ready.weight: 1.2
+  rewards.cycle_return_ready.weight: 2.4
+  rewards.phase_action_rate.weight: -0.32
+  rewards.phase_action_rate.params:
+    command_name: racket_target
+    pre_strike_scale: 0.020
+    strike_scale: 0.004
+    recovery_scale: 0.060
+    hold_scale: 0.090

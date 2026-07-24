@@ -5,9 +5,10 @@ Each swing it samples the quantities the model-based planner supplies at deploy 
 position, a desired racket velocity, and a time-to-strike — plus the swing side (forehand/backhand),
 which is locked for the duration of that swing. It also:
 
-* holds a FIXED station target (a startup constant = the environment origin): the robot base drifts
-  across a rally, and the ``fixed_station_error_xy`` observation feeds that drift back so the policy
-  can re-center in place. The station never moves; this is not station planning.
+* holds a ready station target (a startup constant = the environment origin), and can optionally
+  expose a per-swing dynamic station before impact.  The observation slot remains the same 2-D
+  station-error contract: in fixed mode it is ready-station error; in dynamic mode it is the base
+  target needed to hit the current racket intercept with the reference motion's natural strike pose.
 * computes the ACTUAL racket state in simulation by forward kinematics through the fixed racket mount
   (wrist -> paddle center), so the reward can compare actual vs desired.
 * derives the strike timing from the reference clip phase, and evaluates a simple no-spin outgoing
@@ -29,7 +30,7 @@ from typing import TYPE_CHECKING
 from isaaclab.assets import Articulation
 from isaaclab.managers import CommandTerm, CommandTermCfg
 from isaaclab.utils import configclass
-from isaaclab.utils.math import matrix_from_quat, quat_apply, quat_mul, sample_uniform
+from isaaclab.utils.math import matrix_from_quat, quat_apply, quat_error_magnitude, quat_mul, sample_uniform
 
 from whole_body_tracking.tasks.tracking.mdp.ballistics import (
     GRAVITY as _GRAVITY,
@@ -76,10 +77,17 @@ class RacketTargetCommand(CommandTerm):
         # Desired (sampled) targets, world frame.
         self.racket_target_pos_w = torch.zeros(self.num_envs, 3, device=self.device)
         self.racket_target_vel_w = torch.zeros(self.num_envs, 3, device=self.device)
+        self.racket_impact_target_vel_w = torch.zeros(self.num_envs, 3, device=self.device)
         self.racket_target_normal_w = torch.zeros(self.num_envs, 3, device=self.device)
         self.racket_target_normal_w[:, 2] = 1.0
+        # Hidden true ball task.  The actor sees the planner command above; rewards use these
+        # fields so training can tolerate planner error instead of treating the planner as truth.
+        self.ball_strike_pos_w = torch.zeros(self.num_envs, 3, device=self.device)
         self.incoming_ball_vel_w = torch.zeros(self.num_envs, 3, device=self.device)
+        self.ball_outgoing_target_vel_w = torch.zeros(self.num_envs, 3, device=self.device)
         self.swing_sign = torch.ones(self.num_envs, device=self.device)
+        self.dynamic_station_w = torch.zeros(self.num_envs, 2, device=self.device)
+        self.dynamic_station_w[:] = self.fixed_station_w
 
         # Actual racket state (FK), world frame.
         self.racket_pos_w = torch.zeros(self.num_envs, 3, device=self.device)
@@ -90,9 +98,13 @@ class RacketTargetCommand(CommandTerm):
         self.racket_normal_w[:, 2] = 1.0
 
         # Strike timing.
+        self.true_time_to_strike = torch.zeros(self.num_envs, device=self.device)
         self.time_to_strike = torch.zeros(self.num_envs, device=self.device)
         self.pre_strike = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
         self.strike_window = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
+        self._planner_tts_offset = torch.zeros(self.num_envs, device=self.device)
+        self.steps_since_target_resample = torch.zeros(self.num_envs, dtype=torch.long, device=self.device)
+        self.target_just_resampled = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
 
         # Reward helper signals.
         self.racket_target_distance = torch.zeros(self.num_envs, device=self.device)
@@ -102,6 +114,12 @@ class RacketTargetCommand(CommandTerm):
         self.ball_contact = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
         self.ball_net_cross = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
         self.ball_on_opponent = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
+        self.current_swing_contact = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
+        self.current_swing_net_cross = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
+        self.current_swing_on_opponent = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
+        self.prev_swing_contact = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
+        self.prev_swing_net_cross = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
+        self.prev_swing_on_opponent = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
         self.impact_ball_out_vel_w = torch.zeros(self.num_envs, 3, device=self.device)
         self.impact_ball_out_error = torch.zeros(self.num_envs, device=self.device)
 
@@ -119,6 +137,7 @@ class RacketTargetCommand(CommandTerm):
             if cfg.mount_normal_sign_per_clip
             else None
         )
+        self._motion_racket_offset_xy = None
 
         # Feet resolution for contact fraction (degrades to 0 if it cannot resolve — never crashes).
         try:
@@ -130,7 +149,37 @@ class RacketTargetCommand(CommandTerm):
             sensor_bodies = list(self._contact_sensor.body_names)
             self._foot_idx_contact = [sensor_bodies.index(n) for n in cfg.feet_body_names if n in sensor_bodies]
 
-        for key in ("racket_pos_error", "racket_vel_error", "time_to_strike", "return_success"):
+        for key in (
+            "racket_pos_error",
+            "racket_vel_error",
+            "time_to_strike",
+            "return_success",
+            "prev_return_success",
+            "prev_net_cross",
+            "current_net_cross",
+            "racket_pos_curriculum_scale",
+            "steps_since_target_resample",
+            "recovery_height_error",
+            "recovery_upright_error",
+            "recovery_base_lin_vel",
+            "recovery_base_ang_vel",
+            "recovery_station_error",
+            "recovery_feet_contact_frac",
+            "recovery_racket_speed",
+            "recovery_height_score",
+            "recovery_upright_score",
+            "recovery_lin_vel_score",
+            "recovery_ang_vel_score",
+            "recovery_station_score",
+            "recovery_racket_score",
+            "recovery_arm_score",
+            "recovery_ready_score",
+            "recovery_phase_gate",
+            "recovery_phase_ready_score",
+            "recovery_contact_ready_score",
+            "recovery_net_ready_score",
+            "recovery_return_ready_score",
+        ):
             self.metrics[key] = torch.zeros(self.num_envs, device=self.device)
 
     # --- helpers -------------------------------------------------------------------------------- #
@@ -149,9 +198,25 @@ class RacketTargetCommand(CommandTerm):
 
     @property
     def fixed_station_w(self) -> torch.Tensor:
-        """Fixed startup station XY = the environment origin plus a nominal offset (constant)."""
+        """Fixed ready station XY = the environment origin plus a nominal offset (constant)."""
         off = torch.tensor(self.cfg.station_nominal_offset_xy, device=self.device)
         return self._env.scene.env_origins[:, :2] + off
+
+    @property
+    def station_w(self) -> torch.Tensor:
+        """Current base-station target exposed to the actor.
+
+        In dynamic mode, the station is dynamic before impact so the base can move under the
+        reference strike pose; after impact and during recovery it switches back to the fixed ready
+        station.  This keeps the 111-D observation layout unchanged while giving random racket
+        targets a base-motion target instead of encouraging wrist-only chasing.
+        """
+        if self.cfg.station_mode == "fixed":
+            return self.fixed_station_w
+        if self.cfg.station_mode != "dynamic_from_motion":
+            raise ValueError(f"Unsupported station_mode: {self.cfg.station_mode}")
+        use_dynamic = (self.pre_strike | self.strike_window).unsqueeze(-1)
+        return torch.where(use_dynamic, self.dynamic_station_w, self.fixed_station_w)
 
     @property
     def command(self) -> torch.Tensor:
@@ -161,7 +226,7 @@ class RacketTargetCommand(CommandTerm):
                 self.racket_target_pos_w,
                 self.racket_target_vel_w,
                 self.time_to_strike.unsqueeze(-1),
-                self.fixed_station_w,
+                self.station_w,
                 self.swing_sign.unsqueeze(-1),
             ],
             dim=-1,
@@ -176,8 +241,8 @@ class RacketTargetCommand(CommandTerm):
         return fwd / (torch.norm(fwd, dim=-1, keepdim=True) + 1e-6)
 
     def fixed_station_error_xy(self) -> torch.Tensor:
-        """Fixed startup station XY minus current base XY, world frame (2)."""
-        return self.fixed_station_w - self.base_pos_w[:, :2]
+        """Current station XY minus current base XY, world frame (2)."""
+        return self.station_w - self.base_pos_w[:, :2]
 
     def racket_target_rel_base_w(self) -> torch.Tensor:
         """Target racket position minus base position, world frame (3)."""
@@ -188,34 +253,58 @@ class RacketTargetCommand(CommandTerm):
         motion = self._motion()
         n = len(env_ids)
         clip = motion.clip_id[env_ids] if motion._multiseg else torch.zeros(n, dtype=torch.long, device=self.device)
-        station = self.fixed_station_w[env_ids]  # (n, 2)
+        fixed_station = self.fixed_station_w[env_ids]  # (n, 2)
 
         pos_box = self._resolve_box(self._pos_box, clip, self.cfg.racket_pos_range)  # (n, 3, 2)
+        pos_box = self._apply_racket_pos_curriculum(pos_box)
         vel_box = self._resolve_box(self._vel_box, clip, self.cfg.racket_vel_range)
 
-        # Position: x/y are STATION-RELATIVE (fixed striking plane in front + side band), z absolute.
-        pos = sample_uniform(pos_box[..., 0], pos_box[..., 1], (n, 3), self.device)
-        pos[:, 0] = station[:, 0] + pos[:, 0]
-        pos[:, 1] = station[:, 1] + pos[:, 1]
-        self.racket_target_pos_w[env_ids] = pos
+        # True ball strike position: x/y are ready-station-relative (fixed table/strike frame),
+        # z is absolute.  The planner command may be perturbed away from this hidden truth.
+        true_pos = sample_uniform(pos_box[..., 0], pos_box[..., 1], (n, 3), self.device)
+        true_pos[:, 0] = fixed_station[:, 0] + true_pos[:, 0]
+        true_pos[:, 1] = fixed_station[:, 1] + true_pos[:, 1]
+        self.ball_strike_pos_w[env_ids] = true_pos
+
+        planner_pos_offset, planner_vel_offset, planner_vel_scale, planner_yaw, planner_tts_offset = (
+            self._sample_planner_perturbations(n)
+        )
+        self._planner_tts_offset[env_ids] = planner_tts_offset
+        planner_pos = true_pos + planner_pos_offset
+        self.racket_target_pos_w[env_ids] = planner_pos
+        self._update_dynamic_station(env_ids, clip, planner_pos, fixed_station)
 
         if self.cfg.racket_velocity_mode == "range":
-            vel = sample_uniform(vel_box[..., 0], vel_box[..., 1], (n, 3), self.device)
-        elif self.cfg.racket_velocity_mode == "ballistic_landing":
-            vel = self._sample_ballistic_target_velocity(env_ids, pos, station)
+            outgoing_vel = sample_uniform(vel_box[..., 0], vel_box[..., 1], (n, 3), self.device)
+        elif self.cfg.racket_velocity_mode in ("ballistic_landing", "impact_inverse_landing"):
+            outgoing_vel = self._sample_ballistic_target_velocity(env_ids, true_pos, fixed_station)
         else:
             raise ValueError(f"Unsupported racket_velocity_mode: {self.cfg.racket_velocity_mode}")
-        self.racket_target_vel_w[env_ids] = vel
+        outgoing_vel = self._apply_outgoing_target_calibration(outgoing_vel)
 
-        incoming_vel = self._sample_incoming_ball_velocity(env_ids, pos)
+        if self.cfg.incoming_trajectory_mode == "direct":
+            incoming_vel = self._sample_incoming_ball_velocity(env_ids, true_pos)
+        elif self.cfg.incoming_trajectory_mode == "one_bounce":
+            incoming_vel = self._sample_one_bounce_incoming_ball_velocity(env_ids, true_pos, fixed_station)
+        else:
+            raise ValueError(f"Unsupported incoming_trajectory_mode: {self.cfg.incoming_trajectory_mode}")
         self.incoming_ball_vel_w[env_ids] = incoming_vel
 
-        # Desired blade normal: normal impulse direction that turns the nominal incoming ball into
-        # the desired outgoing ball velocity. This is still a no-spin approximation, but it avoids
-        # the old over-coupling "face normal == outgoing velocity direction" that produced large
-        # MuJoCo lateral rebounds.
-        normal = vel - incoming_vel
-        self.racket_target_normal_w[env_ids] = normal / (torch.norm(normal, dim=-1, keepdim=True) + 1e-6)
+        self.ball_outgoing_target_vel_w[env_ids] = outgoing_vel
+        if self.cfg.racket_velocity_mode == "impact_inverse_landing":
+            racket_vel, normal = self._solve_impact_racket_command(incoming_vel, outgoing_vel)
+        else:
+            # Legacy mode: the target velocity is interpreted directly as racket velocity.
+            # The outgoing target remains the same vector for the simple analytic return model.
+            racket_vel = outgoing_vel
+            normal = outgoing_vel - incoming_vel
+            normal = normal / (torch.norm(normal, dim=-1, keepdim=True) + 1e-6)
+        self.racket_impact_target_vel_w[env_ids] = racket_vel
+        self.racket_target_normal_w[env_ids] = normal
+        planner_vel = self._apply_planner_velocity_perturbation(
+            racket_vel, planner_vel_offset, planner_vel_scale, planner_yaw
+        )
+        self.racket_target_vel_w[env_ids] = planner_vel
 
         # Swing side follows per-clip metadata when provided. The historical two-clip default remains
         # clip 0 = forehand, everything else = backhand for compatibility with older configs.
@@ -232,12 +321,131 @@ class RacketTargetCommand(CommandTerm):
         else:
             self.swing_sign[env_ids] = 1.0
 
+    def _motion_strike_phase_per_clip(self) -> torch.Tensor:
+        """Return strike phase per motion segment without requiring per-step timing to be initialized."""
+        ml = self._motion().motion
+        sp = tuple(self.cfg.strike_phase_per_clip)
+        if sp and len(sp) == ml.num_segments:
+            return torch.tensor([float(x) for x in sp], device=self.device)
+        return torch.full((ml.num_segments,), float(self.cfg.strike_phase), device=self.device)
+
+    def _ensure_motion_racket_offsets(self) -> torch.Tensor:
+        """Natural racket XY offset from the motion root at each clip's strike frame."""
+        if self._motion_racket_offset_xy is not None:
+            return self._motion_racket_offset_xy
+        motion = self._motion()
+        ml = motion.motion
+        try:
+            wrist_idx = motion.cfg.body_names.index(self.cfg.wrist_body_name)
+        except ValueError as exc:
+            raise ValueError(
+                f"dynamic station requires wrist body {self.cfg.wrist_body_name!r} in motion body_names"
+            ) from exc
+        root_idx = 0
+        phases = self._motion_strike_phase_per_clip()
+        strike_steps = ml.seg_start + (phases * (ml.seg_len - 1).float()).round().long()
+        wrist_pos = ml.body_pos_w[strike_steps, wrist_idx]
+        wrist_quat = ml.body_quat_w[strike_steps, wrist_idx]
+        mount_offset = torch.tensor(self.cfg.mount_offset, dtype=torch.float32, device=self.device).expand(
+            ml.num_segments, 3
+        )
+        racket_pos = wrist_pos + quat_apply(wrist_quat, mount_offset)
+        root_pos = ml.body_pos_w[strike_steps, root_idx]
+        self._motion_racket_offset_xy = racket_pos[:, :2] - root_pos[:, :2]
+        return self._motion_racket_offset_xy
+
+    def _update_dynamic_station(
+        self,
+        env_ids: torch.Tensor,
+        clip: torch.Tensor,
+        target_pos_w: torch.Tensor,
+        fixed_station_w: torch.Tensor,
+    ) -> None:
+        if self.cfg.station_mode == "fixed":
+            self.dynamic_station_w[env_ids] = fixed_station_w
+            return
+        if self.cfg.station_mode != "dynamic_from_motion":
+            raise ValueError(f"Unsupported station_mode: {self.cfg.station_mode}")
+        offset_xy = self._ensure_motion_racket_offsets()[clip]
+        desired = target_pos_w[:, :2] - offset_xy
+        rel = desired - fixed_station_w
+        clip_box = torch.tensor(self.cfg.dynamic_station_xy_clip, dtype=torch.float32, device=self.device)
+        rel = torch.clamp(rel, clip_box[:, 0], clip_box[:, 1])
+        blend = float(self.cfg.dynamic_station_blend)
+        self.dynamic_station_w[env_ids] = fixed_station_w + blend * rel
+
     def _resolve_box(self, per_clip, clip: torch.Tensor, shared_range) -> torch.Tensor:
         """Return an (n, 3, 2) [lo, hi] box per env: per-clip if configured, else the shared box."""
         if per_clip is not None:
             return per_clip[clip]
         shared = torch.tensor(shared_range, dtype=torch.float32, device=self.device)  # (3, 2)
         return shared.unsqueeze(0).expand(len(clip), 3, 2)
+
+    def _racket_pos_curriculum_scale(self) -> torch.Tensor:
+        steps = int(self.cfg.racket_pos_curriculum_steps)
+        if steps <= 0:
+            return torch.ones(3, dtype=torch.float32, device=self.device)
+        start = self.cfg.racket_pos_curriculum_start_scale
+        if isinstance(start, (float, int)):
+            start_scale = torch.full((3,), float(start), dtype=torch.float32, device=self.device)
+        else:
+            if len(start) != 3:
+                raise ValueError("racket_pos_curriculum_start_scale must be a scalar or a 3-tuple")
+            start_scale = torch.tensor([float(v) for v in start], dtype=torch.float32, device=self.device)
+        start_scale = torch.clamp(start_scale, 0.0, 1.0)
+        step_count = float(getattr(self._env, "common_step_counter", 0))
+        alpha = min(max(step_count / float(steps), 0.0), 1.0)
+        return start_scale + alpha * (torch.ones_like(start_scale) - start_scale)
+
+    def _apply_racket_pos_curriculum(self, box: torch.Tensor) -> torch.Tensor:
+        """Shrink target-position boxes around their centers early in training, then grow to full size."""
+        scale = self._racket_pos_curriculum_scale()
+        if bool(torch.all(scale >= 0.999)):
+            return box
+        center = 0.5 * (box[..., 0] + box[..., 1])
+        half = 0.5 * (box[..., 1] - box[..., 0]) * scale.unsqueeze(0)
+        return torch.stack((center - half, center + half), dim=-1)
+
+    def _sample_box_range(self, ranges, n: int) -> torch.Tensor:
+        box = torch.tensor(ranges, dtype=torch.float32, device=self.device)
+        if box.shape != (3, 2):
+            raise ValueError(f"Expected a 3x2 range, got shape {tuple(box.shape)} for {ranges!r}")
+        return sample_uniform(box[:, 0], box[:, 1], (n, 3), self.device)
+
+    def _sample_scalar_range(self, value_range, n: int) -> torch.Tensor:
+        lo, hi = (float(v) for v in value_range)
+        return sample_uniform(lo, hi, (n,), self.device)
+
+    def _sample_planner_perturbations(
+        self, n: int
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Sample per-swing planner command errors.
+
+        These perturb the actor-visible command only.  The hidden ball task remains unchanged and
+        is used by contact / impact / net / opponent-bounce rewards.
+        """
+        pos_offset = self._sample_box_range(self.cfg.planner_target_pos_offset_range, n)
+        vel_offset = self._sample_box_range(self.cfg.planner_target_vel_offset_range, n)
+        vel_scale = self._sample_scalar_range(self.cfg.planner_target_vel_scale_range, n)
+        yaw = self._sample_scalar_range(self.cfg.planner_target_vel_yaw_deg_range, n)
+        tts_offset = self._sample_scalar_range(self.cfg.planner_time_to_strike_offset_range, n)
+        return pos_offset, vel_offset, vel_scale, yaw, tts_offset
+
+    def _apply_planner_velocity_perturbation(
+        self,
+        vel: torch.Tensor,
+        vel_offset: torch.Tensor,
+        vel_scale: torch.Tensor,
+        yaw_deg: torch.Tensor,
+    ) -> torch.Tensor:
+        out = vel * vel_scale.unsqueeze(-1)
+        theta = yaw_deg * (torch.pi / 180.0)
+        c = torch.cos(theta)
+        s = torch.sin(theta)
+        x = c * out[:, 0] - s * out[:, 1]
+        y = s * out[:, 0] + c * out[:, 1]
+        out = torch.stack((x, y, out[:, 2]), dim=-1)
+        return out + vel_offset
 
     def _sample_ballistic_target_velocity(
         self,
@@ -293,6 +501,16 @@ class RacketTargetCommand(CommandTerm):
             out[~resolved] = fallback[~resolved]
         return out
 
+    def _apply_outgoing_target_calibration(self, outgoing_vel: torch.Tensor) -> torch.Tensor:
+        """Apply small training-side corrections inferred from MuJoCo impact diagnostics."""
+        scale = float(self.cfg.target_outgoing_vel_scale)
+        z_bias = float(self.cfg.target_outgoing_vel_z_bias)
+        if abs(scale - 1.0) < 1.0e-6 and abs(z_bias) < 1.0e-6:
+            return outgoing_vel
+        out = outgoing_vel * scale
+        out[:, 2] = out[:, 2] + z_bias
+        return out
+
     def _sample_incoming_ball_velocity(self, env_ids: torch.Tensor, target_pos_w: torch.Tensor) -> torch.Tensor:
         """Nominal incoming ball velocity at the strike point.
 
@@ -317,6 +535,61 @@ class RacketTargetCommand(CommandTerm):
         v0 = (target_pos_w - origin) / flight_time.unsqueeze(-1) - 0.5 * accel * flight_time.unsqueeze(-1)
         return v0 + accel * flight_time.unsqueeze(-1)
 
+    def _sample_one_bounce_incoming_ball_velocity(
+        self,
+        env_ids: torch.Tensor,
+        target_pos_w: torch.Tensor,
+        fixed_station_w: torch.Tensor,
+    ) -> torch.Tensor:
+        """Sample the true incoming velocity after one robot-half table bounce.
+
+        This mirrors the MuJoCo one-bounce serve geometry at the command/reward level.  It does not
+        spawn a rigid ball in Isaac; it generates the hidden incoming velocity that the moving-racket
+        impact model sees at the true strike point.
+        """
+        n = len(env_ids)
+        origins = self._env.scene.env_origins[env_ids]
+        p_target = target_pos_w - origins
+        center_y = fixed_station_w[:, 1] - origins[:, 1]
+
+        near_x = float(self.cfg.table_near_x)
+        net_x = near_x + float(self.cfg.net_x)
+        half_w = 0.5 * float(self.cfg.table_width)
+        margin = 0.08
+
+        target_table_x = p_target[:, 0] - near_x
+        lo_x = torch.maximum(
+            torch.full((n,), 0.18, dtype=torch.float32, device=self.device),
+            target_table_x + float(self.cfg.one_bounce_min_post_bounce_dx),
+        )
+        hi_x = torch.minimum(
+            torch.full((n,), float(self.cfg.net_x) - margin, dtype=torch.float32, device=self.device),
+            target_table_x + float(self.cfg.one_bounce_max_post_bounce_dx),
+        )
+        fallback_lo = torch.maximum(
+            torch.full((n,), 0.12, dtype=torch.float32, device=self.device),
+            torch.minimum(
+                torch.full((n,), float(self.cfg.net_x) - margin, dtype=torch.float32, device=self.device),
+                target_table_x + 0.20,
+            ),
+        )
+        bad = hi_x <= lo_x
+        lo_x = torch.where(bad, fallback_lo, lo_x)
+        hi_x = torch.where(bad, torch.minimum(torch.full_like(lo_x, float(self.cfg.net_x) - margin), lo_x + 0.30), hi_x)
+        bounce_x = near_x + sample_uniform(lo_x, hi_x, (n,), self.device)
+
+        jitter_lo, jitter_hi = (float(v) for v in self.cfg.one_bounce_lateral_jitter_range)
+        bounce_y = p_target[:, 1] + sample_uniform(jitter_lo, jitter_hi, (n,), self.device)
+        bounce_y = torch.maximum(torch.minimum(bounce_y, center_y + half_w - margin), center_y - half_w + margin)
+        bounce_z = torch.full((n,), float(self.cfg.table_surface_z) + float(self.cfg.ball_radius), device=self.device)
+        bounce = torch.stack((bounce_x, bounce_y, bounce_z), dim=-1)
+
+        post_lo, post_hi = (float(v) for v in self.cfg.one_bounce_post_time_range)
+        post_t = sample_uniform(post_lo, post_hi, (n,), self.device).clamp_min(1.0e-3)
+        accel = torch.tensor([0.0, 0.0, -_GRAVITY], dtype=torch.float32, device=self.device)
+        post_vel = (p_target - bounce) / post_t.unsqueeze(-1) - 0.5 * accel * post_t.unsqueeze(-1)
+        return post_vel + accel * post_t.unsqueeze(-1)
+
     def _moving_racket_impact_velocity(self) -> tuple[torch.Tensor, torch.Tensor]:
         """Approximate no-spin ball velocity after contact with a moving racket plane."""
         normal = self.racket_normal_w / (torch.norm(self.racket_normal_w, dim=-1, keepdim=True) + 1e-6)
@@ -326,10 +599,68 @@ class RacketTargetCommand(CommandTerm):
         rel_out = float(self.cfg.paddle_tangent_retain) * rel_t - float(self.cfg.paddle_restitution) * rel_n * normal
         return self.racket_lin_vel_w + rel_out, rel_n.squeeze(-1)
 
-    def _resample_command(self, env_ids: Sequence[int]):
+    def _solve_impact_racket_command(
+        self, incoming_vel: torch.Tensor, outgoing_vel: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Invert the moving-racket impact model into a feasible racket velocity and blade normal.
+
+        ``outgoing_vel`` is the desired post-impact ball velocity.  The policy should not chase that
+        vector as the racket velocity; for a moving paddle, the needed racket velocity is smaller and
+        depends on the incoming ball velocity and the blade normal.  We use the impulse direction
+        ``outgoing - incoming`` as the target normal, then solve the normal/tangential components of the
+        moving-plane model.  A speed clamp keeps the command inside the A3's observed reachable range.
+        """
+        delta = outgoing_vel - incoming_vel
+        delta_norm = torch.norm(delta, dim=-1, keepdim=True)
+        fallback = torch.tensor([1.0, 0.0, 0.0], dtype=torch.float32, device=self.device).expand_as(delta)
+        normal = torch.where(delta_norm > 1.0e-6, delta / delta_norm.clamp_min(1.0e-6), fallback)
+
+        e = float(self.cfg.paddle_restitution)
+        retain = float(self.cfg.paddle_tangent_retain)
+        vin_n = torch.sum(incoming_vel * normal, dim=-1, keepdim=True)
+        vout_n = torch.sum(outgoing_vel * normal, dim=-1, keepdim=True)
+        racket_n = (vout_n + e * vin_n) / max(1.0 + e, 1.0e-6)
+
+        vin_t = incoming_vel - vin_n * normal
+        vout_t = outgoing_vel - vout_n * normal
+        if abs(1.0 - retain) > 1.0e-4:
+            racket_t_exact = (vout_t - retain * vin_t) / (1.0 - retain)
+        else:
+            racket_t_exact = vout_t
+        blend = float(self.cfg.impact_inverse_tangent_blend)
+        racket_t = (1.0 - blend) * vout_t + blend * racket_t_exact
+        racket_vel = racket_n * normal + racket_t
+
+        speed = torch.norm(racket_vel, dim=-1, keepdim=True)
+        speed_scale = float(self.cfg.impact_inverse_racket_speed_scale)
+        speed_bias = float(self.cfg.impact_inverse_racket_speed_bias)
+        if abs(speed_scale - 1.0) >= 1.0e-6 or abs(speed_bias) >= 1.0e-6:
+            direction = racket_vel / speed.clamp_min(1.0e-6)
+            speed = speed * speed_scale + speed_bias
+            racket_vel = direction * speed
+        min_speed = float(self.cfg.impact_inverse_min_racket_speed)
+        max_speed = float(self.cfg.impact_inverse_max_racket_speed)
+        clamped = torch.clamp(speed, min=min_speed, max=max_speed)
+        racket_vel = racket_vel * (clamped / speed.clamp_min(1.0e-6))
+        return racket_vel, normal
+
+    def _resample_command(self, env_ids: Sequence[int], carry_previous: bool = False):
         if len(env_ids) == 0:
             return
         env_ids = torch.as_tensor(env_ids, dtype=torch.long, device=self.device)
+        if carry_previous:
+            self.prev_swing_contact[env_ids] = self.current_swing_contact[env_ids]
+            self.prev_swing_net_cross[env_ids] = self.current_swing_net_cross[env_ids]
+            self.prev_swing_on_opponent[env_ids] = self.current_swing_on_opponent[env_ids]
+        else:
+            self.prev_swing_contact[env_ids] = False
+            self.prev_swing_net_cross[env_ids] = False
+            self.prev_swing_on_opponent[env_ids] = False
+        self.current_swing_contact[env_ids] = False
+        self.current_swing_net_cross[env_ids] = False
+        self.current_swing_on_opponent[env_ids] = False
+        self.steps_since_target_resample[env_ids] = 0
+        self.target_just_resampled[env_ids] = True
         self._sample_targets(env_ids)
 
     # --- per-step updates ----------------------------------------------------------------------- #
@@ -347,9 +678,10 @@ class RacketTargetCommand(CommandTerm):
         seg_len = ml.seg_len[clip]
         phase = self._strike_phase_per_clip[clip]
         strike_step = seg_start + (phase * (seg_len - 1).float()).round().long()
-        self.time_to_strike = (strike_step - motion.time_steps).float() * self._env.step_dt
-        self.pre_strike = self.time_to_strike > 0.0
-        self.strike_window = self.time_to_strike.abs() <= self.cfg.strike_window_s
+        self.true_time_to_strike = (strike_step - motion.time_steps).float() * self._env.step_dt
+        self.time_to_strike = self.true_time_to_strike + self._planner_tts_offset
+        self.pre_strike = self.true_time_to_strike > 0.0
+        self.strike_window = self.true_time_to_strike.abs() <= self.cfg.strike_window_s
 
     def _compute_racket_state(self):
         data = self.robot.data
@@ -385,6 +717,70 @@ class RacketTargetCommand(CommandTerm):
         in_contact = (forces > self.cfg.contact_force_threshold).float()
         self.feet_contact_frac = in_contact.mean(dim=-1)
 
+    def _recovery_arm_pose_score(self, motion: MotionCommand) -> torch.Tensor:
+        body_names = tuple(self.cfg.recovery_diag_arm_body_names)
+        if not body_names:
+            return torch.ones(self.num_envs, device=self.device)
+        ids = [motion.cfg.body_names.index(name) for name in body_names if name in motion.cfg.body_names]
+        if not ids:
+            return torch.ones(self.num_envs, device=self.device)
+        idx = torch.tensor(ids, dtype=torch.long, device=self.device)
+        pos_err = torch.norm(motion.robot_body_pos_w[:, idx] - motion.body_pos_relative_w[:, idx], dim=-1).mean(dim=-1)
+        pos = torch.exp(-torch.square(pos_err / max(float(self.cfg.recovery_diag_arm_pos_std), 1.0e-6)))
+
+        q_ref = motion.body_quat_relative_w[:, idx].reshape(-1, 4)
+        q_robot = motion.robot_body_quat_w[:, idx].reshape(-1, 4)
+        ori_err = quat_error_magnitude(q_ref, q_robot).reshape(self.num_envs, len(ids)).mean(dim=-1)
+        ori = torch.exp(-torch.square(ori_err / max(float(self.cfg.recovery_diag_arm_ori_std), 1.0e-6)))
+        return 0.5 * pos + 0.5 * ori
+
+    def _update_recovery_diagnostics(self, motion: MotionCommand):
+        data = self.robot.data
+        default_z = data.default_root_state[:, 2] + self._env.scene.env_origins[:, 2]
+        height_error = torch.abs(data.root_pos_w[:, 2] - default_z)
+        upright_error = torch.norm(data.projected_gravity_b[:, :2], dim=-1)
+        base_lin_vel = torch.norm(data.root_lin_vel_w[:, :2], dim=-1)
+        base_ang_vel = torch.norm(data.root_ang_vel_w, dim=-1)
+        station_error = torch.norm(self.base_pos_w[:, :2] - self.station_w, dim=-1)
+        racket_speed = torch.norm(self.racket_lin_vel_w, dim=-1)
+
+        height = torch.exp(-torch.square(height_error / max(float(self.cfg.recovery_diag_height_std), 1.0e-6)))
+        upright = torch.exp(-torch.square(upright_error / max(float(self.cfg.recovery_diag_upright_std), 1.0e-6)))
+        lin = torch.exp(-torch.square(base_lin_vel / max(float(self.cfg.recovery_diag_lin_vel_std), 1.0e-6)))
+        ang = torch.exp(-torch.square(base_ang_vel / max(float(self.cfg.recovery_diag_ang_vel_std), 1.0e-6)))
+        station = torch.exp(-torch.square(station_error / max(float(self.cfg.recovery_diag_station_std), 1.0e-6)))
+        racket = torch.exp(-torch.square(racket_speed / max(float(self.cfg.recovery_diag_racket_vel_std), 1.0e-6)))
+        arm = self._recovery_arm_pose_score(motion)
+        feet = torch.clamp(self.feet_contact_frac, 0.0, 1.0)
+        ready = 0.18 * height + 0.18 * upright + 0.15 * lin + 0.15 * ang + 0.12 * feet + 0.10 * station + 0.07 * racket + 0.05 * arm
+
+        recovery_or_hold = ((~self.pre_strike) & (~self.strike_window)) | motion.in_hold
+        early_next = self.pre_strike & (
+            self.steps_since_target_resample <= int(self.cfg.recovery_diag_early_prestrike_steps)
+        )
+        phase_gate = (recovery_or_hold | early_next).float()
+
+        self.metrics["recovery_height_error"] = height_error
+        self.metrics["recovery_upright_error"] = upright_error
+        self.metrics["recovery_base_lin_vel"] = base_lin_vel
+        self.metrics["recovery_base_ang_vel"] = base_ang_vel
+        self.metrics["recovery_station_error"] = station_error
+        self.metrics["recovery_feet_contact_frac"] = feet
+        self.metrics["recovery_racket_speed"] = racket_speed
+        self.metrics["recovery_height_score"] = height
+        self.metrics["recovery_upright_score"] = upright
+        self.metrics["recovery_lin_vel_score"] = lin
+        self.metrics["recovery_ang_vel_score"] = ang
+        self.metrics["recovery_station_score"] = station
+        self.metrics["recovery_racket_score"] = racket
+        self.metrics["recovery_arm_score"] = arm
+        self.metrics["recovery_ready_score"] = ready
+        self.metrics["recovery_phase_gate"] = phase_gate
+        self.metrics["recovery_phase_ready_score"] = ready * phase_gate
+        self.metrics["recovery_contact_ready_score"] = ready * phase_gate * self.current_swing_contact.float()
+        self.metrics["recovery_net_ready_score"] = ready * phase_gate * self.current_swing_net_cross.float()
+        self.metrics["recovery_return_ready_score"] = ready * phase_gate * self.current_swing_on_opponent.float()
+
     def _evaluate_return(self):
         """Simple no-spin outgoing-ball evaluation at the exact strike frame (contact/net/bounce).
 
@@ -392,18 +788,20 @@ class RacketTargetCommand(CommandTerm):
         outgoing flight is a gravity-only ballistic arc; net clearance and the first table bounce are
         solved in closed form. All quantities are example approximations for training shaping.
         """
-        exact = self.time_to_strike.abs() <= (0.5 * self._env.step_dt + 1e-6)
+        exact = self.true_time_to_strike.abs() <= (0.5 * self._env.step_dt + 1e-6)
         self.strike_fired = exact
 
-        pos_err = torch.norm(self.racket_pos_w - self.racket_target_pos_w, dim=-1)
+        pos_err = torch.norm(self.racket_pos_w - self.ball_strike_pos_w, dim=-1)
         self.racket_target_distance = pos_err
         # Contact requires the racket to be near the target and moving through the strike.  The
         # target-velocity mode avoids a singular "toward the target point" test when the racket is
         # already at the contact point.
         if self.cfg.contact_approach_mode == "target_velocity":
-            approach_dir = self.racket_target_vel_w / (torch.norm(self.racket_target_vel_w, dim=-1, keepdim=True) + 1e-6)
+            approach_dir = self.racket_impact_target_vel_w / (
+                torch.norm(self.racket_impact_target_vel_w, dim=-1, keepdim=True) + 1e-6
+            )
         elif self.cfg.contact_approach_mode == "target_point":
-            to_target = self.racket_target_pos_w - self.racket_pos_w
+            to_target = self.ball_strike_pos_w - self.racket_pos_w
             approach_dir = to_target / (torch.norm(to_target, dim=-1, keepdim=True) + 1e-6)
         else:
             raise ValueError(f"Unsupported contact_approach_mode: {self.cfg.contact_approach_mode}")
@@ -418,10 +816,11 @@ class RacketTargetCommand(CommandTerm):
         else:
             raise ValueError(f"Unsupported return_model: {self.cfg.return_model}")
         self.impact_ball_out_vel_w = out_vel
-        self.impact_ball_out_error = torch.norm(out_vel - self.racket_target_vel_w, dim=-1)
+        self.impact_ball_out_error = torch.norm(out_vel - self.ball_outgoing_target_vel_w, dim=-1)
 
-        # Outgoing ballistic arc from the strike point (env-local frame) at the predicted ball velocity.
-        p0 = self.racket_pos_w - self._env.scene.env_origins
+        # Outgoing ballistic arc from the true ball strike point (env-local frame) at the predicted
+        # post-impact ball velocity.
+        p0 = self.ball_strike_pos_w - self._env.scene.env_origins
         v = out_vel
         x0, y0, z0 = p0[:, 0], p0[:, 1], p0[:, 2]
         vx, vy, vz = v[:, 0], v[:, 1], v[:, 2]
@@ -432,7 +831,7 @@ class RacketTargetCommand(CommandTerm):
         half_w = 0.5 * float(self.cfg.table_width)
         surface_z = float(self.cfg.table_surface_z)
         net_top = surface_z + float(self.cfg.net_height) + float(self.cfg.net_margin)
-        center_y = self.fixed_station_w[:, 1] - self._env.scene.env_origins[:, 1]  # env-local station y
+        center_y = self.fixed_station_w[:, 1] - self._env.scene.env_origins[:, 1]  # env-local table center y
 
         # Net crossing height (ball travels in +x toward the opponent).
         moving_fwd = vx > 0.1
@@ -450,6 +849,9 @@ class RacketTargetCommand(CommandTerm):
         self.ball_contact = contact
         self.ball_net_cross = net_cross
         self.ball_on_opponent = on_opponent
+        self.current_swing_contact[:] = self.current_swing_contact | contact
+        self.current_swing_net_cross[:] = self.current_swing_net_cross | net_cross
+        self.current_swing_on_opponent[:] = self.current_swing_on_opponent | on_opponent
 
     def _update_metrics(self):
         # Timing + FK must be fresh before the reward reads them (motion updated first this step).
@@ -457,27 +859,37 @@ class RacketTargetCommand(CommandTerm):
         self._compute_racket_state()
         self._update_feet_contact()
         self._evaluate_return()
+        self._update_recovery_diagnostics(self._motion())
         self.metrics["racket_pos_error"] = torch.where(
             self.strike_window, self.racket_target_distance, self.metrics["racket_pos_error"]
         )
         self.metrics["racket_vel_error"] = torch.where(
             self.strike_window,
-            torch.norm(self.racket_lin_vel_w - self.racket_target_vel_w, dim=-1),
+            torch.norm(self.racket_lin_vel_w - self.racket_impact_target_vel_w, dim=-1),
             self.metrics["racket_vel_error"],
         )
         self.metrics["time_to_strike"] = self.time_to_strike
         self.metrics["return_success"] = torch.where(
             self.strike_fired, self.ball_on_opponent.float(), self.metrics["return_success"]
         )
+        self.metrics["prev_return_success"] = self.prev_swing_on_opponent.float()
+        self.metrics["prev_net_cross"] = self.prev_swing_net_cross.float()
+        self.metrics["current_net_cross"] = self.current_swing_net_cross.float()
+        self.metrics["racket_pos_curriculum_scale"] = torch.full_like(
+            self.metrics["racket_pos_curriculum_scale"], float(torch.mean(self._racket_pos_curriculum_scale()).item())
+        )
+        self.metrics["steps_since_target_resample"] = self.steps_since_target_resample.float()
 
     def _update_command(self):
+        self.steps_since_target_resample += 1
+        self.target_just_resampled.zero_()
         self._compute_strike_timing()
         # Re-sample the target at each new swing (the motion command sets just_resampled this step
         # when it wrapped a swing). Reset-time resampling is handled by the manager's reset -> _resample.
         motion = self._motion()
         wrapped = torch.where(motion.just_resampled)[0]
         if len(wrapped) > 0:
-            self._resample_command(wrapped)
+            self._resample_command(wrapped, carry_previous=True)
 
     def _set_debug_vis_impl(self, debug_vis: bool):
         pass
@@ -520,8 +932,11 @@ class RacketTargetCommandCfg(CommandTermCfg):
     # Per-clip swing side exposed to the actor: forehand +1, backhand -1.
     swing_side_per_clip: tuple = ()
 
-    # --- fixed station (startup constant) ---
+    # --- station target ---
     station_nominal_offset_xy: tuple[float, float] = (0.0, 0.0)
+    station_mode: str = "fixed"  # fixed | dynamic_from_motion
+    dynamic_station_xy_clip: tuple = ((-0.08, 0.08), (-0.25, 0.25))
+    dynamic_station_blend: float = 1.0
 
     # --- feet (for the contact fraction used by the follow-through/recovery reward) ---
     feet_body_names: tuple[str, ...] = ("left_ankle_roll_Link", "right_ankle_roll_Link")
@@ -536,10 +951,14 @@ class RacketTargetCommandCfg(CommandTermCfg):
     # x/y are STATION-RELATIVE (fixed striking plane in front + swing-side band), z is absolute height.
     racket_pos_range: tuple = ((0.45, 0.55), (-0.35, 0.35), (0.7, 1.1))
     racket_vel_range: tuple = ((1.0, 2.5), (-1.5, 1.5), (0.0, 1.0))
-    racket_velocity_mode: str = "range"  # range | ballistic_landing
+    racket_velocity_mode: str = "range"  # range | ballistic_landing | impact_inverse_landing
     # Optional per-clip boxes (indexed by clip_id 0=forehand, 1=backhand). None -> shared boxes above.
     racket_pos_range_per_clip: tuple | None = None
     racket_vel_range_per_clip: tuple | None = None
+    # Shrink each sampled racket-position box around its center at the beginning of training, then
+    # linearly widen it to the configured full range over this many environment control steps.
+    racket_pos_curriculum_steps: int = 0
+    racket_pos_curriculum_start_scale: tuple[float, float, float] | float = (1.0, 1.0, 1.0)
 
     # --- no-spin return evaluation (example table placement in the env frame; tune to your scene) ---
     contact_radius: float = 0.095   # racket radius + ball radius
@@ -549,10 +968,32 @@ class RacketTargetCommandCfg(CommandTermCfg):
     paddle_restitution: float = 0.654
     paddle_tangent_retain: float = 0.85
     min_normal_closing_speed: float = 0.2
+    impact_inverse_tangent_blend: float = 1.0
+    impact_inverse_min_racket_speed: float = 0.3
+    impact_inverse_max_racket_speed: float = 3.2
+    impact_inverse_racket_speed_scale: float = 1.0
+    impact_inverse_racket_speed_bias: float = 0.0
+    target_outgoing_vel_scale: float = 1.0
+    target_outgoing_vel_z_bias: float = 0.0
     incoming_origin_x_range: tuple = (1.9, 2.4)
     incoming_origin_y_jitter_range: tuple = (-0.15, 0.15)
     incoming_origin_z_above_table_range: tuple = (0.15, 0.35)
     incoming_flight_time_range: tuple = (0.75, 1.0)
+    incoming_trajectory_mode: str = "direct"  # direct | one_bounce
+    ball_radius: float = 0.02
+    # One-bounce incoming geometry. The hidden true ball bounces on the robot half, then reaches
+    # the true strike point. The actor still receives only the planner target fields.
+    one_bounce_post_time_range: tuple = (0.28, 0.44)
+    one_bounce_lateral_jitter_range: tuple = (-0.18, 0.18)
+    one_bounce_min_post_bounce_dx: float = 0.18
+    one_bounce_max_post_bounce_dx: float = 0.78
+    # Planner perturbations affect the actor-visible command only. Rewards/evaluation use the
+    # hidden true ball task so small planner errors train robustness instead of changing the task.
+    planner_target_pos_offset_range: tuple = ((0.0, 0.0), (0.0, 0.0), (0.0, 0.0))
+    planner_time_to_strike_offset_range: tuple = (0.0, 0.0)
+    planner_target_vel_scale_range: tuple = (1.0, 1.0)
+    planner_target_vel_offset_range: tuple = ((0.0, 0.0), (0.0, 0.0), (0.0, 0.0))
+    planner_target_vel_yaw_deg_range: tuple = (0.0, 0.0)
     table_near_x: float = 0.5       # x of the robot's own table end (robot sits behind it)
     table_surface_z: float = 0.76   # table surface height above the env origin
     table_length: float = 2.74      # ITTF table length (+x)
@@ -565,3 +1006,17 @@ class RacketTargetCommandCfg(CommandTermCfg):
     ballistic_land_y_range: tuple = (-0.45, 0.45)
     ballistic_min_forward_speed: float = 0.3
     ballistic_sample_attempts: int = 8
+
+    # Recovery diagnostics only affect logging.  They mirror the readiness reward components so we can
+    # identify whether continuous failures come from base height, tilt, residual velocity, station drift,
+    # foot contact, racket settling, or right-arm pose.
+    recovery_diag_height_std: float = 0.095
+    recovery_diag_upright_std: float = 0.26
+    recovery_diag_lin_vel_std: float = 0.24
+    recovery_diag_ang_vel_std: float = 0.70
+    recovery_diag_station_std: float = 0.21
+    recovery_diag_racket_vel_std: float = 0.68
+    recovery_diag_arm_pos_std: float = 0.34
+    recovery_diag_arm_ori_std: float = 0.78
+    recovery_diag_arm_body_names: tuple[str, ...] = ()
+    recovery_diag_early_prestrike_steps: int = 18

@@ -1,0 +1,36 @@
+# =============================================================================
+# Recovery-focused variant for A/B comparison against HOPEPingPong.
+#
+# Same task, same motion set, same actor observation/action contract.  This variant
+# only increases post-strike / ready-hold recovery pressure and gives the robot a
+# longer ready window between swings.
+# =============================================================================
+
+defaults:
+  - HOPEPingPong
+  - _self_
+
+name: HOPEPingPongRecoveryStrong
+
+overrides:
+  commands.motion.hold_steps_range: [45, 90]
+  commands.motion.stand_start_prob: 0.35
+  commands.motion.stand_start_min_hold: 45
+
+  commands.racket_target.station_mode: dynamic_from_motion
+  commands.racket_target.dynamic_station_xy_clip: [[-0.18, 0.18], [-0.22, 0.22]]
+  commands.racket_target.dynamic_station_blend: 1.0
+  commands.racket_target.racket_pos_curriculum_start_scale: [0.25, 0.25, 0.50]
+  commands.racket_target.racket_pos_curriculum_steps: 24000
+
+  rewards.pre_strike_station.weight: 1.0
+  rewards.follow_through_recovery.weight: 1.4
+  rewards.follow_through_recovery.params.std: 0.35
+  rewards.follow_through_recovery.params.station_std: 0.22
+  rewards.recovery_health.weight: 2.0
+  rewards.recovery_health.params.height_std: 0.08
+  rewards.recovery_health.params.upright_std: 0.25
+  rewards.recovery_health.params.lin_vel_std: 0.25
+  rewards.recovery_health.params.ang_vel_std: 0.70
+  rewards.recovery_health.params.station_std: 0.20
+  rewards.termination_penalty.weight: -15.0

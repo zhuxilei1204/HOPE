@@ -19,9 +19,10 @@ There is exactly one layout; no normalization is applied (raw observation).
 | [109:110]  | time_to_strike          | 1   | s                      |
 | [110:111]  | swing_side              | 1   | +1 forehand / -1 back  |
 
-``fixed_station_error_xy`` = fixed_station_xy (a startup constant) - current base
-xy. It is NOT constant zero: the base drifts across rallies, and this term is the
-in-place recentring feedback the policy uses to hold its station.
+``fixed_station_error_xy`` keeps its historical name for the 111-D contract, but
+the value is current_station_xy - current base xy. For fixed-station policies the
+current station is the startup ready station; for dynamic-station policies the
+runner/planner may supply a per-swing station before impact.
 
 (*) ``last_action`` is the previous tick's APPLIED action: the actor's raw output
 with the passive head columns (idx 3, 4) zeroed, exactly as training zeroes them

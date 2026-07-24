@@ -976,6 +976,7 @@ stage_body_drive_debug_files() {
 
   cp -f \
     "${debug_src}/config/a3_body_drive_debug_record.iceoryx.yaml" \
+    "${debug_src}/config/a3_body_drive_debug_record.iceoryx_ros2_sim.yaml" \
     "${debug_src}/config/a3_body_drive_debug_record.ros2.yaml" \
     "${debug_src}/config/a3_body_drive_debug.layout.json" \
     "${PKG_DIR}/config/"
@@ -1245,6 +1246,7 @@ verify_package() {
     "libaimrt_iceoryx_plugin.so"
     "libaimrt_ros2_plugin.so"
     "config/a3_body_drive_debug_record.iceoryx.yaml"
+    "config/a3_body_drive_debug_record.iceoryx_ros2_sim.yaml"
     "config/a3_body_drive_debug_record.ros2.yaml"
     "config/a3_body_drive_debug.layout.json"
     "run_a3_body_drive_debug_record.sh"

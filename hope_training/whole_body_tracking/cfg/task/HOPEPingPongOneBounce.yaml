@@ -1,0 +1,85 @@
+# =============================================================================
+# Baseline policy task with realistic incoming-ball command generation.
+#
+# This preserves the baseline reward/termination/action/observation structure and only changes the
+# sampled training task:
+#   1. hidden true incoming ball reaches the racket after one bounce on the robot half;
+#   2. actor-visible racket command is generated from the same bounce-aware task;
+#   3. small planner perturbations are injected into the actor-visible command only.
+# =============================================================================
+
+defaults:
+  - HOPEPingPong
+  - _self_
+
+name: HOPEPingPongOneBounce
+
+overrides:
+  # Baseline continuous-rally setup.
+  commands.motion.hold_steps_range: [20, 40]
+  commands.motion.stand_start_prob: 0.25
+  commands.motion.stand_start_min_hold: 30
+
+  commands.racket_target.station_mode: dynamic_from_motion
+  commands.racket_target.dynamic_station_xy_clip: [[-0.18, 0.18], [-0.22, 0.22]]
+  commands.racket_target.dynamic_station_blend: 1.0
+  commands.racket_target.racket_pos_curriculum_start_scale: [0.25, 0.25, 0.50]
+  commands.racket_target.racket_pos_curriculum_steps: 24000
+
+  # Train against the deployment-style ball route: the incoming ball bounces once on the robot
+  # half, then arrives at the true strike point.
+  commands.racket_target.incoming_trajectory_mode: one_bounce
+  commands.racket_target.racket_velocity_mode: impact_inverse_landing
+  commands.racket_target.return_model: moving_racket_impact
+  commands.racket_target.paddle_restitution: 0.654
+  commands.racket_target.paddle_tangent_retain: 0.48
+  commands.racket_target.impact_inverse_min_racket_speed: 0.3
+  commands.racket_target.impact_inverse_max_racket_speed: 2.8
+  commands.racket_target.impact_inverse_tangent_blend: 1.0
+  commands.racket_target.one_bounce_post_time_range: [0.30, 0.42]
+  commands.racket_target.one_bounce_lateral_jitter_range: [-0.12, 0.12]
+  commands.racket_target.one_bounce_min_post_bounce_dx: 0.18
+  commands.racket_target.one_bounce_max_post_bounce_dx: 0.72
+
+  # Planner perturbation curriculum starts light. These errors perturb only the actor-visible
+  # command; success rewards still evaluate the hidden true one-bounce ball task.
+  commands.racket_target.planner_target_pos_offset_range: [[0.0, 0.0], [-0.03, 0.03], [-0.02, 0.02]]
+  commands.racket_target.planner_time_to_strike_offset_range: [-0.02, 0.02]
+  commands.racket_target.planner_target_vel_scale_range: [0.95, 1.05]
+  commands.racket_target.planner_target_vel_offset_range: [[0.0, 0.0], [-0.05, 0.05], [-0.05, 0.05]]
+  commands.racket_target.planner_target_vel_yaw_deg_range: [-5.0, 5.0]
+
+  rewards.pre_strike_station.weight: 1.0
+  rewards.racket_position.weight: 5.0
+  rewards.racket_velocity.weight: 1.0
+  rewards.racket_velocity.params:
+    command_name: racket_target
+    std: 1.6
+  rewards.impact_outgoing_velocity.weight: 2.5
+  rewards.impact_outgoing_velocity.params:
+    command_name: racket_target
+    std: 2.0
+    start_step: 0
+    warmup_steps: 8000
+    start_scale: 0.25
+  rewards.blade_direction.weight: 1.2
+  rewards.blade_direction.params:
+    command_name: racket_target
+    std: 0.55
+    start_step: 0
+    warmup_steps: 8000
+    start_scale: 0.35
+  rewards.soft_ball_contact.weight: 7.0
+  rewards.ball_contact.weight: 3.0
+  rewards.net_cross.weight: 2.5
+  rewards.net_cross.params:
+    command_name: racket_target
+    start_step: 0
+    warmup_steps: 4000
+    start_scale: 0.50
+  rewards.opponent_bounce.weight: 3.0
+  rewards.opponent_bounce.params:
+    command_name: racket_target
+    start_step: 6000
+    warmup_steps: 10000
+    start_scale: 0.0

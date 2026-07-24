@@ -47,3 +47,12 @@ overrides:
   commands.motion.hold_steps_range: [20, 40]
   commands.motion.stand_start_prob: 0.25
   commands.motion.stand_start_min_hold: 30
+  # Let the base move to the current swing's station before impact, then recover to the ready
+  # station after impact.  The initial clip keeps the range deliberately small; widen only after the
+  # policy shows stable station tracking and racket contact.
+  commands.racket_target.station_mode: dynamic_from_motion
+  commands.racket_target.dynamic_station_xy_clip: [[-0.18, 0.18], [-0.22, 0.22]]
+  commands.racket_target.dynamic_station_blend: 1.0
+  commands.racket_target.racket_pos_curriculum_start_scale: [0.25, 0.25, 0.50]
+  commands.racket_target.racket_pos_curriculum_steps: 24000
+  rewards.pre_strike_station.weight: 1.0

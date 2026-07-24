@@ -1,0 +1,75 @@
+# =============================================================================
+# Small robustness experiment on top of the collision + recovery-cycle branch.
+#
+# Scope:
+#   - low-amplitude rough height-field ground;
+#   - higher global terrain friction;
+#   - soft analytic no-table-touch penalty for upper body and racket.
+#
+# The hard table-touch termination stays disabled in this first pass because the
+# current HOPE tracking scene has no real table collider.  The analytic volume is
+# useful as a training signal, but it should be visually checked before it becomes
+# a reset condition.
+# =============================================================================
+
+defaults:
+  - HOPEPingPongOneBounceCollisionRecoveryCycle
+  - _self_
+
+name: HOPEPingPongOneBounceCollisionRecoveryCycleRoughSafe
+
+terrain:
+  type: low_rough
+  seed: 23
+  size: [4.0, 4.0]
+  num_rows: 3
+  num_cols: 6
+  horizontal_scale: 0.08
+  vertical_scale: 0.005
+  noise_range: [-0.012, 0.018]
+  noise_step: 0.006
+  downsampled_scale: 0.25
+  border_width: 0.25
+  max_init_terrain_level: 1
+  static_friction: 1.15
+  dynamic_friction: 0.95
+  debug_vis: false
+
+overrides:
+  rewards.table_no_touch.weight: -1.5
+  rewards.table_no_touch.params:
+    command_name: racket_target
+    body_names:
+      - torso_Link
+      - left_shoulder_roll_Link
+      - left_elbow_Link
+      - left_wrist_yaw_Link
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    include_racket: true
+    x_margin: 0.06
+    y_margin: 0.06
+    below_surface_margin: 0.08
+    above_surface_margin: 0.05
+    distance_std: 0.05
+
+  # Keep as a metric switch for later A/B.  Enable only after video confirms the
+  # analytic box does not reject valid over-table swing clearance.
+  terminations.table_touch.params:
+    command_name: racket_target
+    body_names:
+      - torso_Link
+      - left_shoulder_roll_Link
+      - left_elbow_Link
+      - left_wrist_yaw_Link
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    include_racket: true
+    x_margin: 0.04
+    y_margin: 0.04
+    below_surface_margin: 0.08
+    above_surface_margin: 0.04
+    min_steps: 75
+    enabled: false

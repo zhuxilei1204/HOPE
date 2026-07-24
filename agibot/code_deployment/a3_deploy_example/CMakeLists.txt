@@ -24,6 +24,8 @@ include(CheckLanguage)
 option(BUILD_SRCS "Build sources" ON)
 option(ENABLE_TRT_INFERENCE "Build TensorRT/CUDA inference targets" OFF)
 option(ENABLE_RKNN_INFERENCE "Build Rockchip RKNN inference backend" OFF)
+option(ENABLE_UNITREE_SDK
+       "Link the vendored Unitree SDK2 transport library when available" ON)
 option(USE_BUNDLED_ONNXRUNTIME_AARCH64
        "Use repo-local ONNX Runtime package on aarch64/arm64" ON)
 
@@ -308,20 +310,24 @@ else()
 endif()
 find_package(ZLIB REQUIRED)
 
-# Use local unitree_sdk2 subfolder
-# Disable building examples for unitree_sdk2
-set(BUILD_EXAMPLES
-    OFF
-    CACHE BOOL "Build unitree_sdk2 examples" FORCE)
+if(ENABLE_UNITREE_SDK)
+  # Use local unitree_sdk2 subfolder
+  # Disable building examples for unitree_sdk2
+  set(BUILD_EXAMPLES
+      OFF
+      CACHE BOOL "Build unitree_sdk2 examples" FORCE)
 
-add_subdirectory(thirdparty/unitree_sdk2)
+  add_subdirectory(thirdparty/unitree_sdk2)
 
-# Add unitree_sdk2 include directories
-target_include_directories(${PROJECT_NAME}
-                           INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/unitree_sdk2/include)
+  # Add unitree_sdk2 include directories
+  target_include_directories(${PROJECT_NAME}
+                             INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/unitree_sdk2/include)
 
-# Link to unitree_sdk2 which includes all necessary dependencies
-target_link_libraries(${PROJECT_NAME} INTERFACE unitree_sdk2)
+  # Link to unitree_sdk2 which includes all necessary dependencies
+  target_link_libraries(${PROJECT_NAME} INTERFACE unitree_sdk2)
+else()
+  message(STATUS "Unitree SDK2 disabled (ENABLE_UNITREE_SDK=OFF)")
+endif()
 
 # Examples
 if(BUILD_SRCS)

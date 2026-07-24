@@ -1,0 +1,120 @@
+# =============================================================================
+# One-bounce task with MuJoCo-calibrated impact targets and closed-loop rally reward.
+#
+# Inherits the recovery-ready setup, then:
+#   1. nudges the impact-inverse command toward the speed/arc MuJoCo diagnostics showed were missing;
+#   2. rewards a completed cycle: previous return outcome AND next-swing ready posture.
+# =============================================================================
+
+defaults:
+  - HOPEPingPongOneBounceRecoveryReady
+  - _self_
+
+name: HOPEPingPongOneBounceCycleClosedLoop
+
+motion:
+  wrap_teleport: false
+
+overrides:
+  # MuJoCo impact diagnostics showed the realized pre-contact racket speed was about 20% below the
+  # target and the post-contact ball velocity had a low/short bias.  Keep this conservative so the
+  # command remains reachable and the policy can still deviate for balance.
+  commands.racket_target.impact_inverse_racket_speed_scale: 1.12
+  commands.racket_target.impact_inverse_racket_speed_bias: 0.08
+  commands.racket_target.impact_inverse_max_racket_speed: 3.1
+  commands.racket_target.target_outgoing_vel_scale: 1.02
+  commands.racket_target.target_outgoing_vel_z_bias: 0.18
+  commands.racket_target.net_margin: 0.04
+
+  # Keep the primary hit objective strong, but make the physics-facing return terms more important
+  # than pure racket target chasing.
+  rewards.racket_position.weight: 5.0
+  rewards.racket_velocity.weight: 1.2
+  rewards.racket_velocity.params:
+    command_name: racket_target
+    std: 1.7
+  rewards.impact_outgoing_velocity.weight: 3.2
+  rewards.impact_outgoing_velocity.params:
+    command_name: racket_target
+    std: 1.9
+    start_step: 0
+    warmup_steps: 8000
+    start_scale: 0.35
+  rewards.blade_direction.weight: 1.6
+  rewards.blade_direction.params:
+    command_name: racket_target
+    std: 0.50
+    start_step: 0
+    warmup_steps: 8000
+    start_scale: 0.45
+  rewards.soft_ball_contact.weight: 7.0
+  rewards.ball_contact.weight: 3.0
+  rewards.net_cross.weight: 3.2
+  rewards.net_cross.params:
+    command_name: racket_target
+    start_step: 0
+    warmup_steps: 4000
+    start_scale: 0.50
+  rewards.opponent_bounce.weight: 3.8
+  rewards.opponent_bounce.params:
+    command_name: racket_target
+    start_step: 3000
+    warmup_steps: 9000
+    start_scale: 0.20
+
+  # Recovery remains useful, but the cycle terms below define the target more precisely:
+  # successful previous return plus a healthy posture for the newly sampled ball.
+  rewards.follow_through_recovery.weight: 1.0
+  rewards.recovery_health.weight: 1.1
+  rewards.next_ball_readiness.weight: 1.0
+  rewards.next_swing_ready_bonus.weight: 1.1
+  rewards.cycle_net_ready.weight: 1.4
+  rewards.cycle_net_ready.params:
+    command_name: racket_target
+    outcome: net_cross
+    window_steps: 16
+    height_std: 0.10
+    upright_std: 0.28
+    lin_vel_std: 0.25
+    ang_vel_std: 0.75
+    station_std: 0.22
+    racket_vel_std: 0.75
+    arm_pos_std: 0.35
+    arm_ori_std: 0.80
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    start_step: 0
+    warmup_steps: 6000
+    start_scale: 0.30
+  rewards.cycle_return_ready.weight: 3.0
+  rewards.cycle_return_ready.params:
+    command_name: racket_target
+    outcome: opponent_bounce
+    window_steps: 16
+    height_std: 0.10
+    upright_std: 0.28
+    lin_vel_std: 0.25
+    ang_vel_std: 0.75
+    station_std: 0.22
+    racket_vel_std: 0.75
+    arm_pos_std: 0.35
+    arm_ori_std: 0.80
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    start_step: 3000
+    warmup_steps: 12000
+    start_scale: 0.20
+
+  # Keep recovery damping, but avoid making the swing too conservative.
+  rewards.action_rate.weight: -0.004
+  rewards.phase_action_rate.weight: -0.35
+  rewards.phase_action_rate.params:
+    command_name: racket_target
+    pre_strike_scale: 0.022
+    strike_scale: 0.006
+    recovery_scale: 0.065
+    hold_scale: 0.095

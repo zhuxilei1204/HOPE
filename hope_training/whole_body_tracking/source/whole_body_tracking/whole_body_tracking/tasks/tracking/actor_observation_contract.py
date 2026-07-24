@@ -12,7 +12,7 @@ Layout (assembly order is fixed; slices are contiguous):
     [65:96]    last_action             previous tick's applied raw action (31)
     [96:99]    projected_gravity       gravity direction in the base frame (IMU)
     [99:101]   base_forward_xy         base forward unit vector e_base,x, world XY
-    [101:103]  fixed_station_error_xy  fixed startup station XY minus current base XY, world (m)
+    [101:103]  fixed_station_error_xy  current station XY minus current base XY, world (m)
     [103:106]  racket_target_rel_base  target racket position minus base position, world (m)
     [106:109]  racket_target_vel_w     desired racket velocity, world (m/s)
     [109:110]  time_to_strike          remaining time to the strike (s)
@@ -72,7 +72,7 @@ HOPE_PINGPONG = ActorObservationContract(
             "fixed_station_error_xy",
             2,
             "runtime_state",
-            "fixed startup station XY minus current base XY, world frame",
+            "current station XY minus current base XY, world frame",
         ),
         ActorObservationTerm(
             "racket_target_rel_base", 3, "planner", "target racket position minus base position, world frame"

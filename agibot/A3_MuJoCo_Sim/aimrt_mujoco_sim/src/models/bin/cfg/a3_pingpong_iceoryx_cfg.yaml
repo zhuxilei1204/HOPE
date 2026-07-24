@@ -103,6 +103,7 @@ aimrt:
 
 MujocoSimModule:
   simulation_model_path: ./cfg/model/a3_pingpong/a3_pingpong.xml
+  headless: false
   sim_executor: sim_thread
   gui_executor: gui_thread
   default_tracking_camera_body: torso_Link

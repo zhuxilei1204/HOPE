@@ -1,0 +1,87 @@
+# =============================================================================
+# One-bounce impact-aware task plus explicit continuous-recovery readiness.
+#
+# This is an A/B experiment against HOPEPingPongOneBounce:
+#   - keep wrap_teleport=false so bad postures carry into the next ball;
+#   - reward being usable at the start of the next swing, not only surviving
+#     immediately after the current strike;
+#   - use phase-specific action-rate damping: light during swing, heavier during
+#     recovery/hold.
+# =============================================================================
+
+defaults:
+  - HOPEPingPongOneBounce
+  - _self_
+
+name: HOPEPingPongOneBounceRecoveryReady
+
+motion:
+  wrap_teleport: false
+
+overrides:
+  # Keep continuous-rally state. Holds are not resets: they are the waiting/ready
+  # window between physically carried swings.
+  commands.motion.hold_steps_range: [25, 45]
+  commands.motion.stand_start_prob: 0.20
+  commands.motion.stand_start_min_hold: 35
+
+  # Generic recovery stays active, but the new readiness rewards define the
+  # deploy-relevant objective: can the next ball start from a healthy, usable state?
+  rewards.follow_through_recovery.weight: 1.0
+  rewards.recovery_health.weight: 1.2
+  rewards.recovery_health.params:
+    command_name: racket_target
+    height_std: 0.10
+    upright_std: 0.30
+    lin_vel_std: 0.28
+    ang_vel_std: 0.80
+    station_std: 0.24
+
+  rewards.next_ball_readiness.weight: 1.3
+  rewards.next_ball_readiness.params:
+    command_name: racket_target
+    height_std: 0.10
+    upright_std: 0.28
+    lin_vel_std: 0.25
+    ang_vel_std: 0.75
+    station_std: 0.22
+    racket_vel_std: 0.75
+    arm_pos_std: 0.35
+    arm_ori_std: 0.80
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    early_prestrike_window_steps: 14
+
+  rewards.next_swing_ready_bonus.weight: 1.8
+  rewards.next_swing_ready_bonus.params:
+    command_name: racket_target
+    window_steps: 12
+    height_std: 0.09
+    upright_std: 0.25
+    lin_vel_std: 0.22
+    ang_vel_std: 0.65
+    station_std: 0.18
+    racket_vel_std: 0.65
+    arm_pos_std: 0.32
+    arm_ori_std: 0.75
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+
+  # Replace the uniform action-rate pressure with phase-specific pressure.
+  # Light during pre-strike/strike so exploration can still swing; heavy after
+  # impact and during hold to prevent posture-damaging residual thrashing.
+  rewards.action_rate.weight: -0.005
+  rewards.phase_action_rate.weight: -0.4
+  rewards.phase_action_rate.params:
+    command_name: racket_target
+    pre_strike_scale: 0.025
+    strike_scale: 0.008
+    recovery_scale: 0.07
+    hold_scale: 0.10
+
+  # Keep hard physical safety terminations; make the penalty slightly clearer.
+  rewards.termination_penalty.weight: -10.0

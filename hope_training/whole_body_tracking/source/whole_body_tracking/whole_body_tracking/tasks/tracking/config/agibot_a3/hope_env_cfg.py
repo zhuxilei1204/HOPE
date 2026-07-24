@@ -5,7 +5,7 @@ One environment config, :class:`HOPEPingPongEnvCfg`, wiring:
 * motion imitation (:class:`MotionCommand`) over a forehand + backhand clip pair (clip 0 / clip 1),
   ``wrap_teleport=False`` so the policy physically transitions between swings (continuous rally);
 * the ping-pong goal (:class:`RacketTargetCommand`): sampled racket target pos/vel + time-to-strike +
-  swing side, a fixed startup station, and a no-spin outgoing-ball evaluation for the return rewards;
+  swing side, a ready/dynamic station target, and a no-spin outgoing-ball evaluation for the return rewards;
 * the 111-D actor observation (``hope_pingpong`` contract) and a privileged critic that adds
   the 62-D reference joint stream, reference errors, and the actual racket FK state (value function only);
 * the eleven reward terms with illustrative example weights;
@@ -52,6 +52,7 @@ A3_MOTION_PRIOR_BODIES = tuple(name for name in A3_TRACKED_BODIES if name not in
 A3_SWING_PRIOR_BODIES = tuple(name for name in A3_UPPER_TRACKED if name not in A3_RACKET_FREE_BODIES)
 A3_SOFT_RACKET_PRIOR_BODIES = tuple(A3_RACKET_FREE_BODIES)
 A3_REFERENCE_RESET_BODIES = tuple(A3_FEET_BODIES)
+A3_RIGHT_ARM_READY_BODIES = ("right_shoulder_roll_Link", "right_elbow_Link", "right_wrist_yaw_Link")
 A3_ALLOWED_CONTACT_BODIES = tuple(A3_FEET_BODIES) + tuple(A3_HAND_BODIES) + (
     "right_hand_pingpang_Link",
     "pingpang_red_Link",
@@ -139,6 +140,7 @@ class CommandsCfg:
         ballistic_land_x_range=(2.05, 2.95),
         ballistic_land_y_range=(-0.45, 0.45),
         feet_body_names=tuple(A3_FEET_BODIES),
+        recovery_diag_arm_body_names=tuple(A3_RIGHT_ARM_READY_BODIES),
     )
 
 
@@ -272,6 +274,20 @@ class RewardsCfg:
             "threshold": 1.0,
         },
     )
+    table_no_touch = RewTerm(
+        func=mdp.table_proximity_penalty,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "body_names": list(A3_UPPER_TRACKED),
+            "include_racket": True,
+            "x_margin": 0.06,
+            "y_margin": 0.06,
+            "below_surface_margin": 0.08,
+            "above_surface_margin": 0.05,
+            "distance_std": 0.05,
+        },
+    )
 
     # Ping-pong task shaping.
     alive = RewTerm(func=mdp.is_alive, weight=0.1)
@@ -283,24 +299,26 @@ class RewardsCfg:
     )
     racket_wrist_motion_pos = RewTerm(
         func=mdp.wrist_motion_pos_release,
-        weight=0.10,
+        weight=0.35,
         params={
             "motion_command_name": "motion",
             "racket_command_name": "racket_target",
             "std": 0.65,
             "body_names": list(A3_SOFT_RACKET_PRIOR_BODIES),
             "release_window_s": 0.22,
+            "release_scale": 0.35,
         },
     )
     racket_wrist_motion_ori = RewTerm(
         func=mdp.wrist_motion_ori_release,
-        weight=0.05,
+        weight=0.20,
         params={
             "motion_command_name": "motion",
             "racket_command_name": "racket_target",
             "std": 1.0,
             "body_names": list(A3_SOFT_RACKET_PRIOR_BODIES),
             "release_window_s": 0.22,
+            "release_scale": 0.35,
         },
     )
     racket_position = RewTerm(
@@ -308,6 +326,32 @@ class RewardsCfg:
     )
     racket_velocity = RewTerm(
         func=mdp.racket_velocity, weight=2.0, params={"command_name": "racket_target", "std": 2.5}
+    )
+    racket_velocity_projection = RewTerm(
+        func=mdp.racket_velocity_projection,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "min_speed_ratio": 0.82,
+            "speed_std": 0.35,
+            "lateral_std": 0.75,
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
+        },
+    )
+    impact_forward_lift = RewTerm(
+        func=mdp.impact_forward_lift,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "min_forward_speed": 1.9,
+            "min_upward_speed": 1.0,
+            "speed_std": 0.45,
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
+        },
     )
     impact_outgoing_velocity = RewTerm(
         func=mdp.impact_outgoing_velocity, weight=0.75, params={"command_name": "racket_target", "std": 3.0}
@@ -331,6 +375,11 @@ class RewardsCfg:
     ball_contact = RewTerm(func=mdp.ball_contact, weight=4.0, params={"command_name": "racket_target"})
     net_cross = RewTerm(func=mdp.ball_net_cross, weight=1.0, params={"command_name": "racket_target"})
     opponent_bounce = RewTerm(func=mdp.ball_opponent_bounce, weight=2.0, params={"command_name": "racket_target"})
+    pre_strike_station = RewTerm(
+        func=mdp.pre_strike_station_tracking,
+        weight=0.0,
+        params={"command_name": "racket_target", "station_std": 0.22, "stop_window_s": 0.10},
+    )
     follow_through_recovery = RewTerm(
         func=mdp.follow_through_recovery,
         weight=0.8,
@@ -348,12 +397,264 @@ class RewardsCfg:
             "station_std": 0.25,
         },
     )
+    next_ball_readiness = RewTerm(
+        func=mdp.next_ball_readiness,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "height_std": 0.10,
+            "upright_std": 0.28,
+            "lin_vel_std": 0.25,
+            "ang_vel_std": 0.75,
+            "station_std": 0.22,
+            "racket_vel_std": 0.75,
+            "arm_pos_std": 0.35,
+            "arm_ori_std": 0.8,
+            "arm_body_names": list(A3_RIGHT_ARM_READY_BODIES),
+            "early_prestrike_window_steps": 12,
+        },
+    )
+    next_swing_ready_bonus = RewTerm(
+        func=mdp.next_swing_ready_bonus,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "window_steps": 10,
+            "height_std": 0.09,
+            "upright_std": 0.25,
+            "lin_vel_std": 0.22,
+            "ang_vel_std": 0.65,
+            "station_std": 0.18,
+            "racket_vel_std": 0.65,
+            "arm_pos_std": 0.32,
+            "arm_ori_std": 0.75,
+            "arm_body_names": list(A3_RIGHT_ARM_READY_BODIES),
+        },
+    )
+    post_contact_recovery_ready = RewTerm(
+        func=mdp.post_outcome_recovery_readiness,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "outcome": "contact",
+            "height_std": 0.10,
+            "upright_std": 0.28,
+            "lin_vel_std": 0.25,
+            "ang_vel_std": 0.75,
+            "station_std": 0.22,
+            "racket_vel_std": 0.75,
+            "arm_pos_std": 0.35,
+            "arm_ori_std": 0.80,
+            "arm_body_names": list(A3_RIGHT_ARM_READY_BODIES),
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
+        },
+    )
+    post_net_recovery_ready = RewTerm(
+        func=mdp.post_outcome_recovery_readiness,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "outcome": "net_cross",
+            "height_std": 0.10,
+            "upright_std": 0.28,
+            "lin_vel_std": 0.25,
+            "ang_vel_std": 0.75,
+            "station_std": 0.22,
+            "racket_vel_std": 0.75,
+            "arm_pos_std": 0.35,
+            "arm_ori_std": 0.80,
+            "arm_body_names": list(A3_RIGHT_ARM_READY_BODIES),
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
+        },
+    )
+    post_return_recovery_ready = RewTerm(
+        func=mdp.post_outcome_recovery_readiness,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "outcome": "opponent_bounce",
+            "height_std": 0.10,
+            "upright_std": 0.28,
+            "lin_vel_std": 0.25,
+            "ang_vel_std": 0.75,
+            "station_std": 0.22,
+            "racket_vel_std": 0.75,
+            "arm_pos_std": 0.35,
+            "arm_ori_std": 0.80,
+            "arm_body_names": list(A3_RIGHT_ARM_READY_BODIES),
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
+        },
+    )
+    post_contact_arm_racket_ready = RewTerm(
+        func=mdp.post_outcome_arm_racket_readiness,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "outcome": "contact",
+            "arm_pos_std": 0.30,
+            "arm_ori_std": 0.70,
+            "racket_vel_std": 0.55,
+            "arm_body_names": list(A3_RIGHT_ARM_READY_BODIES),
+            "include_hold": True,
+            "early_prestrike_window_steps": 0,
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
+        },
+    )
+    post_net_arm_racket_ready = RewTerm(
+        func=mdp.post_outcome_arm_racket_readiness,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "outcome": "net_cross",
+            "arm_pos_std": 0.30,
+            "arm_ori_std": 0.70,
+            "racket_vel_std": 0.55,
+            "arm_body_names": list(A3_RIGHT_ARM_READY_BODIES),
+            "include_hold": True,
+            "early_prestrike_window_steps": 0,
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
+        },
+    )
+    post_return_arm_racket_ready = RewTerm(
+        func=mdp.post_outcome_arm_racket_readiness,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "outcome": "opponent_bounce",
+            "arm_pos_std": 0.30,
+            "arm_ori_std": 0.70,
+            "racket_vel_std": 0.55,
+            "arm_body_names": list(A3_RIGHT_ARM_READY_BODIES),
+            "include_hold": True,
+            "early_prestrike_window_steps": 0,
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
+        },
+    )
+    cycle_contact_ready = RewTerm(
+        func=mdp.cycle_return_readiness,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "outcome": "contact",
+            "window_steps": 14,
+            "height_std": 0.10,
+            "upright_std": 0.28,
+            "lin_vel_std": 0.25,
+            "ang_vel_std": 0.75,
+            "station_std": 0.22,
+            "racket_vel_std": 0.75,
+            "arm_pos_std": 0.35,
+            "arm_ori_std": 0.80,
+            "arm_body_names": list(A3_RIGHT_ARM_READY_BODIES),
+        },
+    )
+    cycle_net_ready = RewTerm(
+        func=mdp.cycle_return_readiness,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "outcome": "net_cross",
+            "window_steps": 14,
+            "height_std": 0.10,
+            "upright_std": 0.28,
+            "lin_vel_std": 0.25,
+            "ang_vel_std": 0.75,
+            "station_std": 0.22,
+            "racket_vel_std": 0.75,
+            "arm_pos_std": 0.35,
+            "arm_ori_std": 0.80,
+            "arm_body_names": list(A3_RIGHT_ARM_READY_BODIES),
+        },
+    )
+    cycle_return_ready = RewTerm(
+        func=mdp.cycle_return_readiness,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "outcome": "opponent_bounce",
+            "window_steps": 14,
+            "height_std": 0.10,
+            "upright_std": 0.28,
+            "lin_vel_std": 0.25,
+            "ang_vel_std": 0.75,
+            "station_std": 0.22,
+            "racket_vel_std": 0.75,
+            "arm_pos_std": 0.35,
+            "arm_ori_std": 0.80,
+            "arm_body_names": list(A3_RIGHT_ARM_READY_BODIES),
+        },
+    )
+    post_strike_base_ang_vel = RewTerm(
+        func=mdp.post_strike_base_angular_velocity,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "std": 0.60,
+            "include_hold": True,
+            "early_prestrike_window_steps": 0,
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
+        },
+    )
+    post_strike_lower_body_action_rate = RewTerm(
+        func=mdp.post_strike_lower_body_action_rate_l2,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "joint_names": [
+                "waist_yaw_joint",
+                "waist_roll_joint",
+                "waist_pitch_joint",
+                "left_hip_pitch_joint",
+                "left_hip_roll_joint",
+                "left_hip_yaw_joint",
+                "left_knee_joint",
+                "left_ankle_pitch_joint",
+                "left_ankle_roll_joint",
+                "right_hip_pitch_joint",
+                "right_hip_roll_joint",
+                "right_hip_yaw_joint",
+                "right_knee_joint",
+                "right_ankle_pitch_joint",
+                "right_ankle_roll_joint",
+            ],
+            "include_hold": True,
+            "early_prestrike_window_steps": 0,
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
+        },
+    )
     termination_penalty = RewTerm(
         func=mdp.is_terminated_term,
         weight=-10.0,
-        params={"term_keys": ["base_too_low", "base_tilted", "anchor_pos", "anchor_ori", "ee_body_pos"]},
+        params={"term_keys": ["base_too_low", "base_tilted", "anchor_pos", "anchor_ori", "ee_body_pos", "table_touch"]},
     )
     action_rate = RewTerm(func=mdp.action_rate_l2, weight=-0.05)
+    phase_action_rate = RewTerm(
+        func=mdp.phase_action_rate_l2,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "pre_strike_scale": 0.04,
+            "strike_scale": 0.015,
+            "recovery_scale": 0.12,
+            "hold_scale": 0.16,
+        },
+    )
     joint_limit = RewTerm(
         func=mdp.joint_pos_limits, weight=-10.0, params={"asset_cfg": _a3_joint_entity()}
     )
@@ -387,6 +688,20 @@ class TerminationsCfg:
             "threshold": 0.35,
             "body_names": list(A3_REFERENCE_RESET_BODIES),
             "min_steps": 75,
+        },
+    )
+    table_touch = DoneTerm(
+        func=mdp.body_inside_table_zone,
+        params={
+            "command_name": "racket_target",
+            "body_names": list(A3_UPPER_TRACKED),
+            "include_racket": True,
+            "x_margin": 0.04,
+            "y_margin": 0.04,
+            "below_surface_margin": 0.08,
+            "above_surface_margin": 0.04,
+            "min_steps": 75,
+            "enabled": False,
         },
     )
 

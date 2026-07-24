@@ -1,0 +1,132 @@
+# =============================================================================
+# Collision-recovery mainline retargeted to the four user-recorded raised/translation motions.
+#
+# This keeps the hit objective from HOPEPingPongOneBounceCollisionRecoveryCycle, which has been the
+# strongest Isaac/MuJoCo transfer base so far. The changes here are intentionally narrow:
+#   - use wider dynamic-station limits so the translation clips can command base motion;
+#   - restart target spread with a short curriculum because the per-clip contact boxes moved;
+#   - keep only moderate extra post-outcome arm/racket ready pressure, avoiding the failed high-weight
+#     outcome-recovery branch.
+# =============================================================================
+
+defaults:
+  - HOPEPingPongOneBounceCollisionRecoveryCycle
+  - _self_
+
+name: HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotion
+
+motion:
+  wrap_teleport: false
+
+overrides:
+  commands.motion.hold_steps_range: [35, 65]
+  commands.motion.stand_start_prob: 0.15
+  commands.motion.stand_start_min_hold: 45
+
+  commands.racket_target.station_mode: dynamic_from_motion
+  commands.racket_target.dynamic_station_xy_clip: [[-0.25, 0.25], [-0.44, 0.44]]
+  commands.racket_target.dynamic_station_blend: 1.0
+  commands.racket_target.racket_pos_curriculum_start_scale: [0.55, 0.55, 0.75]
+  commands.racket_target.racket_pos_curriculum_steps: 12000
+
+  # Tighten the wrist release compared with the collision branch, but keep impact correction possible.
+  rewards.racket_wrist_motion_pos.weight: 0.28
+  rewards.racket_wrist_motion_pos.params:
+    motion_command_name: motion
+    racket_command_name: racket_target
+    std: 0.65
+    body_names:
+      - right_wrist_yaw_Link
+    release_window_s: 0.18
+    release_scale: 0.40
+  rewards.racket_wrist_motion_ori.weight: 0.16
+  rewards.racket_wrist_motion_ori.params:
+    motion_command_name: motion
+    racket_command_name: racket_target
+    std: 1.00
+    body_names:
+      - right_wrist_yaw_Link
+    release_window_s: 0.18
+    release_scale: 0.40
+
+  # Preserve the collision hit weights from the parent. The user four-motion experiment should test
+  # motion quality and recoverability, not introduce a new hit objective at the same time.
+  rewards.racket_position.weight: 4.5
+  rewards.racket_velocity.weight: 2.4
+  rewards.racket_velocity_projection.weight: 2.2
+  rewards.impact_forward_lift.weight: 2.5
+  rewards.impact_outgoing_velocity.weight: 4.6
+  rewards.blade_direction.weight: 2.4
+  rewards.net_cross.weight: 3.8
+  rewards.opponent_bounce.weight: 4.2
+
+  # Slightly stronger, still moderate, continuous recovery pressure.
+  rewards.follow_through_recovery.weight: 1.20
+  rewards.recovery_health.weight: 1.40
+  rewards.next_ball_readiness.weight: 1.65
+  rewards.next_swing_ready_bonus.weight: 1.75
+  rewards.post_contact_recovery_ready.weight: 1.35
+  rewards.cycle_net_ready.weight: 1.85
+  rewards.cycle_return_ready.weight: 3.35
+
+  # Low-weight arm/racket ready terms only after useful outcomes. These target the observed issue
+  # where the base stayed upright but the racket/right arm carried high residual velocity.
+  rewards.post_contact_arm_racket_ready.weight: 0.35
+  rewards.post_contact_arm_racket_ready.params:
+    command_name: racket_target
+    outcome: contact
+    arm_pos_std: 0.32
+    arm_ori_std: 0.74
+    racket_vel_std: 0.62
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    include_hold: true
+    early_prestrike_window_steps: 0
+    start_step: 0
+    warmup_steps: 3000
+    start_scale: 0.25
+  rewards.post_net_arm_racket_ready.weight: 0.55
+  rewards.post_net_arm_racket_ready.params:
+    command_name: racket_target
+    outcome: net_cross
+    arm_pos_std: 0.32
+    arm_ori_std: 0.74
+    racket_vel_std: 0.62
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    include_hold: true
+    early_prestrike_window_steps: 0
+    start_step: 0
+    warmup_steps: 5000
+    start_scale: 0.20
+  rewards.post_return_arm_racket_ready.weight: 0.75
+  rewards.post_return_arm_racket_ready.params:
+    command_name: racket_target
+    outcome: opponent_bounce
+    arm_pos_std: 0.32
+    arm_ori_std: 0.74
+    racket_vel_std: 0.62
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    include_hold: true
+    early_prestrike_window_steps: 0
+    start_step: 1500
+    warmup_steps: 7000
+    start_scale: 0.15
+
+  # Keep strike exploration open while increasing damping only in recovery/hold.
+  rewards.action_rate.weight: -0.004
+  rewards.phase_action_rate.weight: -0.38
+  rewards.phase_action_rate.params:
+    command_name: racket_target
+    pre_strike_scale: 0.020
+    strike_scale: 0.004
+    recovery_scale: 0.070
+    hold_scale: 0.105
+  rewards.termination_penalty.weight: -12.0

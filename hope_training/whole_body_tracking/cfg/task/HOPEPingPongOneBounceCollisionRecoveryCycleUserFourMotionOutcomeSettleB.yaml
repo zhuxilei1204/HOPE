@@ -1,0 +1,209 @@
+# =============================================================================
+# A/B experiment B: outcome-conditioned recovery closure on top of the four-motion lower-stable baseline.
+#
+# Intent:
+#   - keep the current collision-enhanced hit objective intact;
+#   - use the same narrower strike/contact windows and longer hold as experiment A;
+#   - shift more recovery pressure behind useful outcomes, so hitting and recovery are rewarded as a
+#     coupled cycle rather than as two independent objectives.
+# =============================================================================
+
+defaults:
+  - HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionLowerStableMild
+  - _self_
+
+name: HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionOutcomeSettleB
+
+overrides:
+  commands.motion.hold_steps_range: [60, 100]
+  commands.motion.stand_start_prob: 0.25
+  commands.motion.stand_start_min_hold: 70
+
+  commands.racket_target.strike_window_s: 0.10
+
+  rewards.racket_wrist_motion_pos.weight: 0.30
+  rewards.racket_wrist_motion_pos.params:
+    motion_command_name: motion
+    racket_command_name: racket_target
+    std: 0.65
+    body_names:
+      - right_wrist_yaw_Link
+    release_window_s: 0.14
+    release_scale: 0.40
+  rewards.racket_wrist_motion_ori.weight: 0.18
+  rewards.racket_wrist_motion_ori.params:
+    motion_command_name: motion
+    racket_command_name: racket_target
+    std: 1.00
+    body_names:
+      - right_wrist_yaw_Link
+    release_window_s: 0.14
+    release_scale: 0.40
+
+  rewards.soft_ball_contact.params:
+    command_name: racket_target
+    pos_std: 0.18
+    approach_speed: 0.10
+    approach_std: 0.75
+    normal_speed: 0.0
+    normal_std: 0.75
+    window_s: 0.18
+
+  # Keep an unconditional recovery floor, but let outcome-gated terms dominate the extra pressure.
+  rewards.follow_through_recovery.weight: 1.10
+  rewards.recovery_health.weight: 1.35
+  rewards.next_ball_readiness.weight: 1.65
+  rewards.next_swing_ready_bonus.weight: 1.75
+
+  rewards.post_contact_recovery_ready.weight: 1.75
+  rewards.post_contact_recovery_ready.params:
+    command_name: racket_target
+    outcome: contact
+    height_std: 0.095
+    upright_std: 0.26
+    lin_vel_std: 0.24
+    ang_vel_std: 0.70
+    station_std: 0.21
+    racket_vel_std: 0.68
+    arm_pos_std: 0.34
+    arm_ori_std: 0.78
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    start_step: 0
+    warmup_steps: 3500
+    start_scale: 0.45
+
+  rewards.cycle_net_ready.weight: 2.35
+  rewards.cycle_net_ready.params:
+    command_name: racket_target
+    outcome: net_cross
+    window_steps: 18
+    height_std: 0.095
+    upright_std: 0.26
+    lin_vel_std: 0.24
+    ang_vel_std: 0.70
+    station_std: 0.21
+    racket_vel_std: 0.68
+    arm_pos_std: 0.34
+    arm_ori_std: 0.78
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    start_step: 0
+    warmup_steps: 5000
+    start_scale: 0.45
+  rewards.cycle_return_ready.weight: 4.20
+  rewards.cycle_return_ready.params:
+    command_name: racket_target
+    outcome: opponent_bounce
+    window_steps: 18
+    height_std: 0.095
+    upright_std: 0.26
+    lin_vel_std: 0.24
+    ang_vel_std: 0.70
+    station_std: 0.21
+    racket_vel_std: 0.68
+    arm_pos_std: 0.34
+    arm_ori_std: 0.78
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    start_step: 0
+    warmup_steps: 8000
+    start_scale: 0.35
+
+  rewards.post_contact_arm_racket_ready.weight: 0.55
+  rewards.post_contact_arm_racket_ready.params:
+    command_name: racket_target
+    outcome: contact
+    arm_pos_std: 0.32
+    arm_ori_std: 0.74
+    racket_vel_std: 0.62
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    include_hold: true
+    early_prestrike_window_steps: 0
+    start_step: 0
+    warmup_steps: 3000
+    start_scale: 0.25
+  rewards.post_net_arm_racket_ready.weight: 0.85
+  rewards.post_net_arm_racket_ready.params:
+    command_name: racket_target
+    outcome: net_cross
+    arm_pos_std: 0.32
+    arm_ori_std: 0.74
+    racket_vel_std: 0.62
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    include_hold: true
+    early_prestrike_window_steps: 0
+    start_step: 0
+    warmup_steps: 5000
+    start_scale: 0.20
+  rewards.post_return_arm_racket_ready.weight: 1.10
+  rewards.post_return_arm_racket_ready.params:
+    command_name: racket_target
+    outcome: opponent_bounce
+    arm_pos_std: 0.32
+    arm_ori_std: 0.74
+    racket_vel_std: 0.62
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    include_hold: true
+    early_prestrike_window_steps: 0
+    start_step: 1500
+    warmup_steps: 7000
+    start_scale: 0.15
+
+  rewards.post_strike_base_ang_vel.weight: 0.55
+  rewards.post_strike_base_ang_vel.params:
+    command_name: racket_target
+    std: 1.65
+    include_hold: true
+    early_prestrike_window_steps: 12
+    start_step: 0
+    warmup_steps: 7000
+    start_scale: 0.20
+
+  rewards.post_strike_lower_body_action_rate.weight: -0.026
+  rewards.post_strike_lower_body_action_rate.params:
+    command_name: racket_target
+    joint_names:
+      - waist_yaw_joint
+      - waist_roll_joint
+      - waist_pitch_joint
+      - left_hip_pitch_joint
+      - left_hip_roll_joint
+      - left_hip_yaw_joint
+      - left_knee_joint
+      - left_ankle_pitch_joint
+      - left_ankle_roll_joint
+      - right_hip_pitch_joint
+      - right_hip_roll_joint
+      - right_hip_yaw_joint
+      - right_knee_joint
+      - right_ankle_pitch_joint
+      - right_ankle_roll_joint
+    include_hold: true
+    early_prestrike_window_steps: 12
+    start_step: 0
+    warmup_steps: 7000
+    start_scale: 0.20
+
+  rewards.phase_action_rate.weight: -0.42
+  rewards.phase_action_rate.params:
+    command_name: racket_target
+    pre_strike_scale: 0.024
+    strike_scale: 0.004
+    recovery_scale: 0.095
+    hold_scale: 0.135

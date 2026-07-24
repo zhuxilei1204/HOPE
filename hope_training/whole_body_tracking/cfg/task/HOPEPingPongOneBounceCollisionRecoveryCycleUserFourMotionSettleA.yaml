@@ -1,0 +1,99 @@
+# =============================================================================
+# A/B experiment A: conservative post-strike settle on top of the four-motion lower-stable baseline.
+#
+# Intent:
+#   - keep the current collision-enhanced hit objective intact;
+#   - narrow the strike/contact shaping windows so the policy cannot collect broad impact credit;
+#   - lengthen ready/hold time so bad follow-through states are carried into the next ball;
+#   - add only moderate recovery/hold damping, preserving strike exploration.
+# =============================================================================
+
+defaults:
+  - HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionLowerStableMild
+  - _self_
+
+name: HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionSettleA
+
+overrides:
+  commands.motion.hold_steps_range: [60, 100]
+  commands.motion.stand_start_prob: 0.25
+  commands.motion.stand_start_min_hold: 70
+
+  commands.racket_target.strike_window_s: 0.10
+
+  rewards.racket_wrist_motion_pos.weight: 0.30
+  rewards.racket_wrist_motion_pos.params:
+    motion_command_name: motion
+    racket_command_name: racket_target
+    std: 0.65
+    body_names:
+      - right_wrist_yaw_Link
+    release_window_s: 0.14
+    release_scale: 0.40
+  rewards.racket_wrist_motion_ori.weight: 0.18
+  rewards.racket_wrist_motion_ori.params:
+    motion_command_name: motion
+    racket_command_name: racket_target
+    std: 1.00
+    body_names:
+      - right_wrist_yaw_Link
+    release_window_s: 0.14
+    release_scale: 0.40
+
+  rewards.soft_ball_contact.params:
+    command_name: racket_target
+    pos_std: 0.18
+    approach_speed: 0.10
+    approach_std: 0.75
+    normal_speed: 0.0
+    normal_std: 0.75
+    window_s: 0.18
+
+  rewards.follow_through_recovery.weight: 1.35
+  rewards.recovery_health.weight: 1.60
+  rewards.next_ball_readiness.weight: 1.80
+  rewards.next_swing_ready_bonus.weight: 1.95
+  rewards.post_contact_recovery_ready.weight: 1.55
+
+  rewards.post_strike_base_ang_vel.weight: 0.55
+  rewards.post_strike_base_ang_vel.params:
+    command_name: racket_target
+    std: 1.65
+    include_hold: true
+    early_prestrike_window_steps: 12
+    start_step: 0
+    warmup_steps: 7000
+    start_scale: 0.20
+
+  rewards.post_strike_lower_body_action_rate.weight: -0.026
+  rewards.post_strike_lower_body_action_rate.params:
+    command_name: racket_target
+    joint_names:
+      - waist_yaw_joint
+      - waist_roll_joint
+      - waist_pitch_joint
+      - left_hip_pitch_joint
+      - left_hip_roll_joint
+      - left_hip_yaw_joint
+      - left_knee_joint
+      - left_ankle_pitch_joint
+      - left_ankle_roll_joint
+      - right_hip_pitch_joint
+      - right_hip_roll_joint
+      - right_hip_yaw_joint
+      - right_knee_joint
+      - right_ankle_pitch_joint
+      - right_ankle_roll_joint
+    include_hold: true
+    early_prestrike_window_steps: 12
+    start_step: 0
+    warmup_steps: 7000
+    start_scale: 0.20
+
+  rewards.phase_action_rate.weight: -0.42
+  rewards.phase_action_rate.params:
+    command_name: racket_target
+    pre_strike_scale: 0.024
+    strike_scale: 0.004
+    recovery_scale: 0.095
+    hold_scale: 0.135

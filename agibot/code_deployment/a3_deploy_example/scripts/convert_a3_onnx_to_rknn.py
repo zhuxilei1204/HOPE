@@ -39,6 +39,8 @@ class ModelSpec:
     rknn_key: str
     expected_input_dim: int
     expected_action_dim: int = 29
+    expected_input_name: str = "obs_dict"
+    expected_output_name: str = "action"
 
 
 MODEL_SPECS = {
@@ -59,6 +61,15 @@ MODEL_SPECS = {
         onnx_key="a3_fast_model_path",
         rknn_key="a3_fast_rknn_model_path",
         expected_input_dim=1570,
+    ),
+    "hope": ModelSpec(
+        label="hope",
+        onnx_key="hope_model_path",
+        rknn_key="hope_rknn_model_path",
+        expected_input_dim=111,
+        expected_action_dim=31,
+        expected_input_name="observation",
+        expected_output_name="raw_action",
     ),
 }
 
@@ -95,11 +106,15 @@ def resolve_path(raw: str, runtime_cfg: Path) -> Path:
 def load_runtime_cfg(path: Path) -> dict:
     with path.open("r", encoding="utf-8") as f:
         cfg = yaml.safe_load(f) or {}
-    if not isinstance(cfg.get("onnx"), dict):
-        raise ValueError("runtime config is missing top-level onnx mapping")
-    mode = str(cfg["onnx"].get("mode") or "monolithic").lower().replace("-", "_")
-    if mode in ("encoder_decoder", "encoderdecoder", "split"):
-        raise ValueError("RKNN conversion supports monolithic A3 policies only")
+    if isinstance(cfg.get("onnx"), dict):
+        mode = str(cfg["onnx"].get("mode") or "monolithic").lower().replace("-", "_")
+        if mode in ("encoder_decoder", "encoderdecoder", "split"):
+            raise ValueError("RKNN conversion supports monolithic A3 policies only")
+    elif cfg.get("contract") != "hope_pingpong":
+        raise ValueError(
+            "runtime config is missing top-level onnx mapping and is not a "
+            "hope_pingpong runtime config"
+        )
     return cfg
 
 
@@ -142,20 +157,41 @@ def probe_onnx_schema(path: Path) -> dict:
 
 
 def validate_schema(spec: ModelSpec, schema: dict, path: Path) -> None:
-    if schema["input_name"] != "obs_dict":
-        raise ValueError(f"{path} input name must be obs_dict, got {schema['input_name']}")
-    if schema["output_name"] != "action":
-        raise ValueError(f"{path} output name must be action, got {schema['output_name']}")
-    if schema["input_shape"] != [1, spec.expected_input_dim]:
+    if schema["input_name"] != spec.expected_input_name:
         raise ValueError(
-            f"{path} input shape must be [1, {spec.expected_input_dim}], "
+            f"{path} input name must be {spec.expected_input_name}, "
+            f"got {schema['input_name']}"
+        )
+    if schema["output_name"] != spec.expected_output_name:
+        raise ValueError(
+            f"{path} output name must be {spec.expected_output_name}, "
+            f"got {schema['output_name']}"
+        )
+    if not _batched_vector_shape_matches(
+        schema["input_shape"], spec.expected_input_dim
+    ):
+        raise ValueError(
+            f"{path} input shape must be [1, {spec.expected_input_dim}] "
+            f"or dynamic batch x {spec.expected_input_dim}, "
             f"got {schema['input_shape']}"
         )
-    if schema["output_shape"] != [1, spec.expected_action_dim]:
+    if not _batched_vector_shape_matches(
+        schema["output_shape"], spec.expected_action_dim
+    ):
         raise ValueError(
-            f"{path} output shape must be [1, {spec.expected_action_dim}], "
+            f"{path} output shape must be [1, {spec.expected_action_dim}] "
+            f"or dynamic batch x {spec.expected_action_dim}, "
             f"got {schema['output_shape']}"
         )
+
+
+def _batched_vector_shape_matches(shape: list[int | str], width: int) -> bool:
+    if len(shape) != 2:
+        return False
+    batch_dim, feature_dim = shape
+    if feature_dim != width:
+        return False
+    return batch_dim == 1 or isinstance(batch_dim, str)
 
 
 def ensure_onnx_mapping_compat() -> None:
@@ -206,7 +242,11 @@ def convert_one(
         ret = rknn.config(target_platform=target_platform)
         if ret != 0:
             raise RuntimeError(f"rknn.config failed with ret={ret}")
-        ret = rknn.load_onnx(model=str(onnx_path))
+        ret = rknn.load_onnx(
+            model=str(onnx_path),
+            inputs=[schema["input_name"]],
+            input_size_list=[[1, spec.expected_input_dim]],
+        )
         if ret != 0:
             raise RuntimeError(f"rknn.load_onnx failed with ret={ret}")
         ret = rknn.build(do_quantization=False)
@@ -242,10 +282,31 @@ def selected_specs(names: Iterable[str]) -> list[ModelSpec]:
     return specs
 
 
+def model_path_from_cfg(cfg: dict, spec: ModelSpec) -> str | None:
+    if spec.label == "hope" and cfg.get("contract") == "hope_pingpong":
+        policy = cfg.get("policy") or {}
+        if isinstance(policy, dict):
+            raw = policy.get("onnx_path")
+            if raw:
+                return str(raw)
+    onnx = cfg.get("onnx") or {}
+    if isinstance(onnx, dict):
+        raw = onnx.get(spec.onnx_key)
+        if raw:
+            return str(raw)
+    return None
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--runtime-cfg", type=Path, default=DEFAULT_RUNTIME_CFG)
     parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUT_DIR)
+    parser.add_argument(
+        "--onnx-path",
+        type=Path,
+        default=None,
+        help="Direct ONNX path override; requires exactly one selected --models entry.",
+    )
     parser.add_argument(
         "--models",
         nargs="+",
@@ -264,12 +325,23 @@ def main() -> int:
         out_dir = (GEAR_ROOT / out_dir).resolve()
 
     manifests = []
-    for spec in selected_specs(args.models):
-        raw = cfg["onnx"].get(spec.onnx_key)
-        if not raw:
-            print(f"[skip] onnx.{spec.onnx_key} is not configured")
-            continue
-        onnx_path = resolve_path(str(raw), cfg_path)
+    specs = selected_specs(args.models)
+    if args.onnx_path is not None and len(specs) != 1:
+        parser.error("--onnx-path requires exactly one selected model")
+    for spec in specs:
+        if args.onnx_path is not None:
+            onnx_path = args.onnx_path.expanduser().resolve()
+            if not onnx_path.exists():
+                raise FileNotFoundError(f"{onnx_path} does not exist")
+        else:
+            raw = model_path_from_cfg(cfg, spec)
+            if not raw:
+                if spec.label == "hope" and cfg.get("contract") == "hope_pingpong":
+                    print("[skip] policy.onnx_path is not configured")
+                else:
+                    print(f"[skip] onnx.{spec.onnx_key} is not configured")
+                continue
+            onnx_path = resolve_path(str(raw), cfg_path)
         print(f"[convert] {spec.label}: {onnx_path}")
         manifest = convert_one(
             spec=spec,

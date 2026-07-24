@@ -1,0 +1,143 @@
+# =============================================================================
+# Recovery-robust branch from the cycle-closed-loop policy.
+#
+# Goal: improve continuous rally carry-over.  This branch keeps the collision
+# target close to the current best model and puts more weight on next-swing
+# readiness, healthy base posture, station recovery, and phase-specific damping.
+# =============================================================================
+
+defaults:
+  - HOPEPingPongOneBounceCycleClosedLoop
+  - _self_
+
+name: HOPEPingPongOneBounceRecoveryRobust
+
+motion:
+  wrap_teleport: false
+
+overrides:
+  # Give the policy a clearer recovery/ready interval in training while still carrying state across
+  # swings.  This should reduce the continuous-eval pattern where one bad follow-through poisons the
+  # next serve.
+  commands.motion.hold_steps_range: [35, 60]
+  commands.motion.stand_start_prob: 0.15
+  commands.motion.stand_start_min_hold: 40
+
+  # Keep the current best impact target rather than making this branch a harder hitter.
+  commands.racket_target.impact_inverse_racket_speed_scale: 1.12
+  commands.racket_target.impact_inverse_racket_speed_bias: 0.08
+  commands.racket_target.impact_inverse_max_racket_speed: 3.1
+  commands.racket_target.target_outgoing_vel_scale: 1.02
+  commands.racket_target.target_outgoing_vel_z_bias: 0.18
+  commands.racket_target.net_margin: 0.04
+
+  # Preserve hit quality enough that recovery is not learned as "do not swing".
+  rewards.racket_position.weight: 4.8
+  rewards.racket_velocity.weight: 1.1
+  rewards.impact_outgoing_velocity.weight: 3.0
+  rewards.blade_direction.weight: 1.5
+  rewards.soft_ball_contact.weight: 6.8
+  rewards.ball_contact.weight: 3.0
+  rewards.net_cross.weight: 3.0
+  rewards.opponent_bounce.weight: 3.5
+
+  # Stronger continuous-state recovery objective.
+  rewards.follow_through_recovery.weight: 1.6
+  rewards.follow_through_recovery.params:
+    command_name: racket_target
+    std: 0.42
+    station_std: 0.24
+  rewards.recovery_health.weight: 1.9
+  rewards.recovery_health.params:
+    command_name: racket_target
+    height_std: 0.09
+    upright_std: 0.24
+    lin_vel_std: 0.22
+    ang_vel_std: 0.62
+    station_std: 0.20
+  rewards.next_ball_readiness.weight: 2.4
+  rewards.next_ball_readiness.params:
+    command_name: racket_target
+    height_std: 0.09
+    upright_std: 0.24
+    lin_vel_std: 0.22
+    ang_vel_std: 0.62
+    station_std: 0.20
+    racket_vel_std: 0.60
+    arm_pos_std: 0.30
+    arm_ori_std: 0.70
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    early_prestrike_window_steps: 18
+  rewards.next_swing_ready_bonus.weight: 2.8
+  rewards.next_swing_ready_bonus.params:
+    command_name: racket_target
+    window_steps: 18
+    height_std: 0.085
+    upright_std: 0.22
+    lin_vel_std: 0.20
+    ang_vel_std: 0.58
+    station_std: 0.18
+    racket_vel_std: 0.55
+    arm_pos_std: 0.28
+    arm_ori_std: 0.65
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+
+  # Bind success and recovery more tightly than the current best model.  The net term gives a less
+  # sparse signal; opponent-bounce + ready remains the main continuous-rally objective.
+  rewards.cycle_net_ready.weight: 2.2
+  rewards.cycle_net_ready.params:
+    command_name: racket_target
+    outcome: net_cross
+    window_steps: 20
+    height_std: 0.09
+    upright_std: 0.24
+    lin_vel_std: 0.22
+    ang_vel_std: 0.62
+    station_std: 0.20
+    racket_vel_std: 0.60
+    arm_pos_std: 0.30
+    arm_ori_std: 0.70
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    start_step: 0
+    warmup_steps: 4000
+    start_scale: 0.45
+  rewards.cycle_return_ready.weight: 4.6
+  rewards.cycle_return_ready.params:
+    command_name: racket_target
+    outcome: opponent_bounce
+    window_steps: 20
+    height_std: 0.09
+    upright_std: 0.24
+    lin_vel_std: 0.22
+    ang_vel_std: 0.62
+    station_std: 0.20
+    racket_vel_std: 0.60
+    arm_pos_std: 0.30
+    arm_ori_std: 0.70
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    start_step: 0
+    warmup_steps: 6000
+    start_scale: 0.35
+
+  # More damping after contact and during hold; strike remains light so it can still swing.
+  rewards.action_rate.weight: -0.004
+  rewards.phase_action_rate.weight: -0.58
+  rewards.phase_action_rate.params:
+    command_name: racket_target
+    pre_strike_scale: 0.020
+    strike_scale: 0.005
+    recovery_scale: 0.105
+    hold_scale: 0.165
+  rewards.termination_penalty.weight: -12.0

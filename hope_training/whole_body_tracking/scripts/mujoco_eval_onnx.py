@@ -169,10 +169,17 @@ def _load_serve_manifest(path: str | None) -> list[dict]:
             if not ok:
                 continue
             side = _float_or_none(row.get("swing_side"))
+            offset_x = _float_or_none(row.get("motion_racket_offset_x"))
+            offset_y = _float_or_none(row.get("motion_racket_offset_y"))
             rows.append(
                 {
                     "side": 1.0 if side is None or side >= 0.0 else -1.0,
                     "ranges": tuple(ranges),
+                    "motion_racket_offset_xy": (
+                        np.array([offset_x, offset_y], dtype=np.float64)
+                        if offset_x is not None and offset_y is not None
+                        else None
+                    ),
                     "source": row.get("output") or row.get("source") or "",
                 }
             )
@@ -185,12 +192,14 @@ def _new_eval_counts() -> dict:
     return {
         "attempts": 0,
         "successes": 0,
+        "incoming_bounce": 0,
         "contact": 0,
         "real_contact": 0,
         "proximity_contact": 0,
         "net_clear": 0,
         "first_bounce": 0,
         "opponent_bounce": 0,
+        "miss_no_incoming_bounce": 0,
         "miss_no_contact": 0,
         "miss_contact_no_net": 0,
         "miss_net_no_bounce": 0,
@@ -217,12 +226,14 @@ def _finalize_counts(counts: dict) -> dict:
         out["min_ball_racket_distance"] = None
     for key in (
         "successes",
+        "incoming_bounce",
         "contact",
         "real_contact",
         "proximity_contact",
         "net_clear",
         "first_bounce",
         "opponent_bounce",
+        "miss_no_incoming_bounce",
         "miss_no_contact",
         "miss_contact_no_net",
         "miss_net_no_bounce",
@@ -358,6 +369,8 @@ def _new_contact_diag_row(trial: int, side_name: str, strike_pt, serve_pos, serv
         "racket_vel_target_angle_deg": "",
         "ball_post_vs_target_vel_error": "",
         "ball_post_vs_target_vel_angle_deg": "",
+        "ball_post_vs_target_outgoing_vel_error": "",
+        "ball_post_vs_target_outgoing_vel_angle_deg": "",
         "closing_speed_pre": "",
         "outgoing_normal_speed_post": "",
         "raw_action_max_at_contact": "",
@@ -373,6 +386,8 @@ def _new_contact_diag_row(trial: int, side_name: str, strike_pt, serve_pos, serv
         ("racket_normal", None),
         ("target_pos", None),
         ("target_vel", None),
+        ("target_outgoing_vel", None),
+        ("target_normal", None),
         ("ball_pre_pos", None),
         ("ball_pre_vel", None),
         ("ball_post_pos", None),
@@ -428,6 +443,8 @@ def _contact_diag_fields() -> list[str]:
         "racket_normal",
         "target_pos",
         "target_vel",
+        "target_outgoing_vel",
+        "target_normal",
         "ball_pre_pos",
         "ball_pre_vel",
         "ball_post_pos",
@@ -450,6 +467,8 @@ def _contact_diag_fields() -> list[str]:
         "racket_vel_target_angle_deg",
         "ball_post_vs_target_vel_error",
         "ball_post_vs_target_vel_angle_deg",
+        "ball_post_vs_target_outgoing_vel_error",
+        "ball_post_vs_target_outgoing_vel_angle_deg",
         "closing_speed_pre",
         "outgoing_normal_speed_post",
         "pred_net_cross",
@@ -542,6 +561,104 @@ def _solve_drag_serve_velocity(origin: np.ndarray, target: np.ndarray, flight_t:
     return v
 
 
+def _table_contact_params(args) -> tuple[float, float]:
+    """Return (normal restitution, tangential speed retain) for the table bounce model."""
+    e = float(getattr(args, "_table_restitution", 0.9215))
+    damping = float(getattr(args, "_table_tangential_damping", 0.369))
+    return e, max(0.0, min(1.0, 1.0 - damping))
+
+
+def _paddle_contact_params(args) -> tuple[float, float]:
+    """Return (normal restitution, tangential speed retain) for the planner-side paddle model."""
+    e = float(getattr(args, "_paddle_restitution", 0.654))
+    damping = float(getattr(args, "_paddle_tangential_damping", 0.52))
+    return e, max(0.0, min(1.0, 1.0 - damping))
+
+
+def _bounce_ball_velocity(v_in: np.ndarray, args) -> np.ndarray:
+    """Simple no-spin table bounce used by the planner-side predictor."""
+    e, tangential_retain = _table_contact_params(args)
+    out = np.asarray(v_in, dtype=np.float64).copy()
+    out[:2] *= tangential_retain
+    out[2] = -e * out[2]
+    return out
+
+
+def _impact_inverse_racket_command(v_in: np.ndarray, v_out: np.ndarray, args) -> tuple[np.ndarray, np.ndarray]:
+    """Invert the moving-paddle no-spin contact model into racket velocity + blade normal."""
+    v_in = np.asarray(v_in, dtype=np.float64)
+    v_out = np.asarray(v_out, dtype=np.float64)
+    normal = _unit_or_none(v_out - v_in)
+    if normal is None:
+        normal = np.array([1.0, 0.0, 0.0], dtype=np.float64)
+
+    e, retain = _paddle_contact_params(args)
+    vin_n = float(np.dot(v_in, normal))
+    vout_n = float(np.dot(v_out, normal))
+    racket_n = (vout_n + e * vin_n) / max(1.0 + e, 1.0e-6)
+    vin_t = v_in - vin_n * normal
+    vout_t = v_out - vout_n * normal
+    if abs(1.0 - retain) > 1.0e-4:
+        racket_t = (vout_t - retain * vin_t) / (1.0 - retain)
+    else:
+        racket_t = vout_t
+    racket_vel = racket_n * normal + racket_t
+    speed = float(np.linalg.norm(racket_vel))
+    max_speed = float(getattr(args, "planner_max_racket_speed", 2.8))
+    min_speed = float(getattr(args, "planner_min_racket_speed", 0.3))
+    if speed > max_speed:
+        racket_vel *= max_speed / speed
+    elif 1.0e-6 < speed < min_speed:
+        racket_vel *= min_speed / speed
+    return racket_vel, normal
+
+
+def _sample_one_bounce_serve(rng, strike_pt: np.ndarray, y: float, scene, physics, args):
+    """Sample an incoming ball that bounces once on the robot half before the strike point.
+
+    The serve is constructed in the table/MuJoCo world frame with a lightweight no-spin bounce
+    model.  MuJoCo still owns the authoritative physics: this only chooses a plausible initial
+    state whose real simulated ball should land on the near half, rebound, then pass the policy's
+    strike plane.
+    """
+    surface_z = scene.table_height + physics.ball_radius
+    target_table_x = float(strike_pt[0] - scene.near_edge_x)
+    target_table_y = float(strike_pt[1] - scene.offset[1])
+    margin = 0.08
+    lo_x = max(0.18, target_table_x + 0.18)
+    hi_x = min(scene.net_x_table - margin, target_table_x + 0.78)
+    if hi_x <= lo_x:
+        lo_x = max(0.12, min(scene.net_x_table - margin, target_table_x + 0.20))
+        hi_x = min(scene.net_x_table - margin, lo_x + 0.30)
+    bounce_table_x = float(rng.uniform(lo_x, hi_x))
+    bounce_table_y = float(np.clip(target_table_y + rng.uniform(-0.18, 0.18), -scene.width + 0.08, -0.08))
+    bounce = np.array(
+        [scene.near_edge_x + bounce_table_x, bounce_table_y + scene.offset[1], surface_z],
+        dtype=np.float64,
+    )
+
+    # Desired post-bounce flight from bounce point to the strike point.
+    post_t = float(rng.uniform(float(args.bounce_post_time[0]), float(args.bounce_post_time[1])))
+    accel = np.array([0.0, 0.0, -physics.gravity], dtype=np.float64)
+    post_vel = (strike_pt - bounce) / post_t - 0.5 * accel * post_t
+
+    e, tangential_retain = _table_contact_params(args)
+    pre_vel = post_vel.copy()
+    pre_vel[:2] = post_vel[:2] / max(tangential_retain, 1.0e-3)
+    pre_vel[2] = -abs(post_vel[2]) / max(e, 1.0e-3)
+
+    # Choose an origin on/above the opponent side so the incoming path really has a near-half bounce.
+    pre_t = float(rng.uniform(float(args.bounce_pre_time[0]), float(args.bounce_pre_time[1])))
+    origin = bounce - pre_vel * pre_t + 0.5 * accel * pre_t * pre_t
+    origin[0] = max(origin[0], scene.near_edge_x + scene.net_x_table + 0.25)
+    origin[0] = min(origin[0], scene.near_edge_x + scene.length - 0.12)
+    origin[1] = float(np.clip(origin[1], scene.offset[1] - scene.width + 0.08, scene.offset[1] - 0.08))
+    origin[2] = float(np.clip(origin[2], scene.table_height + 0.18, scene.table_height + 0.55))
+
+    serve_vel = _solve_drag_serve_velocity(origin, bounce, pre_t, physics)
+    return origin, serve_vel
+
+
 def _sample_serve(rng, side, scene, physics, args, serve_manifest=None):
     """Sample (strike_point, serve_origin, serve_velocity) in the MuJoCo world frame.
 
@@ -558,6 +675,7 @@ def _sample_serve(rng, side, scene, physics, args, serve_manifest=None):
         strike_pt = np.array([rng.uniform(lo, hi) for lo, hi in row["ranges"]], dtype=np.float64)
         y = float(strike_pt[1])
     else:
+        row = None
         strike_x = scene.near_edge_x + args.strike_plane_x  # MuJoCo x of the fixed strike plane
         if side >= 0:  # FOREHAND -> robot's right = -y in the MuJoCo/robot frame
             y = rng.uniform(-0.45, -0.12)
@@ -566,17 +684,59 @@ def _sample_serve(rng, side, scene, physics, args, serve_manifest=None):
         z = scene.table_height + rng.uniform(0.10, 0.22)
         strike_pt = np.array([strike_x, y, z], dtype=np.float64)
 
-    origin = np.array(
-        [
-            scene.near_edge_x + rng.uniform(1.9, 2.4),
-            y + rng.uniform(-0.15, 0.15),
-            scene.table_height + rng.uniform(0.15, 0.35),
-        ],
-        dtype=np.float64,
-    )
-    flight_t = rng.uniform(0.75, 1.0)
-    serve_vel = _solve_drag_serve_velocity(origin, strike_pt, flight_t, physics)
-    return strike_pt, origin, serve_vel
+    if args.incoming_trajectory == "one-bounce":
+        origin, serve_vel = _sample_one_bounce_serve(rng, strike_pt, y, scene, physics, args)
+    else:
+        origin = np.array(
+            [
+                scene.near_edge_x + rng.uniform(1.9, 2.4),
+                y + rng.uniform(-0.15, 0.15),
+                scene.table_height + rng.uniform(0.15, 0.35),
+            ],
+            dtype=np.float64,
+        )
+        flight_t = rng.uniform(0.75, 1.0)
+        serve_vel = _solve_drag_serve_velocity(origin, strike_pt, flight_t, physics)
+    return strike_pt, origin, serve_vel, row
+
+
+def _station_xy_for_observation(fixed_station_xy, target, phase, manifest_row, args):
+    """Return the station XY that should occupy obs[101:103].
+
+    Training keeps the public 111-D observation layout unchanged, but in dynamic-station
+    mode the old ``fixed_station_error_xy`` slot contains the current station target
+    before impact.  MuJoCo eval must mirror that or the policy sees a different task
+    than it was trained on.
+    """
+    fixed_station_xy = np.asarray(fixed_station_xy, dtype=np.float64)[:2]
+    mode = args.station_mode
+    if mode == "fixed":
+        return fixed_station_xy
+    if mode == "auto":
+        has_offset = manifest_row is not None and manifest_row.get("motion_racket_offset_xy") is not None
+        if not has_offset:
+            return fixed_station_xy
+    elif mode != "dynamic-from-manifest":
+        raise ValueError(f"Unsupported station mode: {mode}")
+
+    if manifest_row is None:
+        return fixed_station_xy
+    offset_xy = manifest_row.get("motion_racket_offset_xy")
+    if offset_xy is None:
+        return fixed_station_xy
+    phase_value = getattr(phase, "value", str(phase))
+    if phase_value not in ("swing", "follow_through"):
+        return fixed_station_xy
+    if float(target.time_to_strike) < -float(args.dynamic_station_post_window):
+        return fixed_station_xy
+
+    desired = np.asarray(target.pos_w, dtype=np.float64)[:2] - np.asarray(offset_xy, dtype=np.float64)[:2]
+    rel = desired - fixed_station_xy
+    clip_x = sorted((float(args.dynamic_station_clip_x[0]), float(args.dynamic_station_clip_x[1])))
+    clip_y = sorted((float(args.dynamic_station_clip_y[0]), float(args.dynamic_station_clip_y[1])))
+    rel[0] = np.clip(rel[0], clip_x[0], clip_x[1])
+    rel[1] = np.clip(rel[1], clip_y[0], clip_y[1])
+    return fixed_station_xy + float(args.dynamic_station_blend) * rel
 
 
 def _predict_command(
@@ -607,16 +767,36 @@ def _predict_command(
     dt = 0.002
     t = 0.0
     y_cross, z_cross, tts = float(p[1]), float(p[2]), 0.0
+    v_cross = v.copy()
+    bounced = False
+    surface_z = scene.table_height + physics.ball_radius
     for _ in range(int(2.0 / dt)):
         a = physics.acceleration(v)
         p_new = p + v * dt + 0.5 * a * dt * dt
         v_new = v + a * dt
+        if args.planner_mode == "bounce-aware" and not bounced:
+            z0 = p[2]
+            z1 = p_new[2]
+            if z0 > surface_z >= z1 and v[2] < 0.0:
+                dz = z1 - z0
+                frac = (surface_z - z0) / dz if abs(dz) > 1e-12 else 0.5
+                x_b = float(p[0] + frac * (p_new[0] - p[0]))
+                y_b = float(p[1] + frac * (p_new[1] - p[1]))
+                x_t = x_b - scene.offset[0]
+                y_t = y_b - scene.offset[1]
+                on_near_half = (0.0 <= x_t <= scene.net_x_table) and (-scene.width <= y_t <= 0.0)
+                if on_near_half:
+                    v_impact = v + a * (frac * dt)
+                    p_new = np.array([x_b, y_b, surface_z], dtype=np.float64)
+                    v_new = _bounce_ball_velocity(v_impact, args)
+                    bounced = True
         if p[0] >= strike_x > p_new[0]:  # ball moving -x through the strike plane
             dx = p_new[0] - p[0]
             frac = (strike_x - p[0]) / dx if abs(dx) > 1e-12 else 0.5
             y_cross = float(p[1] + frac * (p_new[1] - p[1]))
             z_cross = float(p[2] + frac * (p_new[2] - p[2]))
             tts = t + frac * dt
+            v_cross = v + a * (frac * dt)
             break
         p, v = p_new, v_new
         t += dt
@@ -631,9 +811,10 @@ def _predict_command(
     landing_mujoco = landing_table + scene.offset
     t_out = 0.6
     accel = np.array([0.0, 0.0, -physics.gravity])
-    target_vel = (landing_mujoco - target_pos) / t_out - 0.5 * accel * t_out
+    target_outgoing_vel = (landing_mujoco - target_pos) / t_out - 0.5 * accel * t_out
+    target_vel, target_normal = _impact_inverse_racket_command(v_cross, target_outgoing_vel, args)
 
-    return RacketCommand(
+    cmd = RacketCommand(
         task_id=task_id,
         task_revision=revision,
         swing_side=side,
@@ -641,6 +822,54 @@ def _predict_command(
         velocity=target_vel,
         time_to_strike=float(tts),
     )
+    cmd.outgoing_velocity = target_outgoing_vel
+    cmd.target_normal = target_normal
+    return cmd
+
+
+def _perturb_command(cmd, args, rng, RacketCommand):
+    """Apply planner-command perturbations for robustness/sensitivity evaluation."""
+    pos = np.asarray(cmd.position, dtype=np.float64).copy()
+    vel = np.asarray(cmd.velocity, dtype=np.float64).copy()
+    outgoing_vel = getattr(cmd, "outgoing_velocity", None)
+    target_normal = getattr(cmd, "target_normal", None)
+    tts = float(cmd.time_to_strike)
+
+    pos_offset = np.asarray(args.planner_target_pos_offset, dtype=np.float64)
+    pos_noise = np.asarray(args.planner_target_pos_noise_std, dtype=np.float64)
+    vel_offset = np.asarray(args.planner_target_vel_offset, dtype=np.float64)
+    vel_noise = np.asarray(args.planner_target_vel_noise_std, dtype=np.float64)
+
+    pos = pos + pos_offset
+    if np.any(pos_noise > 0.0):
+        pos = pos + rng.normal(0.0, pos_noise, size=3)
+
+    vel = vel * float(args.planner_target_vel_scale) + vel_offset
+    if abs(float(args.planner_target_vel_yaw_deg)) > 1.0e-9:
+        theta = np.deg2rad(float(args.planner_target_vel_yaw_deg))
+        c, s = np.cos(theta), np.sin(theta)
+        rot_z = np.array([[c, -s, 0.0], [s, c, 0.0], [0.0, 0.0, 1.0]], dtype=np.float64)
+        vel = rot_z @ vel
+    if np.any(vel_noise > 0.0):
+        vel = vel + rng.normal(0.0, vel_noise, size=3)
+
+    tts = max(0.0, tts + float(args.planner_tts_offset))
+    if float(args.planner_tts_noise_std) > 0.0:
+        tts = max(0.0, tts + float(rng.normal(0.0, float(args.planner_tts_noise_std))))
+
+    out = RacketCommand(
+        task_id=cmd.task_id,
+        task_revision=cmd.task_revision,
+        swing_side=cmd.swing_side,
+        position=pos,
+        velocity=vel,
+        time_to_strike=tts,
+    )
+    if outgoing_vel is not None:
+        out.outgoing_velocity = np.asarray(outgoing_vel, dtype=np.float64).copy()
+    if target_normal is not None:
+        out.target_normal = np.asarray(target_normal, dtype=np.float64).copy()
+    return out
 
 
 def run_eval(args) -> dict:
@@ -683,6 +912,12 @@ def run_eval(args) -> dict:
     robot_xml = args.model_xml or str(runtime_cfg.model_xml_path)
 
     ball_cfg = load_ball_physics_config()
+    table_contact = ball_cfg.get("contact", {}).get("table", {})
+    args._table_restitution = float(table_contact.get("restitution", 0.9215))
+    args._table_tangential_damping = float(table_contact.get("tangential_damping", 0.369))
+    paddle_contact = ball_cfg.get("contact", {}).get("paddle", {})
+    args._paddle_restitution = float(paddle_contact.get("restitution", 0.654))
+    args._paddle_tangential_damping = float(paddle_contact.get("tangential_damping", 0.52))
     physics = BallPhysics.from_config(ball_cfg)
     table = TableGeometry.from_config(ball_cfg)
     accumulator = SuccessRate()
@@ -746,6 +981,7 @@ def run_eval(args) -> dict:
             "target_y",
             "target_z",
             "time_to_strike",
+            "incoming_bounce",
             "contacted",
             "real_contact",
             "proximity_contact",
@@ -817,6 +1053,10 @@ def run_eval(args) -> dict:
                 mujoco_normal = -mujoco_normal
 
         target_vel = np.asarray(cmd.velocity, dtype=np.float64)
+        target_outgoing_vel = np.asarray(getattr(cmd, "outgoing_velocity", target_vel), dtype=np.float64)
+        target_normal = getattr(cmd, "target_normal", None)
+        if target_normal is not None:
+            target_normal = np.asarray(target_normal, dtype=np.float64)
         racket_pre_vel = np.asarray(racket_pre_vel, dtype=np.float64)
         racket_post_vel = np.asarray(racket_post_vel, dtype=np.float64)
         contact_ball_pre_vel = np.asarray(contact_ball_pre_vel, dtype=np.float64)
@@ -842,9 +1082,12 @@ def run_eval(args) -> dict:
         row["racket_vel_target_error"] = _norm(racket_post_vel - target_vel)
         angle = _angle_deg(racket_post_vel, target_vel)
         row["racket_vel_target_angle_deg"] = "" if angle is None else angle
-        row["ball_post_vs_target_vel_error"] = _norm(contact_ball_post_vel - target_vel)
-        ball_angle = _angle_deg(contact_ball_post_vel, target_vel)
+        row["ball_post_vs_target_vel_error"] = _norm(contact_ball_post_vel - target_outgoing_vel)
+        ball_angle = _angle_deg(contact_ball_post_vel, target_outgoing_vel)
         row["ball_post_vs_target_vel_angle_deg"] = "" if ball_angle is None else ball_angle
+        row["ball_post_vs_target_outgoing_vel_error"] = _norm(contact_ball_post_vel - target_outgoing_vel)
+        outgoing_angle = _angle_deg(contact_ball_post_vel, target_outgoing_vel)
+        row["ball_post_vs_target_outgoing_vel_angle_deg"] = "" if outgoing_angle is None else outgoing_angle
         row["closing_speed_pre"] = float(-np.dot(rel_pre, racket_normal))
         row["outgoing_normal_speed_post"] = float(np.dot(rel_post, racket_normal))
         row["raw_action_max_at_contact"] = float(diag["max_abs_raw_action"])
@@ -858,6 +1101,8 @@ def run_eval(args) -> dict:
             ("racket_normal", racket_normal),
             ("target_pos", cmd.position),
             ("target_vel", target_vel),
+            ("target_outgoing_vel", target_outgoing_vel),
+            ("target_normal", target_normal),
             ("ball_pre_pos", contact_ball_pre_pos),
             ("ball_pre_vel", contact_ball_pre_vel),
             ("ball_post_pos", contact_ball_post_pos),
@@ -869,7 +1114,7 @@ def run_eval(args) -> dict:
         ):
             _xyz(row, prefix, value)
 
-    def _policy_tick(lifecycle, source, last_action, fixed_station_xy):
+    def _policy_tick(lifecycle, source, last_action, fixed_station_xy, manifest_row=None):
         """One 50 Hz policy step (identical to the deploy runner's tick).
 
         Returns (events, applied_action) — the caller keeps ``applied_action`` as
@@ -877,7 +1122,8 @@ def run_eval(args) -> dict:
         """
         state = scene.read_robot_state()
         target = lifecycle.update(source.poll(), state)
-        obs = build_observation(state, target, last_action, default_q, fixed_station_xy)
+        station_xy = _station_xy_for_observation(fixed_station_xy, target, lifecycle.phase, manifest_row, args)
+        obs = build_observation(state, target, last_action, default_q, station_xy)
         policy_obs = _obs_for_policy_joint_order(obs, last_action, args.policy_joint_order)
         raw_policy_action = policy.infer(policy_obs)
         raw_action = _raw_action_to_canonical(raw_policy_action, args.policy_joint_order)
@@ -930,7 +1176,7 @@ def run_eval(args) -> dict:
         if prev_side is not None:
             transitions_seen.add((prev_side, side))
         prev_side = side
-        strike_pt, serve_pos, serve_vel = _sample_serve(rng, side, scene, physics, args, serve_manifest)
+        strike_pt, serve_pos, serve_vel, serve_row = _sample_serve(rng, side, scene, physics, args, serve_manifest)
 
         if not continuous:
             # Independent-strike evaluation: fresh robot + policy state per serve.
@@ -963,6 +1209,7 @@ def run_eval(args) -> dict:
         proximity_contacted = False
         net_clear = False
         first_bounce = None
+        incoming_bounced = args.incoming_trajectory != "one-bounce"
         fell = False
         timed_out = True
         min_distance = float("inf")
@@ -987,11 +1234,12 @@ def run_eval(args) -> dict:
                 RacketCommand,
                 strike_x_w=float(strike_pt[0]) if serve_manifest else None,
             )
+            cmd = _perturb_command(cmd, args, rng, RacketCommand)
             revision += 1
             source.submit(cmd)
 
             racket_pre_pos, racket_pre_vel, _racket_site_xmat_pre = scene.racket_site_pose()
-            events, last_action, diag = _policy_tick(lifecycle, source, last_action, fixed_station_xy)
+            events, last_action, diag = _policy_tick(lifecycle, source, last_action, fixed_station_xy, serve_row)
             if recorder is not None and trial < args.record_serves:
                 recorder.capture(scene)
             if not diag["finite"]:
@@ -1006,6 +1254,12 @@ def run_eval(args) -> dict:
             delta = b_pos - r_pos
             distance = float(np.linalg.norm(delta))
             min_distance = min(min_distance, distance)
+
+            if args.incoming_trajectory == "one-bounce" and not contacted and not incoming_bounced:
+                for x_t, y_t, z_sign in events.surface_crossings:
+                    if z_sign < 0.0 and (0.0 <= x_t <= scene.net_x_table) and (-scene.width <= y_t <= 0.0):
+                        incoming_bounced = True
+                        break
 
             # --- contact: real MuJoCo ball<->racket contact, or the allowed proximity
             #     fallback (ball within contact_radius of the racket site with the
@@ -1084,6 +1338,7 @@ def run_eval(args) -> dict:
                         "target_y": float(cmd.position[1]),
                         "target_z": float(cmd.position[2]),
                         "time_to_strike": float(cmd.time_to_strike),
+                        "incoming_bounce": int(incoming_bounced),
                         "contacted": int(contacted),
                         "real_contact": int(real_contacted),
                         "proximity_contact": int(proximity_contacted),
@@ -1107,13 +1362,16 @@ def run_eval(args) -> dict:
 
         opponent = bool(first_bounce is not None and table.on_opponent_half(first_bounce[0], first_bounce[1]))
         success = bool(
-            contacted
+            incoming_bounced
+            and contacted
             and net_clear
             and first_bounce is not None
             and opponent
         )
         if success:
             miss_reason = "success"
+        elif not incoming_bounced:
+            miss_reason = "no_incoming_bounce"
         elif not contacted:
             miss_reason = "no_contact"
         elif not net_clear:
@@ -1145,6 +1403,7 @@ def run_eval(args) -> dict:
         for bucket in (counts, by_side[side_name]):
             bucket["attempts"] += 1
             bucket["successes"] += int(success)
+            bucket["incoming_bounce"] += int(incoming_bounced)
             bucket["contact"] += int(contacted)
             bucket["real_contact"] += int(real_contacted)
             bucket["proximity_contact"] += int(proximity_contacted)
@@ -1152,7 +1411,9 @@ def run_eval(args) -> dict:
             bucket["first_bounce"] += int(first_bounce is not None)
             bucket["opponent_bounce"] += int(opponent)
             bucket["nonfinite_action_ticks"] += int(trial_nonfinite_ticks)
-            if not contacted:
+            if not incoming_bounced:
+                bucket["miss_no_incoming_bounce"] += 1
+            elif not contacted:
                 bucket["miss_no_contact"] += 1
             elif not net_clear:
                 bucket["miss_contact_no_net"] += 1
@@ -1188,6 +1449,7 @@ def run_eval(args) -> dict:
     print(
         f"[mujoco_eval] mode={args.eval_mode} serves={accumulator.attempts} "
         f"returns={accumulator.successes} success_rate={accumulator.value:.4f} "
+        f"incoming_bounce_rate={counts['incoming_bounce'] / max(1, counts['attempts']):.4f} "
         f"contact_rate={counts['contact'] / max(1, counts['attempts']):.4f} "
         f"net_clear_rate={counts['net_clear'] / max(1, counts['attempts']):.4f} "
         f"opponent_bounce_rate={counts['opponent_bounce'] / max(1, counts['attempts']):.4f}",
@@ -1201,6 +1463,20 @@ def run_eval(args) -> dict:
                 "by_side": {name: _finalize_counts(v) for name, v in by_side.items()},
                 "eval_mode": args.eval_mode,
                 "side_mode": args.side_mode,
+                "incoming_trajectory": args.incoming_trajectory,
+                "planner_mode": args.planner_mode,
+                "planner_perturbation": {
+                    "target_pos_offset": [float(v) for v in args.planner_target_pos_offset],
+                    "target_pos_noise_std": [float(v) for v in args.planner_target_pos_noise_std],
+                    "tts_offset": float(args.planner_tts_offset),
+                    "tts_noise_std": float(args.planner_tts_noise_std),
+                    "target_vel_scale": float(args.planner_target_vel_scale),
+                    "target_vel_offset": [float(v) for v in args.planner_target_vel_offset],
+                    "target_vel_noise_std": [float(v) for v in args.planner_target_vel_noise_std],
+                    "target_vel_yaw_deg": float(args.planner_target_vel_yaw_deg),
+                    "min_racket_speed": float(args.planner_min_racket_speed),
+                    "max_racket_speed": float(args.planner_max_racket_speed),
+                },
                 "policy_joint_order": args.policy_joint_order,
                 "kp_scale": float(args.kp_scale),
                 "kd_scale": float(args.kd_scale),
@@ -1228,6 +1504,138 @@ def parse_args() -> argparse.Namespace:
         "--serve-manifest",
         default=None,
         help="Optional TSV motion manifest; sample strike points from its racket_pos target boxes.",
+    )
+    parser.add_argument(
+        "--incoming-trajectory",
+        choices=["direct", "one-bounce"],
+        default="direct",
+        help="direct preserves the old sampled flight-to-strike eval; one-bounce serves a ball that "
+             "must bounce on the robot half before the strike.",
+    )
+    parser.add_argument(
+        "--planner-mode",
+        choices=["no-bounce", "bounce-aware"],
+        default="no-bounce",
+        help="Inline planner used to turn the live ball state into RacketCommand targets.",
+    )
+    parser.add_argument(
+        "--planner-target-pos-offset",
+        nargs=3,
+        type=float,
+        default=(0.0, 0.0, 0.0),
+        metavar=("DX", "DY", "DZ"),
+        help="Add a fixed offset to the planner command target position in world metres.",
+    )
+    parser.add_argument(
+        "--planner-target-pos-noise-std",
+        nargs=3,
+        type=float,
+        default=(0.0, 0.0, 0.0),
+        metavar=("SX", "SY", "SZ"),
+        help="Per-command Gaussian noise std for target position in metres.",
+    )
+    parser.add_argument(
+        "--planner-tts-offset",
+        type=float,
+        default=0.0,
+        help="Add a fixed time-to-strike offset in seconds; negative values emulate late commands.",
+    )
+    parser.add_argument(
+        "--planner-tts-noise-std",
+        type=float,
+        default=0.0,
+        help="Per-command Gaussian noise std for time-to-strike in seconds.",
+    )
+    parser.add_argument(
+        "--planner-target-vel-scale",
+        type=float,
+        default=1.0,
+        help="Scale the planner command target velocity vector.",
+    )
+    parser.add_argument(
+        "--planner-target-vel-offset",
+        nargs=3,
+        type=float,
+        default=(0.0, 0.0, 0.0),
+        metavar=("DVX", "DVY", "DVZ"),
+        help="Add a fixed offset to the planner command target velocity in m/s.",
+    )
+    parser.add_argument(
+        "--planner-target-vel-noise-std",
+        nargs=3,
+        type=float,
+        default=(0.0, 0.0, 0.0),
+        metavar=("SVX", "SVY", "SVZ"),
+        help="Per-command Gaussian noise std for target velocity in m/s.",
+    )
+    parser.add_argument(
+        "--planner-target-vel-yaw-deg",
+        type=float,
+        default=0.0,
+        help="Rotate the planner command target velocity around world z by this many degrees.",
+    )
+    parser.add_argument(
+        "--planner-min-racket-speed",
+        type=float,
+        default=0.3,
+        help="Lower clamp for impact-inverted planner racket speed in m/s.",
+    )
+    parser.add_argument(
+        "--planner-max-racket-speed",
+        type=float,
+        default=2.8,
+        help="Upper clamp for impact-inverted planner racket speed in m/s.",
+    )
+    parser.add_argument(
+        "--bounce-pre-time",
+        nargs=2,
+        type=float,
+        default=(0.42, 0.65),
+        metavar=("LO", "HI"),
+        help="one-bounce serve: flight time from opponent origin to the robot-half bounce.",
+    )
+    parser.add_argument(
+        "--bounce-post-time",
+        nargs=2,
+        type=float,
+        default=(0.28, 0.44),
+        metavar=("LO", "HI"),
+        help="one-bounce serve: approximate time from robot-half bounce to strike point.",
+    )
+    parser.add_argument(
+        "--station-mode",
+        choices=["auto", "fixed", "dynamic-from-manifest"],
+        default="auto",
+        help="Observation station source. auto uses dynamic station only when --serve-manifest rows contain "
+             "motion_racket_offset_x/y; fixed preserves the legacy fixed-station eval.",
+    )
+    parser.add_argument(
+        "--dynamic-station-clip-x",
+        nargs=2,
+        type=float,
+        default=(-0.18, 0.18),
+        metavar=("LO", "HI"),
+        help="Dynamic station x clip relative to fixed station, matching training.",
+    )
+    parser.add_argument(
+        "--dynamic-station-clip-y",
+        nargs=2,
+        type=float,
+        default=(-0.22, 0.22),
+        metavar=("LO", "HI"),
+        help="Dynamic station y clip relative to fixed station, matching training.",
+    )
+    parser.add_argument(
+        "--dynamic-station-blend",
+        type=float,
+        default=1.0,
+        help="Blend from fixed station to manifest-derived dynamic station, matching training.",
+    )
+    parser.add_argument(
+        "--dynamic-station-post-window",
+        type=float,
+        default=0.12,
+        help="Keep dynamic station for this many seconds after contact, matching strike_window_s.",
     )
     parser.add_argument("--detailed", action="store_true", help="Emit detailed stage rates and diagnostics.")
     parser.add_argument(
@@ -1287,6 +1695,7 @@ def main() -> int:
     result = run_eval(args)
     print(json.dumps(result))
     if args.json_out:
+        pathlib.Path(args.json_out).parent.mkdir(parents=True, exist_ok=True)
         with open(args.json_out, "w", encoding="utf-8") as f:
             json.dump(result, f)
             f.write("\n")

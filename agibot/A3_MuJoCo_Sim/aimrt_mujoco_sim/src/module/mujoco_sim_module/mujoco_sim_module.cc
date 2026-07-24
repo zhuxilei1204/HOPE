@@ -17,7 +17,23 @@
   #include "mujoco_sim_module/subscriber/sim_reset_ros2_subscriber.h"
 #endif
 
+#include <cstdlib>
+#include <cstring>
 #include <thread>
+
+namespace {
+bool EnvFlagEnabled(const char* name) {
+  const char* value = std::getenv(name);
+  if (value == nullptr) return false;
+  return std::strcmp(value, "1") == 0 ||
+         std::strcmp(value, "true") == 0 ||
+         std::strcmp(value, "TRUE") == 0 ||
+         std::strcmp(value, "yes") == 0 ||
+         std::strcmp(value, "YES") == 0 ||
+         std::strcmp(value, "on") == 0 ||
+         std::strcmp(value, "ON") == 0;
+}
+}  // namespace
 
 namespace YAML {
 template <>
@@ -28,6 +44,7 @@ struct convert<aimrt_mujoco_sim::mujoco_sim_module::MujocoSimModule::Options> {
     Node node;
 
     node["simulation_model_path"] = rhs.simulation_model_path;
+    node["headless"] = rhs.headless;
     node["sim_executor"] = rhs.sim_executor;
     node["gui_executor"] = rhs.gui_executor;
     node["default_free_camera_focus_body"] = rhs.default_free_camera_focus_body;
@@ -61,8 +78,13 @@ struct convert<aimrt_mujoco_sim::mujoco_sim_module::MujocoSimModule::Options> {
     if (!node.IsMap()) return false;
 
     rhs.simulation_model_path = node["simulation_model_path"].as<std::string>();
+    if (node["headless"]) {
+      rhs.headless = node["headless"].as<bool>();
+    }
     rhs.sim_executor = node["sim_executor"].as<std::string>();
-    rhs.gui_executor = node["gui_executor"].as<std::string>();
+    if (node["gui_executor"]) {
+      rhs.gui_executor = node["gui_executor"].as<std::string>();
+    }
     if (node["default_free_camera_focus_body"]) {
       rhs.default_free_camera_focus_body = node["default_free_camera_focus_body"].as<std::string>();
     }
@@ -121,10 +143,15 @@ bool MujocoSimModule::Initialize(aimrt::CoreRef core) {
   auto file_path = core_.GetConfigurator().GetConfigFilePath();
   auto yaml_node = YAML::LoadFile(std::string(file_path));
   options_ = yaml_node.as<Options>();
+  if (EnvFlagEnabled("AIMRT_MUJOCO_SIM_HEADLESS") || EnvFlagEnabled("A3_MUJOCO_HEADLESS")) {
+    options_.headless = true;
+  }
 
   // Get executor handle
-  gui_executor_ = core_.GetExecutorManager().GetExecutor(options_.gui_executor);
-  AIMRT_CHECK_ERROR_THROW(gui_executor_, "Get executor '{}' failed.", options_.gui_executor);
+  if (!options_.headless) {
+    gui_executor_ = core_.GetExecutorManager().GetExecutor(options_.gui_executor);
+    AIMRT_CHECK_ERROR_THROW(gui_executor_, "Get executor '{}' failed.", options_.gui_executor);
+  }
 
   sim_executor_ = core_.GetExecutorManager().GetExecutor(options_.sim_executor);
   AIMRT_CHECK_ERROR_THROW(sim_executor_, "Get executor '{}' failed.", options_.sim_executor);
@@ -193,8 +220,12 @@ bool MujocoSimModule::Start() {
   run_flag_ = true;
   sim_loop_exited_ = false;
 
-  scope_.spawn(aimrt::co::On(aimrt::co::InlineScheduler(), GuiLoop()));
-  scope_.spawn(aimrt::co::On(aimrt::co::InlineScheduler(), SimLoop()));
+  if (options_.headless) {
+    scope_.spawn(aimrt::co::On(aimrt::co::InlineScheduler(), HeadlessSimLoop()));
+  } else {
+    scope_.spawn(aimrt::co::On(aimrt::co::InlineScheduler(), GuiLoop()));
+    scope_.spawn(aimrt::co::On(aimrt::co::InlineScheduler(), SimLoop()));
+  }
 
   for (auto& itr : subscriber_map_) {
     itr.second->Start();
@@ -462,6 +493,52 @@ aimrt::co::Task<void> MujocoSimModule::SimLoop() {
   }
 
   AIMRT_INFO("SimLoop exit.");
+  sim_loop_exited_ = true;
+
+  co_return;
+}
+
+aimrt::co::Task<void> MujocoSimModule::HeadlessSimLoop() {
+  auto sim_scheduler = aimrt::co::AimRTScheduler(sim_executor_);
+  co_await aimrt::co::Schedule(sim_scheduler);
+
+  mj_forward(m_, d_);
+
+  auto next_sche_tp = sim_executor_.Now();
+  std::chrono::nanoseconds dt(static_cast<uint64_t>(m_->opt.timestep * 1e9));
+
+  while (run_flag_) {
+    next_sche_tp += dt;
+
+    co_await aimrt::co::ScheduleAt(sim_scheduler, next_sche_tp);
+
+    for (auto& itr : subscriber_map_) {
+      if (itr.second->Type() == "sim_reset_ros2") {
+        itr.second->ApplyCtrlData();
+      }
+    }
+
+    for (auto& itr : subscriber_map_) {
+      if (itr.second->Type() != "sim_reset_ros2") {
+        itr.second->ApplyCtrlData();
+      }
+    }
+
+    const auto timestamp_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                                  std::chrono::system_clock::now().time_since_epoch())
+                                  .count();
+    const auto publish_context = publisher::PublishContext{
+        .sequence = publish_sequence_++,
+        .timestamp_ns = static_cast<uint64_t>(timestamp_ns)};
+    for (auto& itr : publisher_map_) {
+      itr.second->SetPublishContext(publish_context);
+      itr.second->PublishSensorData();
+    }
+
+    mj_step(m_, d_);
+  }
+
+  AIMRT_INFO("HeadlessSimLoop exit.");
   sim_loop_exited_ = true;
 
   co_return;

@@ -152,6 +152,20 @@ class HOPEPlannerNode(Node):
             float(intercept_y), self._split_y, self._hysteresis_y, self._prev_side
         )
 
+    def _warn_if_outlier(self) -> None:
+        """Surface a dropped mocap frame (throttled) without disrupting the pipeline.
+
+        The estimator already handles the outlier itself (see
+        ``BallStateEstimator._is_outlier``); this only makes the data-cleaning
+        step observable for on-site debugging (e.g. a wrong ball_pose_index,
+        a reflection, or a mocap dropout showing up as repeated rejections).
+        """
+        if self.planner.estimator.outlier_rejected:
+            self.get_logger().warning(
+                "ball pose sample rejected by the outlier gate (implausible jump or "
+                "non-finite value); check the mocap feed (ball_pose_index, reflections, "
+                "dropouts)", throttle_duration_sec=2.0)
+
     def _poses_cb(self, msg: PoseArray) -> None:
         if len(msg.poses) <= self._ball_index:
             return
@@ -163,6 +177,7 @@ class HOPEPlannerNode(Node):
         if (self._solve_period > 0.0 and self._last_solve_t is not None
                 and 0.0 <= (t - self._last_solve_t) < self._solve_period):
             self.planner.estimator.push(t, p_ball)
+            self._warn_if_outlier()
             return
         self._last_solve_t = t
 
@@ -174,6 +189,7 @@ class HOPEPlannerNode(Node):
                 f"planner solve skipped ({type(exc).__name__}: {exc}); check the mocap feed "
                 "(units, frame, outliers)", throttle_duration_sec=2.0)
             return
+        self._warn_if_outlier()
 
         if cmd is None:
             # Ball struck / moving away -> end the active task; next incoming

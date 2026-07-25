@@ -29,7 +29,7 @@ class HOPEPlanner:
         self.config = config or PlannerConfig()
         self.table = table or TableParams()
 
-        self.estimator = BallStateEstimator(self.config)
+        self.estimator = BallStateEstimator(self.config, self.physics)
         self.predictor = BallTrajectoryPredictor(self.physics, self.config, self.table)
         self.target_planner = RacketTargetPlanner(self.physics, self.config, self.table)
 

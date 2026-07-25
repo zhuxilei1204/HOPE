@@ -59,6 +59,71 @@ def test_outgoing_velocity_with_drag_lands_near_target():
     assert np.allclose(p_end, p_land, atol=5e-4)
 
 
+def test_net_margin_matches_analytic_estimate_without_drag():
+    """With zero drag, the stepped (accurate) and closed-form (analytic) net
+    margins should agree almost exactly -- they integrate the same physics."""
+    pl = RacketTargetPlanner(BallPhysics(k=0.0), PlannerConfig(), TableParams())
+    p_strike = np.array([0.0, -0.7625, 0.3])
+    v_outgoing = np.array([4.0, 0.0, 1.5])
+    accurate = pl._net_margin(p_strike, v_outgoing)
+    analytic = pl._analytic_net_margin(p_strike, v_outgoing)
+    assert np.isclose(accurate, analytic, atol=1e-3)
+
+
+def test_net_margin_increases_with_flight_time():
+    """For a fixed p_strike -> p_land pair, a longer flight time lofts the arc
+    higher at the net (more hang time), so margin must increase with
+    delta_t -- this is the direction the search in _solve_flight_time relies
+    on; if it ever regresses, the search would extend flight time in the
+    wrong direction and make net clearance worse, not better."""
+    pl = _planner()
+    p_strike = np.array([0.0, -0.7625, 0.3])
+    p_land = np.array([2.055, -0.7625, 0.02])
+    margins = []
+    for dt in [0.2, 0.35, 0.5, 0.65, 0.8]:
+        v = pl._compute_outgoing_velocity(p_strike, p_land, dt)
+        margins.append(pl._net_margin(p_strike, v))
+    assert all(b > a for a, b in zip(margins, margins[1:]))
+
+
+def test_plan_extends_flight_time_when_nominal_would_clip_the_net():
+    """A short nominal delta_t_flight forces a flat, low arc that clips the
+    net; plan() must lengthen the flight time (not shorten it) until the
+    configured clearance is met."""
+    config = PlannerConfig(delta_t_flight=0.2, delta_t_flight_max=1.0, net_clearance_margin=0.03)
+    pl = RacketTargetPlanner(BallPhysics(), config, TableParams())
+    cmd = pl.plan(_incoming_strike())
+    assert cmd.flight_time > config.delta_t_flight
+    assert cmd.net_margin >= config.net_clearance_margin - 1e-6
+    assert np.all(np.isfinite(cmd.v_racket))
+
+
+def test_plan_leaves_flight_time_unchanged_when_nominal_already_clears():
+    """The common case (nominal already clears comfortably) must be
+    untouched: no search, exact nominal flight time, unchanged behaviour."""
+    pl = _planner()
+    cmd = pl.plan(_incoming_strike())
+    assert cmd.flight_time == pl.config.delta_t_flight
+    assert cmd.net_margin >= pl.config.net_clearance_margin
+
+
+def test_plan_falls_back_to_best_effort_when_ceiling_cannot_clear():
+    """Even when delta_t_flight_max is too tight to fully satisfy
+    net_clearance_margin, plan() must still return a finite command (the
+    best-available margin) rather than raising or stalling."""
+    config = PlannerConfig(delta_t_flight=0.1, delta_t_flight_max=0.15, net_clearance_margin=0.03)
+    pl = RacketTargetPlanner(BallPhysics(), config, TableParams())
+    strike = StrikeTarget(
+        p_ball=np.array([0.0, -0.7625, 0.05]),
+        v_ball=np.array([-3.0, 0.0, -0.5]),
+        t_strike=0.4, num_bounces=1, valid=True,
+    )
+    cmd = pl.plan(strike)
+    assert cmd.flight_time <= config.delta_t_flight_max + 1e-9
+    assert np.all(np.isfinite(cmd.v_racket))
+    assert np.all(np.isfinite(cmd.p_intercept))
+
+
 def test_constant_restitution_is_self_consistent():
     """The commanded racket normal speed must satisfy the restitution identity
     v_o_n - v_r_n = -C_r (v_i_n - v_r_n)."""

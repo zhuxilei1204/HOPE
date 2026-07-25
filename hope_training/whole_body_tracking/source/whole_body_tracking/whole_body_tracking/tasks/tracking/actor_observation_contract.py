@@ -1,8 +1,10 @@
-"""The single HOPE actor-observation contract.
+"""HOPE actor-observation contracts.
 
-One contract, ``hope_pingpong`` (111 dims), pinned so training, ONNX export, the reference runner and
-the planner all agree on the exact term order, dimensions and deploy sources. This module is pure
-Python (no Isaac/torch imports) so it can be imported and unit-tested anywhere.
+The baseline contract, ``hope_pingpong`` (111 dims), is pinned so training, ONNX export, the
+reference runner and the planner all agree on the exact term order, dimensions and deploy sources.
+Experimental variants must use a distinct contract name so old checkpoints and deploy runners do
+not silently consume a different observation layout. This module is pure Python (no Isaac/torch
+imports) so it can be imported and unit-tested anywhere.
 
 Layout (assembly order is fixed; slices are contiguous):
 
@@ -22,6 +24,10 @@ Total = 3+31+31+31+3+2+2+3+3+1+1 = 111.
 
 The 62-D reference-motion joint stream and other privileged signals may feed the CRITIC (value
 function) during training, but they NEVER enter this actor/deployed observation.
+
+Experimental normal-visible layout:
+
+    hope_pingpong_normal114 = hope_pingpong + [111:114] racket_target_normal_w
 """
 
 from __future__ import annotations
@@ -83,8 +89,25 @@ HOPE_PINGPONG = ActorObservationContract(
     ),
 )
 
-# One contract only; keyed for lookup convenience.
-CONTRACTS = {HOPE_PINGPONG.name: HOPE_PINGPONG}
+HOPE_PINGPONG_NORMAL114 = ActorObservationContract(
+    name="hope_pingpong_normal114",
+    total_dim=114,
+    terms=HOPE_PINGPONG.terms
+    + (
+        ActorObservationTerm(
+            "racket_target_normal_w",
+            3,
+            "planner",
+            "desired racket face normal, world frame",
+        ),
+    ),
+)
+
+# Keyed for lookup convenience.
+CONTRACTS = {
+    HOPE_PINGPONG.name: HOPE_PINGPONG,
+    HOPE_PINGPONG_NORMAL114.name: HOPE_PINGPONG_NORMAL114,
+}
 
 
 def resolve_actor_observation_contract(name: str | None) -> ActorObservationContract | None:

@@ -1,11 +1,12 @@
 """HOPE observation terms.
 
-The actor (policy) observation is exactly the ``hope_pingpong`` contract (111 dims). Most
+The baseline actor (policy) observation is the ``hope_pingpong`` contract (111 dims). Most
 terms are standard proprioception from ``isaaclab.envs.mdp`` (base_ang_vel, joint_pos_rel,
 joint_vel_rel, projected_gravity); the goal/target terms below wrap :class:`RacketTargetCommand`, and
 ``last_action`` reads the action term's deploy-faithful applied action.
 
-The privileged terms at the bottom (actual racket FK state, desired racket normal) are CRITIC-ONLY.
+The actual racket FK terms remain critic-only. ``racket_target_normal_w`` is critic-only in the
+baseline and can be enabled as an experimental actor term by the 114-D normal-visible contract.
 """
 
 from __future__ import annotations
@@ -87,7 +88,7 @@ def racket_normal_w(env: ManagerBasedRLEnv, command_name: str) -> torch.Tensor:
 
 
 def racket_target_normal_w(env: ManagerBasedRLEnv, command_name: str) -> torch.Tensor:
-    """Desired racket face normal, world frame. Privileged (reward target only)."""
+    """Desired racket face normal, world frame."""
     return _cmd(env, command_name).racket_target_normal_w
 
 

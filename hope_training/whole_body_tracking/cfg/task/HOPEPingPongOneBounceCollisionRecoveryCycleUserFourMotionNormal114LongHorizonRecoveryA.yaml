@@ -1,0 +1,76 @@
+# =============================================================================
+# Recovery A experiment for the 114-D actor-visible-normal policy.
+#
+# Hypothesis:
+#   The current 10 s training episode only exposes roughly two complete swing cycles, while MuJoCo
+#   continuous evaluation fails after bad post-strike states are carried into later balls. This
+#   variant lengthens the episode so the same policy must survive more consecutive strikes without
+#   resetting into a clean pose.
+#
+# Scope:
+#   - keep the current 114-D actor contract, one-bounce planner command, and collision hit objective;
+#   - lengthen the continuous episode and reduce clean stand-starts;
+#   - add only mild recovery/hold damping so hit skill is not suppressed.
+# =============================================================================
+
+defaults:
+  - HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionNormal114FullRangeContinue
+  - _self_
+
+name: HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionNormal114LongHorizonRecoveryA
+
+overrides:
+  episode_length_s: 20.0
+
+  commands.motion.hold_steps_range: [45, 75]
+  commands.motion.stand_start_prob: 0.10
+  commands.motion.stand_start_min_hold: 50
+
+  rewards.follow_through_recovery.weight: 1.45
+  rewards.recovery_health.weight: 1.72
+  rewards.next_ball_readiness.weight: 2.05
+  rewards.next_swing_ready_bonus.weight: 2.20
+  rewards.post_contact_recovery_ready.weight: 1.70
+
+  rewards.post_strike_base_ang_vel.weight: 0.64
+  rewards.post_strike_base_ang_vel.params:
+    command_name: racket_target
+    std: 1.55
+    include_hold: true
+    early_prestrike_window_steps: 18
+    start_step: 0
+    warmup_steps: 6000
+    start_scale: 0.25
+
+  rewards.post_strike_lower_body_action_rate.weight: -0.030
+  rewards.post_strike_lower_body_action_rate.params:
+    command_name: racket_target
+    joint_names:
+      - waist_yaw_joint
+      - waist_roll_joint
+      - waist_pitch_joint
+      - left_hip_pitch_joint
+      - left_hip_roll_joint
+      - left_hip_yaw_joint
+      - left_knee_joint
+      - left_ankle_pitch_joint
+      - left_ankle_roll_joint
+      - right_hip_pitch_joint
+      - right_hip_roll_joint
+      - right_hip_yaw_joint
+      - right_knee_joint
+      - right_ankle_pitch_joint
+      - right_ankle_roll_joint
+    include_hold: true
+    early_prestrike_window_steps: 18
+    start_step: 0
+    warmup_steps: 6000
+    start_scale: 0.25
+
+  rewards.phase_action_rate.weight: -0.44
+  rewards.phase_action_rate.params:
+    command_name: racket_target
+    pre_strike_scale: 0.024
+    strike_scale: 0.004
+    recovery_scale: 0.105
+    hold_scale: 0.145

@@ -77,6 +77,8 @@ class RuntimeConfig:
             ready_reach_x=float(life_doc.get("ready_reach_x", 0.40)),
             ready_reach_y=float(life_doc.get("ready_reach_y", 0.20)),
             ready_reach_z=float(life_doc.get("ready_reach_z", -0.05)),
+            recovery_blend_s=float(life_doc.get("recovery_blend_s", 0.0)),
+            recovery_blend_velocity=bool(life_doc.get("recovery_blend_velocity", False)),
         )
 
         return cls(

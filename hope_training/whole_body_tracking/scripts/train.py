@@ -134,7 +134,10 @@ def _metadata_from_sidecar(path: str) -> dict:
 
 def _resolve_motion_plan(cfg) -> tuple[list[str], list[dict]]:
     """Return local clip paths and optional per-clip timing/side metadata."""
+    task_cfg = _cfg_get(cfg, "task")
     manifest = _cfg_get(cfg, "motion_manifest")
+    if manifest is None and task_cfg is not None:
+        manifest = _cfg_get(task_cfg, "motion_manifest")
     if manifest is not None:
         manifest_path = _resolve_existing_file(str(manifest))
         if not manifest_path.is_file():
@@ -153,11 +156,18 @@ def _resolve_motion_plan(cfg) -> tuple[list[str], list[dict]]:
             raise RuntimeError(f"motion_manifest has no clip rows: {manifest_path}")
     else:
         explicit = _motion_list(_cfg_get(cfg, "motion_files"))
+        if not explicit and task_cfg is not None:
+            explicit = _motion_list(_cfg_get(task_cfg, "motion_files"))
         if explicit:
             clips = explicit
         else:
-            primary = cfg.motion_file if cfg.motion_file is not None else cfg.task.get("motion_file")
-            secondary = cfg.motion_file_2 if cfg.motion_file_2 is not None else cfg.task.get("motion_file_2")
+            primary = _cfg_get(cfg, "motion_file")
+            secondary = _cfg_get(cfg, "motion_file_2")
+            if task_cfg is not None:
+                if primary is None:
+                    primary = _cfg_get(task_cfg, "motion_file")
+                if secondary is None:
+                    secondary = _cfg_get(task_cfg, "motion_file_2")
             clips = [primary]
             if secondary is not None:
                 clips.append(secondary)
@@ -323,6 +333,29 @@ def _apply_terrain(env_cfg, terrain, applied: list) -> None:
         applied.append(f"scene.terrain.debug_vis = {terrain_cfg.debug_vis}")
 
 
+def _apply_actor_observation_options(env_cfg, actor_obs, applied: list) -> None:
+    """Enable experimental actor-observation terms declared by a task config.
+
+    The baseline policy group keeps these terms as ``None`` so legacy 111-D tasks are unchanged.
+    """
+    if actor_obs is None:
+        return
+    actor_obs = OmegaConf.to_container(actor_obs, resolve=True)
+    if not bool(actor_obs.get("racket_target_normal_w", False)):
+        return
+
+    from isaaclab.managers import ObservationTermCfg as ObsTerm
+
+    import whole_body_tracking.tasks.tracking.mdp as mdp
+
+    policy = getattr(getattr(env_cfg, "observations", None), "policy", None)
+    if policy is None:
+        print("[train.py] WARNING: actor_obs provided but env_cfg.observations.policy is missing; skipped.", flush=True)
+        return
+    policy.racket_target_normal_w = ObsTerm(func=mdp.racket_target_normal_w, params={"command_name": "racket_target"})
+    applied.append("observations.policy.racket_target_normal_w = enabled")
+
+
 def _expand_two_side_boxes(boxes, sides: list[float]) -> tuple | None:
     if boxes is None:
         return None
@@ -405,6 +438,9 @@ def _apply_task_overrides(env_cfg, cfg, applied: list) -> None:
     _apply_domain_rand(env_cfg, task.get("domain_rand"), applied)
     # terrain generation / friction overrides.
     _apply_terrain(env_cfg, task.get("terrain"), applied)
+    # optional actor observation terms. Must run before env construction so the observation manager
+    # sees the final policy layout.
+    _apply_actor_observation_options(env_cfg, task.get("actor_obs"), applied)
     # generic overrides map (dotted attribute paths -> value).
     overrides = task.get("overrides")
     if overrides:

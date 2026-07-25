@@ -1,0 +1,109 @@
+# =============================================================================
+# B17996 anti-backlean short fine-tune.
+#
+# Start from the validated B17996 deploy-ready/no-command baseline and only address
+# the MuJoCo video failure where the upper body throws the robot backward during
+# pre-strike / impact.  This deliberately avoids the failed S2/S3 pattern:
+#   - no global lower-body stiffening;
+#   - no added lower-body joint-velocity penalty;
+#   - no stronger recovery/hold action-rate;
+#   - legs are rewarded for support quality but remain free to compensate quickly.
+# =============================================================================
+
+defaults:
+  - HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionNormal114DeployReadyNoCommand
+  - _self_
+
+name: HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionNormal114B17996AntiBacklean1500
+
+overrides:
+  rewards.strike_balance.weight: 0.55
+  rewards.strike_balance.params:
+    command_name: racket_target
+    pre_window_s: 0.34
+    post_window_s: 0.18
+    pitch_std: 0.16
+    upright_std: 0.26
+    ang_vel_std: 1.05
+    backward_std: 0.16
+    backward_vel_std: 0.42
+    start_step: 0
+    warmup_steps: 1500
+    start_scale: 0.25
+
+  rewards.lower_body_support.weight: 0.42
+  rewards.lower_body_support.params:
+    command_name: racket_target
+    pre_window_s: 0.36
+    post_window_s: 0.22
+    station_std: 0.28
+    backward_std: 0.18
+    backward_vel_std: 0.48
+    min_feet_contact: 0.50
+    start_step: 0
+    warmup_steps: 1500
+    start_scale: 0.25
+
+  # Third point: keep the existing outcome-conditioned closure, but use it as a
+  # light gated bonus rather than the main stabilizer.  Contact already exists in
+  # B17996; net/return get a smaller bonus so useful hits and ready recovery stay
+  # coupled without teaching a stand-still local optimum.
+  rewards.post_contact_recovery_ready.weight: 2.00
+  rewards.post_contact_recovery_ready.params:
+    command_name: racket_target
+    outcome: contact
+    height_std: 0.10
+    upright_std: 0.28
+    lin_vel_std: 0.25
+    ang_vel_std: 0.75
+    station_std: 0.22
+    racket_vel_std: 0.75
+    arm_pos_std: 0.35
+    arm_ori_std: 0.80
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    start_step: 0
+    warmup_steps: 1500
+    start_scale: 0.50
+
+  rewards.post_net_recovery_ready.weight: 0.35
+  rewards.post_net_recovery_ready.params:
+    command_name: racket_target
+    outcome: net_cross
+    height_std: 0.10
+    upright_std: 0.28
+    lin_vel_std: 0.25
+    ang_vel_std: 0.75
+    station_std: 0.22
+    racket_vel_std: 0.75
+    arm_pos_std: 0.35
+    arm_ori_std: 0.80
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    start_step: 0
+    warmup_steps: 1500
+    start_scale: 0.35
+
+  rewards.post_return_recovery_ready.weight: 0.55
+  rewards.post_return_recovery_ready.params:
+    command_name: racket_target
+    outcome: opponent_bounce
+    height_std: 0.10
+    upright_std: 0.28
+    lin_vel_std: 0.25
+    ang_vel_std: 0.75
+    station_std: 0.22
+    racket_vel_std: 0.75
+    arm_pos_std: 0.35
+    arm_ori_std: 0.80
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    start_step: 0
+    warmup_steps: 1500
+    start_scale: 0.35

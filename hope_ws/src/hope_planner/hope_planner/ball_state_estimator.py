@@ -82,7 +82,8 @@ class BallStateEstimator:
     @property
     def ready(self) -> bool:
         """True once enough samples exist for a stable fit."""
-        return len(self.t_buffer) >= 6
+        min_samples = max(6, int(getattr(self.config, "min_ready_samples", 6)))
+        return len(self.t_buffer) >= min_samples
 
     def estimate(self) -> Tuple[np.ndarray, np.ndarray, float]:
         """Compute smoothed ball position and velocity at the latest timestamp.

@@ -92,3 +92,14 @@ def test_fewer_than_six_samples_not_ready():
     for i in range(5):
         est.push(i * dt, np.array([0.0, 0.0, 0.5]))
     assert not est.ready
+
+
+def test_min_ready_samples_delays_ready_without_changing_fit_window():
+    cfg = PlannerConfig(min_ready_samples=12, fit_window=67)
+    est = BallStateEstimator(cfg)
+    dt = _dt()
+    for i in range(11):
+        est.push(i * dt, np.array([float(i), 0.0, 0.5]))
+    assert not est.ready
+    est.push(11 * dt, np.array([11.0, 0.0, 0.5]))
+    assert est.ready

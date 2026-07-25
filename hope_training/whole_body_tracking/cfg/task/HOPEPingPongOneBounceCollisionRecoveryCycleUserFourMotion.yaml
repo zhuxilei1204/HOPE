@@ -15,6 +15,8 @@ defaults:
 
 name: HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotion
 
+motion_manifest: hope_training/motions/user_four_motion_manual_hits_a3fk_yaw_leg_stabilized_20260724/manifest.tsv
+
 motion:
   wrap_teleport: false
 

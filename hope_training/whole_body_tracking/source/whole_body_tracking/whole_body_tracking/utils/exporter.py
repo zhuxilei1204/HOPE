@@ -25,7 +25,9 @@ import os
 # Public contract constants (see docs/POLICY_INTERFACE.md and the observation contract module).
 # ---------------------------------------------------------------------------------------------------
 CONTRACT_NAME = "hope_pingpong"
+CONTRACT_NAME_NORMAL114 = "hope_pingpong_normal114"
 OBS_DIM = 111
+OBS_DIM_NORMAL114 = 114
 ACTION_DIM = 31
 CONTROL_RATE_HZ = 50
 # The ActionAdapter constants (default_q, action_scale, clamp limits) are shipped as an editable
@@ -50,6 +52,27 @@ OBSERVATION_LAYOUT = [
     {"name": "time_to_strike", "slice": [109, 110], "dim": 1},
     {"name": "swing_side", "slice": [110, 111], "dim": 1},
 ]
+
+OBSERVATION_LAYOUT_NORMAL114 = OBSERVATION_LAYOUT + [
+    {"name": "racket_target_normal_w", "slice": [111, 114], "dim": 3},
+]
+
+
+def _resolve_contract(contract_name: str | None, actor_obs_dim: int | None = None) -> tuple[str, int, list[dict]]:
+    """Return ``(contract_name, obs_dim, observation_layout)`` for supported actor layouts."""
+    if contract_name in (None, "", "auto"):
+        if actor_obs_dim == OBS_DIM_NORMAL114:
+            contract_name = CONTRACT_NAME_NORMAL114
+        else:
+            contract_name = CONTRACT_NAME
+    if contract_name == CONTRACT_NAME:
+        return CONTRACT_NAME, OBS_DIM, OBSERVATION_LAYOUT
+    if contract_name == CONTRACT_NAME_NORMAL114:
+        return CONTRACT_NAME_NORMAL114, OBS_DIM_NORMAL114, OBSERVATION_LAYOUT_NORMAL114
+    raise ValueError(
+        f"unsupported actor observation contract {contract_name!r}; "
+        f"expected {CONTRACT_NAME!r}, {CONTRACT_NAME_NORMAL114!r}, or 'auto'"
+    )
 
 
 def _build_exporter_module(actor_critic, normalizer=None):
@@ -91,6 +114,7 @@ def export_policy_as_onnx(
     filename: str = "hope_pingpong.onnx",
     normalizer=None,
     verbose: bool = False,
+    contract_name: str | None = CONTRACT_NAME,
 ) -> str:
     """Export ``actor_critic`` to ``path/filename`` as a single-output ONNX graph.
 
@@ -101,15 +125,16 @@ def export_policy_as_onnx(
 
     os.makedirs(path, exist_ok=True)
     exporter = _build_exporter_module(actor_critic, normalizer).to("cpu").eval()
+    resolved_contract, obs_dim, _ = _resolve_contract(contract_name, exporter.in_features)
 
-    if exporter.in_features != OBS_DIM or exporter.out_features != ACTION_DIM:
+    if exporter.in_features != obs_dim or exporter.out_features != ACTION_DIM:
         raise ValueError(
             f"actor shape {exporter.in_features} -> {exporter.out_features} does not match the "
-            f"public contract {OBS_DIM} -> {ACTION_DIM}. Refusing to export a non-contract policy."
+            f"{resolved_contract} contract {obs_dim} -> {ACTION_DIM}. Refusing to export a non-contract policy."
         )
 
     onnx_path = os.path.join(path, filename)
-    dummy_obs = torch.zeros(1, OBS_DIM)
+    dummy_obs = torch.zeros(1, obs_dim)
     torch.onnx.export(
         exporter,
         dummy_obs,
@@ -149,22 +174,24 @@ def build_manifest(
     joint_names: list[str] | None = None,
     observation_normalization: str = "none",
     onnx_filename: str = "hope_pingpong.onnx",
+    contract_name: str | None = CONTRACT_NAME,
 ) -> dict:
     """Assemble the ``policy_manifest.json`` dictionary for the exported policy."""
     if joint_names is None:
         joint_names = _default_joint_order()
+    resolved_contract, obs_dim, observation_layout = _resolve_contract(contract_name)
     manifest = {
-        "contract_name": CONTRACT_NAME,
+        "contract_name": resolved_contract,
         "onnx_file": onnx_filename,
-        "obs_dim": OBS_DIM,
+        "obs_dim": obs_dim,
         "action_dim": ACTION_DIM,
         "control_rate_hz": CONTROL_RATE_HZ,
         "observation_normalization": observation_normalization,
         "onnx_signature": {
-            "input": {"name": "observation", "shape": [1, OBS_DIM], "dtype": "float32"},
+            "input": {"name": "observation", "shape": [1, obs_dim], "dtype": "float32"},
             "output": {"name": "raw_action", "shape": [1, ACTION_DIM], "dtype": "float32"},
         },
-        "observation_layout": OBSERVATION_LAYOUT,
+        "observation_layout": observation_layout,
         "joint_order_source": JOINT_ORDER_CONFIG,
         "joint_order": list(joint_names) if joint_names else None,
         "action_adapter_config": ACTION_ADAPTER_CONFIG,
@@ -178,10 +205,11 @@ def write_policy_manifest(
     observation_normalization: str = "none",
     onnx_filename: str = "hope_pingpong.onnx",
     manifest_filename: str = "policy_manifest.json",
+    contract_name: str | None = CONTRACT_NAME,
 ) -> str:
     """Write ``policy_manifest.json`` next to the ONNX. Returns the absolute manifest path."""
     os.makedirs(path, exist_ok=True)
-    manifest = build_manifest(joint_names, observation_normalization, onnx_filename)
+    manifest = build_manifest(joint_names, observation_normalization, onnx_filename, contract_name)
     manifest_path = os.path.join(path, manifest_filename)
     with open(manifest_path, "w", encoding="utf-8") as f:
         json.dump(manifest, f, indent=2, sort_keys=False)
@@ -190,7 +218,8 @@ def write_policy_manifest(
 
 
 def attach_onnx_metadata(onnx_path: str, joint_names: list[str] | None = None,
-                         observation_normalization: str = "none") -> None:
+                         observation_normalization: str = "none",
+                         contract_name: str | None = CONTRACT_NAME) -> None:
     """Embed the compact contract fields into the ONNX file's metadata (for the deploy backend).
 
     Only contract-level fields are embedded (dims, control rate, joint order, contract name, action
@@ -200,9 +229,10 @@ def attach_onnx_metadata(onnx_path: str, joint_names: list[str] | None = None,
 
     if joint_names is None:
         joint_names = _default_joint_order()
+    resolved_contract, obs_dim, _ = _resolve_contract(contract_name)
     meta = {
-        "contract_name": CONTRACT_NAME,
-        "obs_dim": str(OBS_DIM),
+        "contract_name": resolved_contract,
+        "obs_dim": str(obs_dim),
         "action_dim": str(ACTION_DIM),
         "control_rate_hz": str(CONTROL_RATE_HZ),
         "observation_normalization": observation_normalization,
@@ -224,6 +254,7 @@ def export_policy(
     normalizer=None,
     onnx_filename: str = "hope_pingpong.onnx",
     verbose: bool = False,
+    contract_name: str | None = CONTRACT_NAME,
 ) -> tuple[str, str]:
     """Export the ONNX policy + write ``policy_manifest.json`` + embed ONNX metadata.
 
@@ -233,7 +264,9 @@ def export_policy(
     import torch.nn as nn
 
     obs_norm = "none" if (normalizer is None or isinstance(normalizer, nn.Identity)) else "empirical"
-    onnx_path = export_policy_as_onnx(actor_critic, path, onnx_filename, normalizer, verbose)
-    attach_onnx_metadata(onnx_path, joint_names, obs_norm)
-    manifest_path = write_policy_manifest(path, joint_names, obs_norm, onnx_filename)
+    # ``auto`` is resolved from the actor shape once here, then reused for manifest/metadata.
+    inferred_contract, _, _ = _resolve_contract(contract_name, _build_exporter_module(actor_critic, normalizer).in_features)
+    onnx_path = export_policy_as_onnx(actor_critic, path, onnx_filename, normalizer, verbose, inferred_contract)
+    attach_onnx_metadata(onnx_path, joint_names, obs_norm, inferred_contract)
+    manifest_path = write_policy_manifest(path, joint_names, obs_norm, onnx_filename, contract_name=inferred_contract)
     return onnx_path, manifest_path

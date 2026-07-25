@@ -53,6 +53,9 @@ class HOPEPlannerNode(Node):
         # bundled 360 Hz Motive captures validated best at 67 samples for
         # 50-500 ms ahead prediction.
         self.declare_parameter("fit_window", 67)
+        # Optional confidence gate. Default 6 preserves legacy behaviour; raise
+        # only after validating the delay/accuracy tradeoff on real captures.
+        self.declare_parameter("min_ready_samples", 6)
         self.declare_parameter("bounce_z_tol", 0.005)
         self.declare_parameter("bounce_center_z_max", 0.11)
         # Push every mocap sample into the estimator; run the predict+plan solve
@@ -98,6 +101,7 @@ class HOPEPlannerNode(Node):
             delta_t_flight=float(self.get_parameter("delta_t_flight").value),
             max_predict_time=float(self.get_parameter("max_predict_time").value),
             fit_window=int(self.get_parameter("fit_window").value),
+            min_ready_samples=int(self.get_parameter("min_ready_samples").value),
             bounce_z_tol=float(self.get_parameter("bounce_z_tol").value),
             bounce_center_z_max=float(self.get_parameter("bounce_center_z_max").value),
             C_r=paddle["C_r"],
@@ -135,7 +139,8 @@ class HOPEPlannerNode(Node):
         self.get_logger().info(
             f"HOPE planner started: x_hit={config.x_hit:.3f} m, "
             f"landing={config.target_land[:2]}, split_y={self._split_y:.3f} m, "
-            f"fit_window={config.fit_window}, bounce_center_z_max={config.bounce_center_z_max:.3f} m, "
+            f"fit_window={config.fit_window}, min_ready_samples={config.min_ready_samples}, "
+            f"bounce_center_z_max={config.bounce_center_z_max:.3f} m, "
             f"ball_physics=(k={physics.k:.4f}, C_h={physics.C_h:.3f}, C_v={physics.C_v:.3f}), "
             f"solve_period={self._solve_period:.3f} s, ball_pose_index={self._ball_index}")
 

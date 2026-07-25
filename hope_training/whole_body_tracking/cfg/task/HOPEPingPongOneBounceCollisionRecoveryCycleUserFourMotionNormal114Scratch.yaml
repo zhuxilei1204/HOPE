@@ -1,0 +1,20 @@
+# =============================================================================
+# Scratch experiment: actor-visible racket target normal on top of the current four-motion SettleA
+# mainline.
+#
+# Intent:
+#   - keep the current collision-enhanced hit objective and conservative recovery loop unchanged;
+#   - train from random initialization, not from any previous checkpoint;
+#   - expose planner-computed racket_target_normal_w to the actor so policy output can be compared
+#     directly against planner blade-direction intent.
+# =============================================================================
+
+defaults:
+  - HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionSettleA
+  - _self_
+
+name: HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionNormal114Scratch
+actor_obs_contract: hope_pingpong_normal114
+
+actor_obs:
+  racket_target_normal_w: true

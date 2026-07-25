@@ -17,6 +17,13 @@ That places the table at ``x in [0, length]``, ``y in [-width, 0]`` and the
 table surface at ``z ~= 0`` for this capture. The raw origin can be shifted
 before remapping with ``--origin-raw-mm X Y Z``.
 
+If the Motive export is already calibrated with raw ``(0,0,0)`` at the HOPE
+table-frame origin, use ``--frame-preset true-origin-planner`` instead:
+
+    planner x = raw Motive X
+    planner y = -raw Motive Z
+    planner z = raw Motive Y
+
 Examples:
 
     python extract_motive_a_segments.py /path/拍1动捕数据.zip /path/拍2动捕数据.zip \
@@ -53,6 +60,11 @@ FRAME_PRESETS = {
         "axis_map": "z,x,y",
         "origin_raw_mm": (0.0, 0.0, 0.0),
         "description": "original requested shuffle: x=rawZ, y=rawX, z=rawY",
+    },
+    "true-origin-planner": {
+        "axis_map": "x,-z,y",
+        "origin_raw_mm": (0.0, 0.0, 0.0),
+        "description": "HOPE planner frame with raw origin preserved: x=rawX, y=-rawZ, z=rawY",
     },
 }
 
@@ -165,16 +177,32 @@ def _unit_scale(units: str, override: float | None) -> float:
     return 1e-3
 
 
-def _parse_axis_map(spec: str) -> tuple[int, int, int]:
+def _parse_axis_map(spec: str) -> tuple[tuple[float, int], tuple[float, int], tuple[float, int]]:
     labels = [p.strip().lower() for p in spec.split(",")]
-    if len(labels) != 3 or any(label not in AXIS_INDEX for label in labels):
-        raise argparse.ArgumentTypeError("--axis-map must look like z,x,y")
-    if len(set(labels)) != 3:
+    parsed: list[tuple[float, int]] = []
+    axes = []
+    for label in labels:
+        sign = 1.0
+        axis = label
+        if label.startswith("-"):
+            sign = -1.0
+            axis = label[1:]
+        elif label.startswith("+"):
+            axis = label[1:]
+        if axis not in AXIS_INDEX:
+            raise argparse.ArgumentTypeError("--axis-map must look like z,x,y or x,-z,y")
+        axes.append(axis)
+        parsed.append((sign, AXIS_INDEX[axis]))
+    if len(parsed) != 3:
+        raise argparse.ArgumentTypeError("--axis-map must look like z,x,y or x,-z,y")
+    if len(set(axes)) != 3:
         raise argparse.ArgumentTypeError("--axis-map must use each raw axis once")
-    return tuple(AXIS_INDEX[label] for label in labels)
+    return tuple(parsed)  # type: ignore[return-value]
 
 
-def _resolve_transform(args: argparse.Namespace) -> tuple[str, tuple[int, int, int], np.ndarray]:
+def _resolve_transform(
+    args: argparse.Namespace,
+) -> tuple[str, tuple[tuple[float, int], tuple[float, int], tuple[float, int]], np.ndarray]:
     preset = FRAME_PRESETS[args.frame_preset]
     axis_map_spec = args.axis_map if args.axis_map is not None else preset["axis_map"]
     origin_raw_mm = args.origin_raw_mm if args.origin_raw_mm is not None else preset["origin_raw_mm"]
@@ -266,7 +294,7 @@ def extract(args: argparse.Namespace) -> list[dict]:
     for capture in _iter_input_captures([Path(p) for p in args.inputs]):
         scale = _unit_scale(capture.units, args.scale)
         raw_shifted = capture.raw_pos - raw_origin
-        pos = raw_shifted[:, axis_map] * scale
+        pos = np.column_stack([sign * raw_shifted[:, axis] for sign, axis in axis_map]) * scale
 
         # Rebase file time before segmentation; per-segment files are rebased
         # again to start at zero.
@@ -346,7 +374,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
         "--axis-map",
         default=None,
         help=(
-            "override output x,y,z source raw axes, comma-separated, e.g. x,z,y. "
+            "override output x,y,z source raw axes, comma-separated, e.g. x,z,y or x,-z,y. "
             "Defaults come from --frame-preset"
         ),
     )

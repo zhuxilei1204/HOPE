@@ -69,12 +69,8 @@ def parse_args() -> argparse.Namespace:
         default="HOPEPingPong.yaml",
         help="Task YAML whose overrides should be applied for eval (name under cfg/task or a path).",
     )
-    parser.add_argument(
-        "--motion-file", default="hope_training/motions/preprocessed/hope_forehand.npz", help="Forehand clip."
-    )
-    parser.add_argument(
-        "--motion-file-2", default="hope_training/motions/preprocessed/hope_backhand.npz", help="Backhand clip."
-    )
+    parser.add_argument("--motion-file", default=None, help="Forehand clip override.")
+    parser.add_argument("--motion-file-2", default=None, help="Backhand clip override.")
     parser.add_argument(
         "--motion-manifest",
         default=None,
@@ -178,8 +174,11 @@ def main() -> int:
         from train import _apply_motion_metadata, _resolve_motion_plan
 
         env_cfg = parse_env_cfg(args.task, device=args.device, num_envs=args.num_envs)
+        task_cfg = _load_task_yaml_with_defaults(_resolve_task_yaml(args.task_yaml))
         applied = _apply_training_task_overrides(env_cfg, args.task_yaml)
-        clips, motion_metadata = _resolve_motion_plan(args)
+        motion_args = argparse.Namespace(**vars(args))
+        motion_args.task = task_cfg
+        clips, motion_metadata = _resolve_motion_plan(motion_args)
         env_cfg.commands.motion.motion_file = clips if len(clips) > 1 else clips[0]
         _apply_motion_metadata(env_cfg, clips, motion_metadata, applied)
         print(f"[evaluate.py] applied {len(applied)} task override(s):", file=sys.stderr, flush=True)

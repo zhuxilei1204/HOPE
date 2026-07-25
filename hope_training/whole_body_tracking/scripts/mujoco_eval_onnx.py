@@ -113,6 +113,19 @@ def _default_runtime_config(repo_root: pathlib.Path) -> pathlib.Path:
     return repo_root / "a3_deploy" / "a3_deploy_example" / "config" / "hope_pingpong_runtime.yaml"
 
 
+def _default_real_planner_yaml(repo_root: pathlib.Path) -> pathlib.Path:
+    return repo_root / "hope_ws" / "src" / "hope_planner" / "config" / "hope_planner.yaml"
+
+
+def _resolve_repo_path(repo_root: pathlib.Path, value: str | None) -> pathlib.Path | None:
+    if value is None or value == "":
+        return None
+    path = pathlib.Path(str(value)).expanduser()
+    if path.is_absolute():
+        return path
+    return repo_root / path
+
+
 def _load_success_metric(repo_root: pathlib.Path):
     """Import the shared ``success_metric`` module by file path (pure NumPy).
 
@@ -673,10 +686,13 @@ def _sample_serve(rng, side, scene, physics, args, serve_manifest=None):
             candidates = serve_manifest
         row = candidates[int(rng.integers(0, len(candidates)))]
         strike_pt = np.array([rng.uniform(lo, hi) for lo, hi in row["ranges"]], dtype=np.float64)
+        if bool(getattr(args, "_force_serve_strike_plane_x", False)):
+            strike_pt[0] = scene.near_edge_x + float(getattr(args, "_serve_strike_plane_x", args.strike_plane_x))
         y = float(strike_pt[1])
     else:
         row = None
-        strike_x = scene.near_edge_x + args.strike_plane_x  # MuJoCo x of the fixed strike plane
+        strike_table_x = float(getattr(args, "_serve_strike_plane_x", args.strike_plane_x))
+        strike_x = scene.near_edge_x + strike_table_x  # MuJoCo x of the fixed strike plane
         if side >= 0:  # FOREHAND -> robot's right = -y in the MuJoCo/robot frame
             y = rng.uniform(-0.45, -0.12)
         else:          # BACKHAND -> robot's left = +y
@@ -821,9 +837,9 @@ def _predict_command(
         position=target_pos,
         velocity=target_vel,
         time_to_strike=float(tts),
+        target_normal=target_normal,
     )
     cmd.outgoing_velocity = target_outgoing_vel
-    cmd.target_normal = target_normal
     return cmd
 
 
@@ -864,12 +880,239 @@ def _perturb_command(cmd, args, rng, RacketCommand):
         position=pos,
         velocity=vel,
         time_to_strike=tts,
+        target_normal=target_normal,
     )
     if outgoing_vel is not None:
         out.outgoing_velocity = np.asarray(outgoing_vel, dtype=np.float64).copy()
-    if target_normal is not None:
-        out.target_normal = np.asarray(target_normal, dtype=np.float64).copy()
     return out
+
+
+class _RealHopePlannerBridge:
+    """Node-faithful pure-Python HOPE planner bridge for MuJoCo eval.
+
+    The real planner consumes table-frame ball positions at mocap rate.  MuJoCo eval
+    owns the physics state at 50 Hz, so this bridge linearly interpolates table-frame
+    ball positions to a configurable mocap rate, applies the same solve-rate limiter
+    and task lifecycle as ``hope_planner.node.HOPEPlannerNode``, then converts the
+    planner command back to the deploy runner's world-frame ``RacketCommand``.
+    """
+
+    def __init__(self, repo_root, scene, args, DeployRacketCommand, forehand: int, backhand: int):
+        self.repo_root = pathlib.Path(repo_root)
+        self.scene = scene
+        self.args = args
+        self.DeployRacketCommand = DeployRacketCommand
+        self.forehand = int(forehand)
+        self.backhand = int(backhand)
+
+        pkg_parent = self.repo_root / "hope_ws" / "src" / "hope_planner"
+        if str(pkg_parent) not in sys.path:
+            sys.path.insert(0, str(pkg_parent))
+
+        from hope_planner.constants import PlannerConfig, load_ball_physics, load_paddle_params, load_table_params
+        from hope_planner.planner import HOPEPlanner
+        from hope_planner.side_selection import select_swing_side
+
+        self._PlannerConfig = PlannerConfig
+        self._HOPEPlanner = HOPEPlanner
+        self._load_ball_physics = load_ball_physics
+        self._load_paddle_params = load_paddle_params
+        self._load_table_params = load_table_params
+        self._select_swing_side = select_swing_side
+
+        self.yaml_path = _resolve_repo_path(self.repo_root, args.real_planner_yaml) or _default_real_planner_yaml(self.repo_root)
+        self.params = self._load_yaml_params(self.yaml_path)
+        self.physics_path = self._resolve_physics_path(args.real_planner_physics_path)
+        self.physics = self._make_physics()
+        self.table = self._make_table()
+        self.config = self._make_config()
+        self.x_hit_table = float(self.config.x_hit)
+        self.solve_period = (
+            float(args.real_planner_solve_period)
+            if args.real_planner_solve_period is not None
+            else float(self.params.get("solve_period_s", 0.02))
+        )
+        self.mocap_hz = float(args.real_planner_mocap_hz)
+        self.mocap_dt = 1.0 / self.mocap_hz if self.mocap_hz > 0.0 else None
+        self.split_y = float(self.params.get("swing_side_split_y", -0.7625))
+        self.hysteresis_y = max(0.0, float(self.params.get("swing_side_hysteresis_y", 0.0)))
+
+        self._task_id = 0
+        self._task_revision = 0
+        self._task_active = False
+        self._locked_side = self.forehand
+        self._prev_side = 0
+        self._last_solve_t = None
+        self._last_control_t = None
+        self._last_control_pos = None
+        self._next_mocap_t = None
+        self.solve_calls = 0
+        self.command_count = 0
+        self.no_command_count = 0
+        self.reset_for_new_ball()
+
+    @staticmethod
+    def _load_yaml_params(path: pathlib.Path) -> dict:
+        if not path.is_file():
+            raise FileNotFoundError(f"real planner yaml not found: {path}")
+        import yaml
+
+        with path.open("r", encoding="utf-8") as fh:
+            doc = yaml.safe_load(fh) or {}
+        params = doc.get("hope_planner", {}).get("ros__parameters", doc)
+        return dict(params or {})
+
+    def _resolve_physics_path(self, value: str | None) -> str | None:
+        candidate = _resolve_repo_path(self.repo_root, value)
+        if candidate is None:
+            candidate = _resolve_repo_path(self.repo_root, self.params.get("ball_physics_path"))
+        if candidate is None:
+            return None
+        return str(candidate)
+
+    def _make_physics(self):
+        physics = self._load_ball_physics(self.physics_path)
+        for arg_name, param_name, attr_name in (
+            ("real_planner_drag_k", "drag_k", "k"),
+            ("real_planner_table_c_h", "table_c_h", "C_h"),
+            ("real_planner_table_c_v", "table_c_v", "C_v"),
+        ):
+            override = getattr(self.args, arg_name, None)
+            if override is None:
+                override = self.params.get(param_name, -1.0)
+            override = float(override)
+            if override >= 0.0:
+                setattr(physics, attr_name, override)
+        return physics
+
+    def _make_table(self):
+        return self._load_table_params(self.physics_path, y_max=float(self.params.get("table_y_max", 0.0)))
+
+    def _make_config(self):
+        paddle = self._load_paddle_params(self.physics_path)
+        x_hit = self.args.real_planner_x_hit
+        if x_hit is None:
+            x_hit = self.params.get("x_hit", 0.2)
+        target_land = np.array(
+            [
+                float(self.params.get("target_land_x", 2.055)),
+                float(self.params.get("target_land_y", -0.7625)),
+                float(self.physics.radius),
+            ],
+            dtype=np.float64,
+        )
+        return self._PlannerConfig(
+            x_hit=float(x_hit),
+            target_land=target_land,
+            delta_t_flight=float(self.params.get("delta_t_flight", 0.5)),
+            max_predict_time=float(self.params.get("max_predict_time", 2.0)),
+            fit_window=int(self.params.get("fit_window", 67)),
+            min_ready_samples=int(self.params.get("min_ready_samples", 6)),
+            bounce_z_tol=float(self.params.get("bounce_z_tol", 0.005)),
+            bounce_center_z_max=float(self.params.get("bounce_center_z_max", 0.11)),
+            C_r=float(paddle["C_r"]),
+            paddle_a_t=float(paddle["paddle_a_t"]),
+            paddle_b_t=float(paddle["paddle_b_t"]),
+            paddle_mu=float(paddle["paddle_mu"]),
+        )
+
+    def reset_for_new_ball(self) -> None:
+        self.planner = self._HOPEPlanner(physics=self.physics, config=self.config, table=self.table)
+        self._task_revision = 0
+        self._task_active = False
+        self._last_solve_t = None
+        self._last_control_t = None
+        self._last_control_pos = None
+        self._next_mocap_t = None
+
+    def _select_side(self, intercept_y: float) -> int:
+        side = self._select_swing_side(float(intercept_y), self.split_y, self.hysteresis_y, self._prev_side)
+        return self.forehand if side >= 0 else self.backhand
+
+    def _push_sample(self, t: float, p_table: np.ndarray):
+        if (
+            self.solve_period > 0.0
+            and self._last_solve_t is not None
+            and 0.0 <= (float(t) - self._last_solve_t) < self.solve_period
+        ):
+            self.planner.estimator.push(float(t), np.asarray(p_table, dtype=np.float64))
+            return None
+        self._last_solve_t = float(t)
+        self.solve_calls += 1
+        try:
+            cmd = self.planner.update(float(t), np.asarray(p_table, dtype=np.float64))
+        except (FloatingPointError, ValueError, np.linalg.LinAlgError):
+            self.no_command_count += 1
+            return None
+
+        if cmd is None:
+            if self.planner.ball_incoming is False:
+                self._task_active = False
+            self.no_command_count += 1
+            return None
+
+        if not self._task_active:
+            self._task_id += 1
+            self._task_revision = 0
+            self._locked_side = self._select_side(float(cmd.p_intercept[1]))
+            self._prev_side = self._locked_side
+            self._task_active = True
+        else:
+            self._task_revision += 1
+
+        tts = self.planner.time_to_strike
+        if tts is None:
+            latest_t = getattr(self.planner, "_latest_t", float(t))
+            tts = float(cmd.t_strike) - float(latest_t)
+        normal = np.asarray(cmd.n_racket, dtype=np.float64)
+        normal /= max(float(np.linalg.norm(normal)), 1.0e-9)
+        deploy_cmd = self.DeployRacketCommand(
+            task_id=self._task_id,
+            task_revision=self._task_revision,
+            swing_side=self._locked_side,
+            position=np.asarray(cmd.p_intercept, dtype=np.float64) + self.scene.offset,
+            velocity=np.asarray(cmd.v_racket, dtype=np.float64),
+            time_to_strike=max(0.0, float(tts)),
+            target_normal=normal,
+        )
+        try:
+            deploy_cmd.outgoing_velocity = self.planner.target_planner._compute_outgoing_velocity(
+                np.asarray(cmd.p_intercept, dtype=np.float64),
+                np.asarray(self.config.target_land, dtype=np.float64),
+                float(self.config.delta_t_flight),
+            )
+        except Exception:
+            pass
+        deploy_cmd.planner_num_bounces = int(getattr(cmd, "num_bounces", 0))
+        self.command_count += 1
+        return deploy_cmd
+
+    def update(self, ball_pos_w: np.ndarray, t: float):
+        p_table = self.scene.to_table(np.asarray(ball_pos_w, dtype=np.float64))
+        t = float(t)
+        if self._last_control_t is None or self._last_control_pos is None or t <= self._last_control_t:
+            self._last_control_t = t
+            self._last_control_pos = p_table.copy()
+            self._next_mocap_t = None if self.mocap_dt is None else t + self.mocap_dt
+            return self._push_sample(t, p_table)
+
+        latest_cmd = None
+        if self.mocap_dt is None:
+            latest_cmd = self._push_sample(t, p_table)
+        else:
+            sample_t = self._next_mocap_t if self._next_mocap_t is not None else self._last_control_t
+            while sample_t <= t + 1.0e-9:
+                alpha = (sample_t - self._last_control_t) / max(t - self._last_control_t, 1.0e-9)
+                interp = (1.0 - alpha) * self._last_control_pos + alpha * p_table
+                cmd = self._push_sample(sample_t, interp)
+                if cmd is not None:
+                    latest_cmd = cmd
+                sample_t += self.mocap_dt
+            self._next_mocap_t = sample_t
+
+        self._last_control_t = t
+        self._last_control_pos = p_table.copy()
+        return latest_cmd
 
 
 def run_eval(args) -> dict:
@@ -884,7 +1127,7 @@ def run_eval(args) -> dict:
     from a3_deploy_onnx_ref_pingpong.config import RuntimeConfig
     from a3_deploy_onnx_ref_pingpong.joint_order import HEAD_INDICES, JOINT_NAMES
     from a3_deploy_onnx_ref_pingpong.lifecycle import SwingLifecycle
-    from a3_deploy_onnx_ref_pingpong.observation import build_observation
+    from a3_deploy_onnx_ref_pingpong.observation import OBS_DIM_NORMAL114, build_observation, build_observation_normal114
     from a3_deploy_onnx_ref_pingpong.onnx_policy import OnnxPolicy
     from a3_deploy_onnx_ref_pingpong.racket_command import (
         BACKHAND,
@@ -908,6 +1151,9 @@ def run_eval(args) -> dict:
     from mujoco_pingpong_scene import PingPongRealPhysicsScene
 
     runtime_cfg = RuntimeConfig.load(args.runtime_config or _default_runtime_config(repo_root))
+    if float(args.lifecycle_recovery_blend_seconds) > 0.0:
+        runtime_cfg.lifecycle.recovery_blend_s = float(args.lifecycle_recovery_blend_seconds)
+        runtime_cfg.lifecycle.recovery_blend_velocity = bool(args.lifecycle_recovery_blend_velocity)
     onnx_path = args.onnx or str(runtime_cfg.onnx_path)
     robot_xml = args.model_xml or str(runtime_cfg.model_xml_path)
 
@@ -943,6 +1189,13 @@ def run_eval(args) -> dict:
         if args.record_video
         else None
     )
+    real_planner = None
+    if args.planner_mode == "real-hope-planner":
+        real_planner = _RealHopePlannerBridge(repo_root, scene, args, RacketCommand, FOREHAND, BACKHAND)
+        # Sample/eval serves at the same fixed table-frame strike plane the real planner uses.  The
+        # manifest still supplies side/y/z boxes and dynamic-station metadata.
+        args._force_serve_strike_plane_x = True
+        args._serve_strike_plane_x = float(real_planner.x_hit_table)
 
     default_q = runtime_cfg.action_adapter.default_q.copy()
     kp = runtime_cfg.sim_kp.copy() * float(args.kp_scale)
@@ -1123,7 +1376,10 @@ def run_eval(args) -> dict:
         state = scene.read_robot_state()
         target = lifecycle.update(source.poll(), state)
         station_xy = _station_xy_for_observation(fixed_station_xy, target, lifecycle.phase, manifest_row, args)
-        obs = build_observation(state, target, last_action, default_q, station_xy)
+        if getattr(policy, "obs_dim", 111) == OBS_DIM_NORMAL114:
+            obs = build_observation_normal114(state, target, last_action, default_q, station_xy)
+        else:
+            obs = build_observation(state, target, last_action, default_q, station_xy)
         policy_obs = _obs_for_policy_joint_order(obs, last_action, args.policy_joint_order)
         raw_policy_action = policy.infer(policy_obs)
         raw_action = _raw_action_to_canonical(raw_policy_action, args.policy_joint_order)
@@ -1177,6 +1433,8 @@ def run_eval(args) -> dict:
             transitions_seen.add((prev_side, side))
         prev_side = side
         strike_pt, serve_pos, serve_vel, serve_row = _sample_serve(rng, side, scene, physics, args, serve_manifest)
+        if real_planner is not None:
+            real_planner.reset_for_new_ball()
 
         if not continuous:
             # Independent-strike evaluation: fresh robot + policy state per serve.
@@ -1222,21 +1480,29 @@ def run_eval(args) -> dict:
 
         for _tick in range(max_ticks):
             ball_pos, ball_vel = scene.ball_state()
-            cmd = _predict_command(
-                ball_pos,
-                ball_vel,
-                side,
-                scene,
-                physics,
-                args,
-                task_id,
-                revision,
-                RacketCommand,
-                strike_x_w=float(strike_pt[0]) if serve_manifest else None,
-            )
-            cmd = _perturb_command(cmd, args, rng, RacketCommand)
-            revision += 1
-            source.submit(cmd)
+            if real_planner is not None:
+                cmd = real_planner.update(ball_pos, float(scene.data.time))
+                if cmd is not None:
+                    cmd = _perturb_command(cmd, args, rng, RacketCommand)
+                    source.submit(cmd)
+                else:
+                    cmd = source.poll()
+            else:
+                cmd = _predict_command(
+                    ball_pos,
+                    ball_vel,
+                    side,
+                    scene,
+                    physics,
+                    args,
+                    task_id,
+                    revision,
+                    RacketCommand,
+                    strike_x_w=float(strike_pt[0]) if serve_manifest else None,
+                )
+                cmd = _perturb_command(cmd, args, rng, RacketCommand)
+                revision += 1
+                source.submit(cmd)
 
             racket_pre_pos, racket_pre_vel, _racket_site_xmat_pre = scene.racket_site_pose()
             events, last_action, diag = _policy_tick(lifecycle, source, last_action, fixed_station_xy, serve_row)
@@ -1277,25 +1543,27 @@ def run_eval(args) -> dict:
             if new_contact_kind == "real" or (
                 new_contact_kind == "proximity" and contact_diag_row["contact_kind"] == "none"
             ):
-                _record_contact_diag(
-                    contact_diag_row,
-                    kind=new_contact_kind,
-                    tick=_tick,
-                    phase=lifecycle.phase.value,
-                    events=events,
-                    cmd=cmd,
-                    ball_pre_pos=ball_pos,
-                    ball_pre_vel=ball_vel,
-                    racket_pre_pos=racket_pre_pos,
-                    racket_pre_vel=racket_pre_vel,
-                    racket_post_pos=r_pos,
-                    racket_post_vel=r_vel,
-                    racket_geom_xmat=racket_geom_xmat,
-                    ball_post_pos=b_pos,
-                    ball_post_vel=b_vel,
-                    base_at_contact=scene.base_pos_w(),
-                    diag=diag,
-                )
+                contact_cmd = cmd if cmd is not None else source.poll()
+                if contact_cmd is not None:
+                    _record_contact_diag(
+                        contact_diag_row,
+                        kind=new_contact_kind,
+                        tick=_tick,
+                        phase=lifecycle.phase.value,
+                        events=events,
+                        cmd=contact_cmd,
+                        ball_pre_pos=ball_pos,
+                        ball_pre_vel=ball_vel,
+                        racket_pre_pos=racket_pre_pos,
+                        racket_pre_vel=racket_pre_vel,
+                        racket_post_pos=r_pos,
+                        racket_post_vel=r_vel,
+                        racket_geom_xmat=racket_geom_xmat,
+                        ball_post_pos=b_pos,
+                        ball_post_vel=b_vel,
+                        base_at_contact=scene.base_pos_w(),
+                        diag=diag,
+                    )
 
             # --- after contact, watch the REAL outgoing ball for net clearance and its
             #     first bounce (both read off the simulated trajectory). ---
@@ -1318,6 +1586,7 @@ def run_eval(args) -> dict:
             if trace_writer is not None and trial < args.trace_serves:
                 floor_count, floor_min = _floor_contact_summary()
                 base = scene.base_pos_w()
+                trace_cmd = cmd if cmd is not None else source.poll()
                 trace_writer.writerow(
                     {
                         "trial": trial,
@@ -1334,10 +1603,10 @@ def run_eval(args) -> dict:
                         "racket_y": float(r_pos[1]),
                         "racket_z": float(r_pos[2]),
                         "ball_racket_distance": float(distance),
-                        "target_x": float(cmd.position[0]),
-                        "target_y": float(cmd.position[1]),
-                        "target_z": float(cmd.position[2]),
-                        "time_to_strike": float(cmd.time_to_strike),
+                        "target_x": "" if trace_cmd is None else float(trace_cmd.position[0]),
+                        "target_y": "" if trace_cmd is None else float(trace_cmd.position[1]),
+                        "target_z": "" if trace_cmd is None else float(trace_cmd.position[2]),
+                        "time_to_strike": "" if trace_cmd is None else float(trace_cmd.time_to_strike),
                         "incoming_bounce": int(incoming_bounced),
                         "contacted": int(contacted),
                         "real_contact": int(real_contacted),
@@ -1465,6 +1734,20 @@ def run_eval(args) -> dict:
                 "side_mode": args.side_mode,
                 "incoming_trajectory": args.incoming_trajectory,
                 "planner_mode": args.planner_mode,
+                "real_planner": (
+                    {
+                        "yaml": str(real_planner.yaml_path),
+                        "physics_path": real_planner.physics_path,
+                        "x_hit_table": float(real_planner.x_hit_table),
+                        "mocap_hz": float(real_planner.mocap_hz),
+                        "solve_period_s": float(real_planner.solve_period),
+                        "solve_calls": int(real_planner.solve_calls),
+                        "command_count": int(real_planner.command_count),
+                        "no_command_count": int(real_planner.no_command_count),
+                    }
+                    if real_planner is not None
+                    else None
+                ),
                 "planner_perturbation": {
                     "target_pos_offset": [float(v) for v in args.planner_target_pos_offset],
                     "target_pos_noise_std": [float(v) for v in args.planner_target_pos_noise_std],
@@ -1478,8 +1761,11 @@ def run_eval(args) -> dict:
                     "max_racket_speed": float(args.planner_max_racket_speed),
                 },
                 "policy_joint_order": args.policy_joint_order,
+                "policy_obs_dim": int(getattr(policy, "obs_dim", 111)),
                 "kp_scale": float(args.kp_scale),
                 "kd_scale": float(args.kd_scale),
+                "lifecycle_recovery_blend_seconds": float(args.lifecycle_recovery_blend_seconds),
+                "lifecycle_recovery_blend_velocity": bool(args.lifecycle_recovery_blend_velocity),
                 "serve_manifest": str(args.serve_manifest) if args.serve_manifest else None,
                 "contact_diag_csv": str(args.contact_diag_csv) if args.contact_diag_csv else None,
             }
@@ -1514,9 +1800,57 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--planner-mode",
-        choices=["no-bounce", "bounce-aware"],
+        choices=["no-bounce", "bounce-aware", "real-hope-planner"],
         default="no-bounce",
-        help="Inline planner used to turn the live ball state into RacketCommand targets.",
+        help="Planner used to turn the live ball state into RacketCommand targets. "
+             "real-hope-planner calls hope_ws/src/hope_planner with table-frame mocap emulation.",
+    )
+    parser.add_argument(
+        "--real-planner-yaml",
+        default=None,
+        help="Planner YAML for --planner-mode real-hope-planner "
+             "(default: hope_ws/src/hope_planner/config/hope_planner.yaml).",
+    )
+    parser.add_argument(
+        "--real-planner-physics-path",
+        default=None,
+        help="Optional ball_physics.yaml path passed to the real planner loaders.",
+    )
+    parser.add_argument(
+        "--real-planner-x-hit",
+        type=float,
+        default=None,
+        help="Override the real planner fixed strike plane in table-frame x metres.",
+    )
+    parser.add_argument(
+        "--real-planner-mocap-hz",
+        type=float,
+        default=300.0,
+        help="Mocap sample rate emulated from the 50 Hz MuJoCo ball state before calling the planner.",
+    )
+    parser.add_argument(
+        "--real-planner-solve-period",
+        type=float,
+        default=None,
+        help="Override planner solve_period_s. None uses the YAML value.",
+    )
+    parser.add_argument(
+        "--real-planner-drag-k",
+        type=float,
+        default=None,
+        help="Override planner drag_k. None uses the YAML value; negative disables override.",
+    )
+    parser.add_argument(
+        "--real-planner-table-c-h",
+        type=float,
+        default=None,
+        help="Override planner table_c_h. None uses the YAML value; negative disables override.",
+    )
+    parser.add_argument(
+        "--real-planner-table-c-v",
+        type=float,
+        default=None,
+        help="Override planner table_c_v. None uses the YAML value; negative disables override.",
     )
     parser.add_argument(
         "--planner-target-pos-offset",
@@ -1663,6 +1997,20 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--contact-radius", type=float, default=0.10, help="Racket-site proximity contact fallback (m).")
     parser.add_argument("--kp-scale", type=float, default=1.0, help="Scale MuJoCo bridge PD stiffness gains.")
     parser.add_argument("--kd-scale", type=float, default=1.0, help="Scale MuJoCo bridge PD damping gains.")
+    parser.add_argument(
+        "--lifecycle-recovery-blend-seconds",
+        type=float,
+        default=0.0,
+        help="Optional deploy/eval experiment: blend the recovery observation target from the last "
+             "strike target into the ready target for this many seconds. Default 0 keeps the "
+             "original abrupt recovery target switch.",
+    )
+    parser.add_argument(
+        "--lifecycle-recovery-blend-velocity",
+        action="store_true",
+        help="With --lifecycle-recovery-blend-seconds, also decay the last strike target velocity "
+             "during recovery. By default only target position is blended and recovery velocity is zero.",
+    )
     parser.add_argument(
         "--near-edge-x", type=float, default=0.30,
         help="MuJoCo x of the table's near edge (sets the robot-to-table placement).",

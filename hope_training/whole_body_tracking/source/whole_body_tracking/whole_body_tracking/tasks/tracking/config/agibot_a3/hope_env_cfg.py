@@ -6,7 +6,8 @@ One environment config, :class:`HOPEPingPongEnvCfg`, wiring:
   ``wrap_teleport=False`` so the policy physically transitions between swings (continuous rally);
 * the ping-pong goal (:class:`RacketTargetCommand`): sampled racket target pos/vel + time-to-strike +
   swing side, a ready/dynamic station target, and a no-spin outgoing-ball evaluation for the return rewards;
-* the 111-D actor observation (``hope_pingpong`` contract) and a privileged critic that adds
+* the 111-D actor observation (``hope_pingpong`` contract), with an experimental 114-D variant that
+  adds actor-visible racket target normal, and a privileged critic that adds
   the 62-D reference joint stream, reference errors, and the actual racket FK state (value function only);
 * the eleven reward terms with illustrative example weights;
 * the clamped joint-position residual action (passive head);
@@ -159,7 +160,7 @@ class ActionsCfg:
 
 @configclass
 class ObservationsCfg:
-    """111-D actor observation + privileged critic."""
+    """111-D actor observation, optional 114-D normal-visible actor variant, and privileged critic."""
 
     @configclass
     class PolicyCfg(ObsGroup):
@@ -189,6 +190,9 @@ class ObservationsCfg:
         racket_target_vel_w = ObsTerm(func=mdp.racket_target_vel_w, params={"command_name": "racket_target"})
         time_to_strike = ObsTerm(func=mdp.time_to_strike, params={"command_name": "racket_target"})
         swing_side = ObsTerm(func=mdp.swing_side, params={"command_name": "racket_target"})
+        # Disabled by default to preserve the deployed 111-D baseline contract. Task YAML can enable
+        # this term through train.py's actor_obs.racket_target_normal_w switch.
+        racket_target_normal_w = None
 
         def __post_init__(self):
             self.enable_corruption = True
@@ -604,6 +608,39 @@ class RewardsCfg:
             "std": 0.60,
             "include_hold": True,
             "early_prestrike_window_steps": 0,
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
+        },
+    )
+    strike_balance = RewTerm(
+        func=mdp.strike_balance,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "pre_window_s": 0.34,
+            "post_window_s": 0.18,
+            "pitch_std": 0.16,
+            "upright_std": 0.26,
+            "ang_vel_std": 1.05,
+            "backward_std": 0.16,
+            "backward_vel_std": 0.42,
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
+        },
+    )
+    lower_body_support = RewTerm(
+        func=mdp.lower_body_support,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "pre_window_s": 0.36,
+            "post_window_s": 0.22,
+            "station_std": 0.28,
+            "backward_std": 0.18,
+            "backward_vel_std": 0.48,
+            "min_feet_contact": 0.50,
             "start_step": 0,
             "warmup_steps": 0,
             "start_scale": 1.0,

@@ -1,0 +1,14 @@
+# Diagnostic-only eval config.
+#
+# Forces every long ready-hold sample to use the deploy no-command observation:
+# ready reach, zero target velocity, fixed station, and ready time_to_strike.
+# This is not a training task; it is used to test no-ball standing in Isaac.
+
+defaults:
+  - HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionNormal114DeployReadyNoCommand
+  - _self_
+
+name: HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionNormal114DeployReadyNoCommandEvalAllHold
+
+overrides:
+  commands.racket_target.deploy_ready_hold_prob: 1.0

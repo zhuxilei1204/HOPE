@@ -80,6 +80,14 @@ class RacketTargetCommand(CommandTerm):
         self.racket_impact_target_vel_w = torch.zeros(self.num_envs, 3, device=self.device)
         self.racket_target_normal_w = torch.zeros(self.num_envs, 3, device=self.device)
         self.racket_target_normal_w[:, 2] = 1.0
+        # Strike-command backups.  Public racket_target_* tensors may be temporarily overridden
+        # during deploy-style no-command holds; the true sampled strike command is restored as soon
+        # as the hold ends, so the swing/reward task remains unchanged.
+        self._strike_racket_target_pos_w = torch.zeros(self.num_envs, 3, device=self.device)
+        self._strike_racket_target_vel_w = torch.zeros(self.num_envs, 3, device=self.device)
+        self._strike_racket_impact_target_vel_w = torch.zeros(self.num_envs, 3, device=self.device)
+        self._strike_racket_target_normal_w = torch.zeros(self.num_envs, 3, device=self.device)
+        self._strike_racket_target_normal_w[:, 2] = 1.0
         # Hidden true ball task.  The actor sees the planner command above; rewards use these
         # fields so training can tolerate planner error instead of treating the planner as truth.
         self.ball_strike_pos_w = torch.zeros(self.num_envs, 3, device=self.device)
@@ -105,6 +113,8 @@ class RacketTargetCommand(CommandTerm):
         self._planner_tts_offset = torch.zeros(self.num_envs, device=self.device)
         self.steps_since_target_resample = torch.zeros(self.num_envs, dtype=torch.long, device=self.device)
         self.target_just_resampled = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
+        self.no_command_ready_hold = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
+        self.no_command_ready_active = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
 
         # Reward helper signals.
         self.racket_target_distance = torch.zeros(self.num_envs, device=self.device)
@@ -179,6 +189,7 @@ class RacketTargetCommand(CommandTerm):
             "recovery_contact_ready_score",
             "recovery_net_ready_score",
             "recovery_return_ready_score",
+            "no_command_ready_active",
         ):
             self.metrics[key] = torch.zeros(self.num_envs, device=self.device)
 
@@ -215,7 +226,7 @@ class RacketTargetCommand(CommandTerm):
             return self.fixed_station_w
         if self.cfg.station_mode != "dynamic_from_motion":
             raise ValueError(f"Unsupported station_mode: {self.cfg.station_mode}")
-        use_dynamic = (self.pre_strike | self.strike_window).unsqueeze(-1)
+        use_dynamic = ((self.pre_strike | self.strike_window) & (~self.no_command_ready_active)).unsqueeze(-1)
         return torch.where(use_dynamic, self.dynamic_station_w, self.fixed_station_w)
 
     @property
@@ -320,6 +331,55 @@ class RacketTargetCommand(CommandTerm):
             self.swing_sign[env_ids] = torch.where(clip == 0, 1.0, -1.0)
         else:
             self.swing_sign[env_ids] = 1.0
+
+        self._strike_racket_target_pos_w[env_ids] = self.racket_target_pos_w[env_ids]
+        self._strike_racket_target_vel_w[env_ids] = self.racket_target_vel_w[env_ids]
+        self._strike_racket_impact_target_vel_w[env_ids] = self.racket_impact_target_vel_w[env_ids]
+        self._strike_racket_target_normal_w[env_ids] = self.racket_target_normal_w[env_ids]
+        self._sample_no_command_ready_hold(env_ids)
+
+    def _sample_no_command_ready_hold(self, env_ids: torch.Tensor) -> None:
+        """Mark a subset of pre-swing holds as deploy no-command ready states."""
+        self.no_command_ready_hold[env_ids] = False
+        prob = float(self.cfg.deploy_ready_hold_prob)
+        if prob <= 0.0:
+            return
+        motion = self._motion()
+        hold = motion.in_hold[env_ids]
+        if not bool(torch.any(hold)):
+            return
+        draw = torch.rand(len(env_ids), device=self.device) < min(max(prob, 0.0), 1.0)
+        self.no_command_ready_hold[env_ids] = hold & draw
+
+    def _apply_no_command_ready_targets(self) -> None:
+        """Expose deploy lifecycle ready/no-command targets while the motion clock is held."""
+        self.racket_target_pos_w.copy_(self._strike_racket_target_pos_w)
+        self.racket_target_vel_w.copy_(self._strike_racket_target_vel_w)
+        self.racket_impact_target_vel_w.copy_(self._strike_racket_impact_target_vel_w)
+        self.racket_target_normal_w.copy_(self._strike_racket_target_normal_w)
+
+        motion = self._motion()
+        active = self.no_command_ready_hold & motion.in_hold
+        self.no_command_ready_active.copy_(active)
+        if not bool(torch.any(active)):
+            return
+
+        ready_reach = torch.tensor(self.cfg.deploy_ready_reach, dtype=torch.float32, device=self.device).expand(
+            self.num_envs, 3
+        )
+        side_y = self.swing_sign.sign().clamp(min=-1.0, max=1.0) * ready_reach[:, 1].abs()
+        ready_pos = self.base_pos_w + torch.stack((ready_reach[:, 0], side_y, ready_reach[:, 2]), dim=-1)
+        ready_vel = torch.tensor(self.cfg.deploy_ready_velocity_w, dtype=torch.float32, device=self.device).expand(
+            self.num_envs, 3
+        )
+        ready_normal = torch.tensor(self.cfg.deploy_ready_normal_w, dtype=torch.float32, device=self.device)
+        ready_normal = ready_normal / torch.norm(ready_normal).clamp_min(1.0e-6)
+
+        self.racket_target_pos_w[active] = ready_pos[active]
+        self.racket_target_vel_w[active] = ready_vel[active]
+        self.racket_impact_target_vel_w[active] = ready_vel[active]
+        self.racket_target_normal_w[active] = ready_normal
+        self.time_to_strike[active] = float(self.cfg.deploy_ready_time_to_strike)
 
     def _motion_strike_phase_per_clip(self) -> torch.Tensor:
         """Return strike phase per motion segment without requiring per-step timing to be initialized."""
@@ -682,6 +742,7 @@ class RacketTargetCommand(CommandTerm):
         self.time_to_strike = self.true_time_to_strike + self._planner_tts_offset
         self.pre_strike = self.true_time_to_strike > 0.0
         self.strike_window = self.true_time_to_strike.abs() <= self.cfg.strike_window_s
+        self._apply_no_command_ready_targets()
 
     def _compute_racket_state(self):
         data = self.robot.data
@@ -780,6 +841,7 @@ class RacketTargetCommand(CommandTerm):
         self.metrics["recovery_contact_ready_score"] = ready * phase_gate * self.current_swing_contact.float()
         self.metrics["recovery_net_ready_score"] = ready * phase_gate * self.current_swing_net_cross.float()
         self.metrics["recovery_return_ready_score"] = ready * phase_gate * self.current_swing_on_opponent.float()
+        self.metrics["no_command_ready_active"] = self.no_command_ready_active.float()
 
     def _evaluate_return(self):
         """Simple no-spin outgoing-ball evaluation at the exact strike frame (contact/net/bounce).
@@ -937,6 +999,15 @@ class RacketTargetCommandCfg(CommandTermCfg):
     station_mode: str = "fixed"  # fixed | dynamic_from_motion
     dynamic_station_xy_clip: tuple = ((-0.08, 0.08), (-0.25, 0.25))
     dynamic_station_blend: float = 1.0
+    # Deploy lifecycle alignment.  With probability deploy_ready_hold_prob, a pre-swing hold exposes
+    # the same no-command READY observation as the reference deploy runner: base-relative ready reach,
+    # zero racket velocity, fixed ready time-to-strike, and fixed station.  The sampled strike command
+    # is kept hidden and restored when the hold ends.  Default 0.0 preserves all existing tasks.
+    deploy_ready_hold_prob: float = 0.0
+    deploy_ready_reach: tuple[float, float, float] = (0.40, 0.20, -0.05)
+    deploy_ready_velocity_w: tuple[float, float, float] = (0.0, 0.0, 0.0)
+    deploy_ready_normal_w: tuple[float, float, float] = (1.0, 0.0, 0.0)
+    deploy_ready_time_to_strike: float = 1.0
 
     # --- feet (for the contact fraction used by the follow-through/recovery reward) ---
     feet_body_names: tuple[str, ...] = ("left_ankle_roll_Link", "right_ankle_roll_Link")

@@ -1,0 +1,90 @@
+# =============================================================================
+# B17996 conservative balance fine-tune.
+#
+# Start from the validated four-motion B17996 deploy-ready/no-command baseline.
+# This branch is intentionally more conservative than the anti-backlean branch:
+#   - no extra shoulder / upper-arm / wrist ready tracking;
+#   - no extra pre-strike arm or racket damping;
+#   - no change to contact, blade-direction, racket target velocity, outgoing velocity, net-cross,
+#     or opponent-bounce rewards;
+#   - recovery stabilization is body/support focused and mainly post-strike, so contact angle and
+#     racket speed should remain available for hitting.
+# =============================================================================
+
+defaults:
+  - HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionNormal114DeployReadyNoCommand
+  - _self_
+
+name: HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionNormal114B17996ConservativeBalance1500
+
+overrides:
+  # Keep legs available for fast compensation.  B17996 used this term through early pre-strike;
+  # here it only acts in recovery/hold and is lighter.
+  rewards.post_strike_lower_body_action_rate.weight: -0.018
+  rewards.post_strike_lower_body_action_rate.params:
+    command_name: racket_target
+    joint_names:
+      - waist_yaw_joint
+      - waist_roll_joint
+      - waist_pitch_joint
+      - left_hip_pitch_joint
+      - left_hip_roll_joint
+      - left_hip_yaw_joint
+      - left_knee_joint
+      - left_ankle_pitch_joint
+      - left_ankle_roll_joint
+      - right_hip_pitch_joint
+      - right_hip_roll_joint
+      - right_hip_yaw_joint
+      - right_knee_joint
+      - right_ankle_pitch_joint
+      - right_ankle_roll_joint
+    include_hold: true
+    early_prestrike_window_steps: 0
+    start_step: 0
+    warmup_steps: 1500
+    start_scale: 0.20
+
+  # Calm the base after the swing, but use a loose std so this does not punish real recovery
+  # compensation.  No pre-strike gate: the next swing should keep its amplitude.
+  rewards.post_strike_base_ang_vel.weight: 0.92
+  rewards.post_strike_base_ang_vel.params:
+    command_name: racket_target
+    std: 1.65
+    include_hold: true
+    early_prestrike_window_steps: 0
+    start_step: 0
+    warmup_steps: 1500
+    start_scale: 0.30
+
+  # Post-strike trunk/support terms only.  Setting pre_window_s to zero avoids suppressing the
+  # forehand/backhand reach before contact.
+  rewards.strike_balance.weight: 0.18
+  rewards.strike_balance.params:
+    command_name: racket_target
+    pre_window_s: 0.0
+    post_window_s: 0.30
+    pitch_std: 0.28
+    upright_std: 0.38
+    ang_vel_std: 1.80
+    backward_std: 0.30
+    backward_vel_std: 0.75
+    start_step: 0
+    warmup_steps: 1500
+    start_scale: 0.20
+
+  rewards.lower_body_support.weight: 0.20
+  rewards.lower_body_support.params:
+    command_name: racket_target
+    pre_window_s: 0.0
+    post_window_s: 0.42
+    station_std: 0.38
+    backward_std: 0.30
+    backward_vel_std: 0.75
+    min_feet_contact: 0.45
+    start_step: 0
+    warmup_steps: 1500
+    start_scale: 0.20
+
+  # Do not increase phase_action_rate or right-arm ready rewards.  Keep the existing B17996
+  # hit/recovery objective otherwise unchanged.

@@ -42,22 +42,24 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--onnx-name", default="hope_pingpong.onnx", help="Exported ONNX filename.")
     parser.add_argument("--num-envs", type=int, default=1, help="Number of envs to build (1 is enough to export).")
     parser.add_argument("--device", default="cuda:0", help="Compute device.")
-    parser.add_argument(
-        "--motion-file",
-        default="hope_training/motions/preprocessed/hope_forehand.npz",
-        help="Forehand clip (only needed so the env instantiates).",
-    )
-    parser.add_argument(
-        "--motion-file-2",
-        default="hope_training/motions/preprocessed/hope_backhand.npz",
-        help="Backhand clip (only needed so the env instantiates).",
-    )
+    parser.add_argument("--motion-file", default=None, help="Forehand clip override.")
+    parser.add_argument("--motion-file-2", default=None, help="Backhand clip override.")
     parser.add_argument(
         "--motion-manifest",
         default=None,
         help="TSV manifest with motion clips and optional strike/racket-target metadata.",
     )
     parser.add_argument("--experiment-name", default="hope_pingpong", help="rsl_rl experiment name.")
+    parser.add_argument(
+        "--task-yaml",
+        default=None,
+        help="Optional task YAML whose training overrides should be applied before export.",
+    )
+    parser.add_argument(
+        "--actor-obs-contract",
+        default="auto",
+        help="Actor observation contract for manifest/metadata: auto, hope_pingpong, or hope_pingpong_normal114.",
+    )
     return parser.parse_args()
 
 
@@ -89,9 +91,26 @@ def main() -> int:
         from train import _apply_motion_metadata, _resolve_motion_plan
 
         env_cfg = parse_env_cfg(args.task, device=args.device, num_envs=args.num_envs)
-        clips, motion_metadata = _resolve_motion_plan(args)
+        applied: list[str] = []
+        from evaluate import _load_task_yaml_with_defaults, _resolve_task_yaml
+
+        task_yaml = args.task_yaml or "HOPEPingPong.yaml"
+        task_cfg = _load_task_yaml_with_defaults(_resolve_task_yaml(task_yaml))
+        if args.task_yaml:
+            from evaluate import _apply_training_task_overrides
+
+            applied.extend(_apply_training_task_overrides(env_cfg, args.task_yaml))
+        import argparse
+
+        motion_args = argparse.Namespace(**vars(args))
+        motion_args.task = task_cfg
+        clips, motion_metadata = _resolve_motion_plan(motion_args)
         env_cfg.commands.motion.motion_file = clips if len(clips) > 1 else clips[0]
-        _apply_motion_metadata(env_cfg, clips, motion_metadata, [])
+        _apply_motion_metadata(env_cfg, clips, motion_metadata, applied)
+        if applied:
+            print(f"[export_onnx] applied {len(applied)} task override(s):", flush=True)
+            for line in applied:
+                print(f"[export_onnx]     {line}", flush=True)
 
         env = gym.make(args.task, cfg=env_cfg, render_mode=None)
         joint_names = list(env.unwrapped.scene["robot"].data.joint_names)
@@ -127,7 +146,11 @@ def main() -> int:
         runner.load(checkpoint)
 
         onnx_path, manifest_path = export_policy(
-            runner.alg.policy, output_dir, joint_names=expected_order, onnx_filename=args.onnx_name
+            runner.alg.policy,
+            output_dir,
+            joint_names=expected_order,
+            onnx_filename=args.onnx_name,
+            contract_name=args.actor_obs_contract,
         )
         print(f"[export_onnx] wrote {onnx_path}", flush=True)
         print(f"[export_onnx] wrote {manifest_path}", flush=True)

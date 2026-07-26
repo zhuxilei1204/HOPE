@@ -1,0 +1,79 @@
+# =============================================================================
+# Recovery B experiment for the 114-D actor-visible-normal policy.
+#
+# Hypothesis:
+#   The dominant continuous-eval weakness is not the initial hit but the residual base angular
+#   velocity and racket/right-arm velocity after contact. This variant keeps the horizon close to the
+#   current task and puts more pressure specifically on post-strike settling and ready posture.
+#
+# Scope:
+#   - keep the current 114-D actor contract, one-bounce planner command, and collision hit objective;
+#   - keep strike action-rate light;
+#   - strengthen recovery/hold damping and post-outcome arm/racket ready terms moderately.
+# =============================================================================
+
+defaults:
+  - HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionNormal114FullRangeContinue
+  - _self_
+
+name: HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionNormal114PostStrikeSettleB
+
+overrides:
+  episode_length_s: 14.0
+
+  commands.motion.hold_steps_range: [70, 110]
+  commands.motion.stand_start_prob: 0.15
+  commands.motion.stand_start_min_hold: 70
+
+  rewards.follow_through_recovery.weight: 1.48
+  rewards.recovery_health.weight: 1.82
+  rewards.next_ball_readiness.weight: 2.12
+  rewards.next_swing_ready_bonus.weight: 2.35
+  rewards.post_contact_recovery_ready.weight: 1.90
+
+  rewards.post_contact_arm_racket_ready.weight: 0.48
+  rewards.post_net_arm_racket_ready.weight: 0.72
+  rewards.post_return_arm_racket_ready.weight: 0.92
+
+  rewards.post_strike_base_ang_vel.weight: 0.82
+  rewards.post_strike_base_ang_vel.params:
+    command_name: racket_target
+    std: 1.35
+    include_hold: true
+    early_prestrike_window_steps: 18
+    start_step: 0
+    warmup_steps: 5000
+    start_scale: 0.30
+
+  rewards.post_strike_lower_body_action_rate.weight: -0.036
+  rewards.post_strike_lower_body_action_rate.params:
+    command_name: racket_target
+    joint_names:
+      - waist_yaw_joint
+      - waist_roll_joint
+      - waist_pitch_joint
+      - left_hip_pitch_joint
+      - left_hip_roll_joint
+      - left_hip_yaw_joint
+      - left_knee_joint
+      - left_ankle_pitch_joint
+      - left_ankle_roll_joint
+      - right_hip_pitch_joint
+      - right_hip_roll_joint
+      - right_hip_yaw_joint
+      - right_knee_joint
+      - right_ankle_pitch_joint
+      - right_ankle_roll_joint
+    include_hold: true
+    early_prestrike_window_steps: 18
+    start_step: 0
+    warmup_steps: 5000
+    start_scale: 0.25
+
+  rewards.phase_action_rate.weight: -0.46
+  rewards.phase_action_rate.params:
+    command_name: racket_target
+    pre_strike_scale: 0.024
+    strike_scale: 0.004
+    recovery_scale: 0.115
+    hold_scale: 0.165

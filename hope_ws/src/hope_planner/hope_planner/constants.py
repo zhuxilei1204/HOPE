@@ -119,6 +119,9 @@ class PlannerConfig:
                                   # 2026-07-23). COUPLED to the mocap rate: tune this in
                                   # samples so the time span stays near the validated window.
                                   # Also a ROS parameter of hope_planner_node.
+    min_ready_samples: int = 6    # minimum samples before estimate() is trusted. Keep at 6
+                                  # for legacy behaviour; raise experimentally to delay
+                                  # low-confidence post-bounce predictions.
     mocap_hz: float = 300.0       # documentation constant (not consumed anywhere): nominal
                                   # motion-capture sample rate. The actual rate is a property
                                   # of the rig; the rate-coupled knob is fit_window above.

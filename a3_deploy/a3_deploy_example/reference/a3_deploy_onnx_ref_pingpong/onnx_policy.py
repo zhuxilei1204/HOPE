@@ -5,6 +5,7 @@
 The exported policy is a single-input, single-output network:
 
     observation[1, 111]  ->  raw_action[1, 31]
+    observation[1, 114]  ->  raw_action[1, 31]  (experimental normal-visible policy)
 
 No observation normalization is applied (the observation is raw). The runner zeroes
 the passive head columns of ``raw_action`` to form the applied action, which is fed
@@ -17,7 +18,7 @@ from pathlib import Path
 
 import numpy as np
 
-from .observation import OBS_DIM
+from .observation import OBS_DIM, OBS_DIM_NORMAL114
 from .joint_order import JOINT_NAMES, NUM_JOINTS
 
 
@@ -42,7 +43,8 @@ class OnnxPolicy:
             raise ValueError("expected a single-input, single-output actor ONNX")
         self._input_name = inputs[0].name
         self._output_name = outputs[0].name
-        self._validate_shape(inputs[0].shape, OBS_DIM, "observation input")
+        self.obs_dim = self._resolve_obs_dim(inputs[0].shape)
+        self._validate_shape(inputs[0].shape, self.obs_dim, "observation input")
         self._validate_shape(outputs[0].shape, NUM_JOINTS, "raw_action output")
 
         # If the exporter embedded the joint order, it must equal the canonical order
@@ -68,8 +70,19 @@ class OnnxPolicy:
         if shape and isinstance(shape[-1], int) and shape[-1] != expected_last:
             raise ValueError(f"{what} trailing dim {shape[-1]} != expected {expected_last}")
 
+    @staticmethod
+    def _resolve_obs_dim(shape) -> int:
+        if shape and isinstance(shape[-1], int):
+            dim = int(shape[-1])
+            if dim not in (OBS_DIM, OBS_DIM_NORMAL114):
+                raise ValueError(
+                    f"observation input trailing dim {dim} is unsupported; expected {OBS_DIM} or {OBS_DIM_NORMAL114}"
+                )
+            return dim
+        return OBS_DIM
+
     def infer(self, obs: np.ndarray) -> np.ndarray:
         """Run one forward pass. Returns ``raw_action`` as ``float32`` length 31."""
-        x = np.asarray(obs, dtype=np.float32).reshape(1, OBS_DIM)
+        x = np.asarray(obs, dtype=np.float32).reshape(1, self.obs_dim)
         out = self._sess.run([self._output_name], {self._input_name: x})[0]
         return np.asarray(out, dtype=np.float32).reshape(NUM_JOINTS)

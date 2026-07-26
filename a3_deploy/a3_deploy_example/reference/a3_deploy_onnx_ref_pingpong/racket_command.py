@@ -43,10 +43,15 @@ class RacketCommand:
     position: np.ndarray                   # (3,) world m
     velocity: np.ndarray                   # (3,) world m/s
     time_to_strike: float                  # s
+    target_normal: np.ndarray | None = None # optional 114-D normal-visible policy command
 
     def __post_init__(self) -> None:
         self.position = np.asarray(self.position, dtype=np.float64).reshape(3)
         self.velocity = np.asarray(self.velocity, dtype=np.float64).reshape(3)
+        if self.target_normal is not None:
+            normal = np.asarray(self.target_normal, dtype=np.float64).reshape(3)
+            n = float(np.linalg.norm(normal))
+            self.target_normal = normal / n if n > 1.0e-9 else np.array([1.0, 0.0, 0.0], dtype=np.float64)
         self.swing_side = FOREHAND if self.swing_side >= 0 else BACKHAND
 
 

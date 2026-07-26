@@ -89,6 +89,7 @@ def _make_config(args: argparse.Namespace) -> tuple[Any, PlannerConfig, Any]:
         "max_predict_time",
         "dt_integrate",
         "fit_window",
+        "min_ready_samples",
         "bounce_z_tol",
         "bounce_center_z_max",
     ):
@@ -103,6 +104,8 @@ def _make_config(args: argparse.Namespace) -> tuple[Any, PlannerConfig, Any]:
         cfg.x_hit = float(args.x_hit)
     if args.fit_window is not None:
         cfg.fit_window = int(args.fit_window)
+    if getattr(args, "min_ready_samples", None) is not None:
+        cfg.min_ready_samples = int(args.min_ready_samples)
     for key, value in load_paddle_params(str(physics_path)).items():
         setattr(cfg, key, value)
     return physics, cfg, table
@@ -382,6 +385,7 @@ def evaluate(args: argparse.Namespace) -> dict[str, Any]:
         "config": {
             "x_hit": float(cfg.x_hit),
             "fit_window": int(cfg.fit_window),
+            "min_ready_samples": int(cfg.min_ready_samples),
             "dt_integrate": float(cfg.dt_integrate),
             "max_predict_time": float(cfg.max_predict_time),
             "bounce_z_tol": float(cfg.bounce_z_tol),
@@ -426,6 +430,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--out-json", default=str(REPO_ROOT / "analysis" / "planner_eval.json"))
     parser.add_argument("--x-hit", type=float, default=None)
     parser.add_argument("--fit-window", type=int, default=None)
+    parser.add_argument("--min-ready-samples", type=int, default=None)
     parser.add_argument("--table-y-max", type=float, default=None)
     parser.add_argument("--min-horizon-ms", type=float, default=20.0)
     parser.add_argument(

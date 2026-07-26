@@ -1,0 +1,28 @@
+# =============================================================================
+# 114-D deploy-lifecycle alignment experiment.
+#
+# Adds deploy-style no-command READY observations during pre-swing holds:
+#   target = base-relative ready reach, velocity = 0, time_to_strike = ready clock,
+#   station = fixed ready station.
+#
+# This keeps the same four-motion collision/recovery task and does not change the
+# sampled strike command once the hold ends.  It is intended to remove the current
+# train/deploy distribution gap found by MuJoCo no-ball standing diagnostics.
+# =============================================================================
+
+defaults:
+  - HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionNormal114PostStrikeSettleB
+  - _self_
+
+name: HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionNormal114DeployReadyNoCommand
+
+overrides:
+  commands.motion.hold_steps_range: [80, 130]
+  commands.motion.stand_start_prob: 0.20
+  commands.motion.stand_start_min_hold: 80
+
+  commands.racket_target.deploy_ready_hold_prob: 0.55
+  commands.racket_target.deploy_ready_reach: [0.40, 0.20, -0.05]
+  commands.racket_target.deploy_ready_velocity_w: [0.0, 0.0, 0.0]
+  commands.racket_target.deploy_ready_normal_w: [1.0, 0.0, 0.0]
+  commands.racket_target.deploy_ready_time_to_strike: 1.0

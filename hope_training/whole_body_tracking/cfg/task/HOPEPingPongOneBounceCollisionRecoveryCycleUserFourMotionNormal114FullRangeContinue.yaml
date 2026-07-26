@@ -1,0 +1,18 @@
+# =============================================================================
+# Continue-training variant for the normal-visible actor.
+#
+# The scratch task uses a target-position curriculum during the first training run. When resuming
+# from a mature checkpoint in a fresh process, the env step counter starts from zero, so that
+# curriculum would narrow the target distribution again. This variant keeps the same rewards/motion
+# setup but forces the racket target range to full scale for true continuation.
+# =============================================================================
+
+defaults:
+  - HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionNormal114Scratch
+  - _self_
+
+name: HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionNormal114FullRangeContinue
+
+overrides:
+  commands.racket_target.racket_pos_curriculum_start_scale: [1.0, 1.0, 1.0]
+  commands.racket_target.racket_pos_curriculum_steps: 0

@@ -776,6 +776,79 @@ def post_strike_base_angular_velocity(
     return calm * gate * _phase_scale(env, start_step, warmup_steps, start_scale, 1.0)
 
 
+def strike_balance(
+    env: ManagerBasedRLEnv,
+    command_name: str,
+    pre_window_s: float = 0.34,
+    post_window_s: float = 0.18,
+    pitch_std: float = 0.16,
+    upright_std: float = 0.26,
+    ang_vel_std: float = 1.05,
+    backward_std: float = 0.16,
+    backward_vel_std: float = 0.42,
+    start_step: int = 0,
+    warmup_steps: int = 0,
+    start_scale: float = 1.0,
+) -> torch.Tensor:
+    """Keep the trunk from leaning/falling backward during the swing window.
+
+    This is intentionally not an arm or lower-body action-rate term.  It targets the observed failure
+    where the upper body throws angular momentum backward during pre-strike/impact, while still
+    allowing the legs to make quick compensating motions.
+    """
+    cmd = _cmd(env, command_name)
+    data = cmd.robot.data
+    tts = cmd.true_time_to_strike
+    gate = (tts <= float(pre_window_s)) & (tts >= -float(post_window_s)) & (~cmd.no_command_ready_active)
+
+    projected_gravity_xy = data.projected_gravity_b[:, :2]
+    pitch_like = torch.abs(projected_gravity_xy[:, 0])
+    pitch = torch.exp(-torch.square(pitch_like / max(float(pitch_std), 1.0e-6)))
+    upright = torch.exp(-torch.square(torch.norm(projected_gravity_xy, dim=-1) / max(float(upright_std), 1.0e-6)))
+    ang = torch.exp(-torch.square(torch.norm(data.root_ang_vel_b[:, :2], dim=-1) / max(float(ang_vel_std), 1.0e-6)))
+
+    # In the table frame used by the task, +x points forward toward the table/opponent.  Negative
+    # root x velocity and base x behind the current station are the backward-fall mode seen in MuJoCo.
+    backward_offset = (cmd.station_w[:, 0] - cmd.base_pos_w[:, 0]).clamp_min(0.0)
+    backward = torch.exp(-torch.square(backward_offset / max(float(backward_std), 1.0e-6)))
+    backward_vel = (-data.root_lin_vel_w[:, 0]).clamp_min(0.0)
+    back_vel = torch.exp(-torch.square(backward_vel / max(float(backward_vel_std), 1.0e-6)))
+
+    score = 0.26 * pitch + 0.24 * upright + 0.22 * ang + 0.16 * backward + 0.12 * back_vel
+    return score * gate.float() * _phase_scale(env, start_step, warmup_steps, start_scale, 1.0)
+
+
+def lower_body_support(
+    env: ManagerBasedRLEnv,
+    command_name: str,
+    pre_window_s: float = 0.36,
+    post_window_s: float = 0.22,
+    station_std: float = 0.28,
+    backward_std: float = 0.18,
+    backward_vel_std: float = 0.48,
+    min_feet_contact: float = 0.50,
+    start_step: int = 0,
+    warmup_steps: int = 0,
+    start_scale: float = 1.0,
+) -> torch.Tensor:
+    """Reward support quality during the swing without making the legs globally stiff."""
+    cmd = _cmd(env, command_name)
+    data = cmd.robot.data
+    tts = cmd.true_time_to_strike
+    gate = (tts <= float(pre_window_s)) & (tts >= -float(post_window_s)) & (~cmd.no_command_ready_active)
+
+    station_err = torch.norm(cmd.base_pos_w[:, :2] - cmd.station_w, dim=-1)
+    station = torch.exp(-torch.square(station_err / max(float(station_std), 1.0e-6)))
+    backward_offset = (cmd.station_w[:, 0] - cmd.base_pos_w[:, 0]).clamp_min(0.0)
+    backward = torch.exp(-torch.square(backward_offset / max(float(backward_std), 1.0e-6)))
+    backward_vel = (-data.root_lin_vel_w[:, 0]).clamp_min(0.0)
+    back_vel = torch.exp(-torch.square(backward_vel / max(float(backward_vel_std), 1.0e-6)))
+    feet = torch.clamp((cmd.feet_contact_frac - float(min_feet_contact)) / max(1.0 - float(min_feet_contact), 1.0e-6), 0.0, 1.0)
+
+    score = 0.36 * feet + 0.26 * station + 0.22 * backward + 0.16 * back_vel
+    return score * gate.float() * _phase_scale(env, start_step, warmup_steps, start_scale, 1.0)
+
+
 def post_strike_lower_body_action_rate_l2(
     env: ManagerBasedRLEnv,
     command_name: str,

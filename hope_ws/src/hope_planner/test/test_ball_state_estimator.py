@@ -226,3 +226,14 @@ def test_bridge_does_not_engage_when_pre_bounce_buffer_was_not_ready():
     assert est.bounce_detected
     assert not est.ready
     assert len(est.t_buffer) == 1
+
+
+def test_min_ready_samples_delays_ready_without_changing_fit_window():
+    cfg = PlannerConfig(min_ready_samples=12, fit_window=67)
+    est = BallStateEstimator(cfg)
+    dt = _dt()
+    for i in range(11):
+        est.push(i * dt, np.array([float(i), 0.0, 0.5]))
+    assert not est.ready
+    est.push(11 * dt, np.array([11.0, 0.0, 0.5]))
+    assert est.ready

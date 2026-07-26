@@ -154,9 +154,9 @@ class BallStateEstimator:
             if legacy_dip or center_min:
                 self._bounce_detected = True
                 # Compute the bridge from the pre-bounce buffer before reset()
-                # clears it; ready() below requires >= 6, matching the fit's
-                # own reliability bar for a pre-bounce velocity worth reflecting.
-                bridge = self._bridge_after_bounce(t) if len(self.t_buffer) >= 6 else []
+                # clears it; use the same threshold as ready().
+                min_samples = max(6, int(getattr(self.config, "min_ready_samples", 6)))
+                bridge = self._bridge_after_bounce(t) if len(self.t_buffer) >= min_samples else []
                 self.reset()
                 for t_b, p_b in bridge:
                     self.t_buffer.append(t_b)

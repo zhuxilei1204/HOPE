@@ -232,8 +232,10 @@ def test_min_ready_samples_delays_ready_without_changing_fit_window():
     cfg = PlannerConfig(min_ready_samples=12, fit_window=67)
     est = BallStateEstimator(cfg)
     dt = _dt()
+    v = np.array([1.0, 0.0, 0.0])  # plausible speed for the outlier gate
+    p0 = np.array([0.0, 0.0, 0.5])
     for i in range(11):
-        est.push(i * dt, np.array([float(i), 0.0, 0.5]))
+        est.push(i * dt, p0 + v * (i * dt))
     assert not est.ready
-    est.push(11 * dt, np.array([11.0, 0.0, 0.5]))
+    est.push(11 * dt, p0 + v * (11 * dt))
     assert est.ready

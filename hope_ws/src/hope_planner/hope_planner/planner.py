@@ -38,6 +38,14 @@ class HOPEPlanner:
         self._latest_t: Optional[float] = None
         self._incoming: Optional[bool] = None
 
+    def reset_stream(self) -> None:
+        """Reset estimator and cached output at a physical tracking boundary."""
+        self.estimator.reset_stream()
+        self._latest_command = None
+        self._latest_strike = None
+        self._latest_t = None
+        self._incoming = None
+
     def update(self, t: float, p_ball: np.ndarray) -> Optional[RacketCommand]:
         """Process a new ball position measurement.
 

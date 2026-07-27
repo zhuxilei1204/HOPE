@@ -11,19 +11,13 @@ mis-tracked marker, a reflection, a stale/duplicate frame) is dropped rather
 than corrupting the polynomial fit. Bounce detection is deliberately exempt --
 see :meth:`BallStateEstimator._is_outlier`.
 
-A cleared buffer would otherwise need >= 6 fresh post-bounce samples (~20 ms
-at 300 Hz) before ``ready``/``estimate()`` are usable again, purely from
-data -- a real cost against ``time_to_strike`` for a bounce that lands close
-to the robot. If the pre-bounce buffer was itself ready, the clear is
-immediately followed by a physics-predicted bridge (see
-:meth:`BallStateEstimator._bridge_after_bounce`): the pre-bounce velocity
-reflected through the same diagonal restitution model
-:class:`~.ball_trajectory_predictor.BallTrajectoryPredictor` uses, then
-forward-integrated a few synthetic samples ahead. ``ready`` therefore becomes
-true again on the very same push that detects the bounce; real samples
-afterward simply age the synthetic ones out of the fit window like any other
-sample, so the bridge only ever covers the gap, never permanently biases the
-fit.
+A cleared buffer would otherwise need many fresh post-bounce samples before
+``ready``/``estimate()`` are usable again.  When the pre-bounce fit is trusted,
+the estimator instead carries a physics-predicted post-bounce *state prior*.
+The prior supplies velocity immediately, while real post-bounce samples take
+over continuously as their own polynomial fit becomes observable.  Unlike the
+older bridge implementation, predicted positions are never inserted into the
+measurement buffer as if they were real mocap samples.
 """
 
 from typing import List, Optional, Tuple
@@ -70,7 +64,9 @@ class BallStateEstimator:
         # Three-sample z ring buffer for bounce detection; None suppresses
         # false triggers before enough measurements are collected.
         self._z_hist: List[Optional[float]] = [None, None, None]
+        self._t_hist: List[Optional[float]] = [None, None, None]
         self._bounce_detected: bool = False
+        self._last_bounce_t: Optional[float] = None
 
         # Outlier gate state, tracked independently of the fit buffer so a
         # bounce-triggered reset() does not itself relax the gate.
@@ -79,10 +75,35 @@ class BallStateEstimator:
         self._consecutive_outliers: int = 0
         self._outlier_rejected: bool = False
 
+        # Temporary post-bounce state prior.  It is deliberately separate from
+        # the real measurement buffers: model-generated positions must not be
+        # given the same weight as mocap observations in the polynomial fit.
+        self._bounce_prior_p: Optional[np.ndarray] = None
+        self._bounce_prior_v: Optional[np.ndarray] = None
+        self._bounce_prior_t: Optional[float] = None
+
     def reset(self) -> None:
         """Clear the estimation buffer (called on bounce detection)."""
         self.t_buffer.clear()
         self.p_buffer.clear()
+        self._clear_bounce_prior()
+
+    def _clear_bounce_prior(self) -> None:
+        self._bounce_prior_p = None
+        self._bounce_prior_v = None
+        self._bounce_prior_t = None
+
+    def reset_stream(self) -> None:
+        """Clear all state after a tracking gap or a new physical ball."""
+        self.reset()
+        self._z_hist = [None, None, None]
+        self._t_hist = [None, None, None]
+        self._bounce_detected = False
+        self._last_bounce_t = None
+        self._last_accepted_t = None
+        self._last_accepted_p = None
+        self._consecutive_outliers = 0
+        self._outlier_rejected = False
 
     def _is_outlier(self, t: float, p: np.ndarray) -> bool:
         """True if ``p`` at ``t`` is not a plausible continuation of the stream.
@@ -143,26 +164,44 @@ class BallStateEstimator:
         self._z_hist[0] = self._z_hist[1]
         self._z_hist[1] = self._z_hist[2]
         self._z_hist[2] = p[2]
+        self._t_hist[0] = self._t_hist[1]
+        self._t_hist[1] = self._t_hist[2]
+        self._t_hist[2] = t
 
         self._bounce_detected = False
         z_pp, z_p, z_c = self._z_hist
+        t_pp, t_p, t_c = self._t_hist
         tol = self.config.bounce_z_tol
         center_max = getattr(self.config, "bounce_center_z_max", 0.11)
         if z_pp is not None and z_p is not None and z_c is not None:
+            max_gap = float(getattr(self.config, "bounce_max_sample_gap_s", 0.01))
+            contiguous = (
+                t_pp is not None and t_p is not None and t_c is not None
+                and 0.0 < t_p - t_pp <= max_gap
+                and 0.0 < t_c - t_p <= max_gap
+            )
+            refractory = float(getattr(self.config, "bounce_refractory_s", 0.08))
+            outside_refractory = (
+                self._last_bounce_t is None or t - self._last_bounce_t >= refractory
+            )
+            min_delta = float(getattr(self.config, "bounce_min_vertical_delta", 0.002))
             legacy_dip = z_pp > tol and z_p <= tol and z_c > tol
-            center_min = z_p <= center_max and z_pp > z_p and z_c > z_p
-            if legacy_dip or center_min:
+            center_min = (
+                z_p <= center_max
+                and z_pp - z_p >= min_delta
+                and z_c - z_p >= min_delta
+            )
+            if contiguous and outside_refractory and (legacy_dip or center_min):
                 self._bounce_detected = True
-                # Compute the bridge from the pre-bounce buffer before reset()
-                # clears it; use the same threshold as ready().
+                self._last_bounce_t = t
+                # Compute a post-bounce state prior before reset() clears the
+                # pre-impact measurements.  Keep it separate from the new real
+                # buffer so model positions never masquerade as observations.
                 min_samples = max(6, int(getattr(self.config, "min_ready_samples", 6)))
-                bridge = self._bridge_after_bounce(t) if len(self.t_buffer) >= min_samples else []
+                prior = self._state_after_bounce(t) if len(self.t_buffer) >= min_samples else None
                 self.reset()
-                for t_b, p_b in bridge:
-                    self.t_buffer.append(t_b)
-                    self.p_buffer.append(p_b)
-                if bridge:
-                    self._last_accepted_t, self._last_accepted_p = bridge[-1]
+                if prior is not None:
+                    self._bounce_prior_p, self._bounce_prior_v, self._bounce_prior_t = prior
 
         if not accept:
             return
@@ -176,6 +215,12 @@ class BallStateEstimator:
         if len(self.t_buffer) > self.config.fit_window:
             self.t_buffer.pop(0)
             self.p_buffer.pop(0)
+
+        # By this point the post-bounce measurement fit has reached the normal
+        # confidence threshold, so retire the model prior completely.
+        min_samples = max(6, int(getattr(self.config, "min_ready_samples", 6)))
+        if self._bounce_prior_t is not None and len(self.t_buffer) >= min_samples:
+            self._clear_bounce_prior()
 
     @property
     def bounce_detected(self) -> bool:
@@ -191,7 +236,9 @@ class BallStateEstimator:
     def ready(self) -> bool:
         """True once enough samples exist for a stable fit."""
         min_samples = max(6, int(getattr(self.config, "min_ready_samples", 6)))
-        return len(self.t_buffer) >= min_samples
+        return len(self.t_buffer) >= min_samples or (
+            self._bounce_prior_t is not None and len(self.t_buffer) >= 1
+        )
 
     def _fit(self) -> Tuple[np.ndarray, np.ndarray, float]:
         """Polynomial fit over the current buffer (caller must ensure `ready`)."""
@@ -211,18 +258,27 @@ class BallStateEstimator:
 
         return p_est, v_est, t_ref
 
-    def _bridge_after_bounce(self, t_now: float) -> List[Tuple[float, np.ndarray]]:
-        """Physics-predicted samples bridging a just-detected bounce.
+    def _propagate_state(
+        self, p0: np.ndarray, v0: np.ndarray, t0: float, t1: float,
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """Propagate one state with the planner's drag + gravity model."""
+        p = np.asarray(p0, dtype=float).copy()
+        v = np.asarray(v0, dtype=float).copy()
+        remaining = max(float(t1 - t0), 0.0)
+        max_step = max(float(getattr(self.config, "dt_integrate", 0.005)), 1e-4)
+        while remaining > 1e-12:
+            dt = min(max_step, remaining)
+            speed = float(np.linalg.norm(v))
+            a = -self.physics.k * speed * v + self.physics.g
+            p = p + v * dt + 0.5 * a * dt * dt
+            v = v + a * dt
+            remaining -= dt
+        return p, v
 
-        Fits the (still pre-clear) buffer for the pre-bounce state, reflects
-        its velocity through the same diagonal restitution model
-        :class:`~.ball_trajectory_predictor.BallTrajectoryPredictor` uses
-        (``v+ = diag(C_h, C_h, -C_v) @ v-``), then forward-integrates the same
-        drag + gravity flight model a few synthetic samples ahead, evenly
-        spaced up to (but not including) ``t_now``. Caller is responsible for
-        only calling this while the pre-bounce buffer is still intact (i.e.
-        before :meth:`reset`) and only when it is `ready`.
-        """
+    def _state_after_bounce(
+        self, t_now: float,
+    ) -> Optional[Tuple[np.ndarray, np.ndarray, float]]:
+        """Build a post-bounce state prior without fabricating measurements."""
         p_pre, v_pre, t_pre = self._fit()
 
         v_seed = np.array([
@@ -232,20 +288,8 @@ class BallStateEstimator:
         ])
         p_seed = p_pre.copy()
         p_seed[2] = max(p_seed[2], self.physics.radius)
-
-        n_bridge = 5  # a handful of samples; real ones age these out fast
-        dt = max(t_now - t_pre, 1e-4) / (n_bridge + 1)
-
-        samples: List[Tuple[float, np.ndarray]] = []
-        p, v, t = p_seed, v_seed, t_pre
-        for _ in range(n_bridge):
-            speed = float(np.linalg.norm(v))
-            a = -self.physics.k * speed * v + self.physics.g
-            p = p + v * dt + 0.5 * a * dt * dt
-            v = v + a * dt
-            t = t + dt
-            samples.append((t, p.copy()))
-        return samples
+        p_now, v_now = self._propagate_state(p_seed, v_seed, t_pre, t_now)
+        return p_now, v_now, float(t_now)
 
     def estimate(self) -> Tuple[np.ndarray, np.ndarray, float]:
         """Compute smoothed ball position and velocity at the latest timestamp.
@@ -260,5 +304,32 @@ class BallStateEstimator:
             Timestamp of the estimate (latest sample time).
         """
         if not self.ready:
-            raise RuntimeError(f"Need >= 6 samples, have {len(self.t_buffer)}")
-        return self._fit()
+            min_samples = max(6, int(getattr(self.config, "min_ready_samples", 6)))
+            raise RuntimeError(f"Need >= {min_samples} samples, have {len(self.t_buffer)}")
+
+        if self._bounce_prior_t is None:
+            return self._fit()
+
+        t_ref = float(self.t_buffer[-1])
+        p_model, v_model = self._propagate_state(
+            self._bounce_prior_p, self._bounce_prior_v,
+            float(self._bounce_prior_t), t_ref,
+        )
+        n_real = len(self.t_buffer)
+        min_samples = max(6, int(getattr(self.config, "min_ready_samples", 6)))
+
+        # Position is directly observed and should correct the model promptly;
+        # velocity needs at least six real samples before a polynomial derivative
+        # is meaningful.  Thereafter, fade continuously from the impact-model
+        # prior to the measurement-only fit, reaching the latter at the normal
+        # readiness threshold.
+        position_gain = min(0.85, 0.25 + 0.60 * n_real / min_samples)
+        p_est = p_model + position_gain * (self.p_buffer[-1] - p_model)
+        v_est = v_model
+        if n_real >= 6:
+            p_fit, v_fit, _ = self._fit()
+            denom = max(min_samples - 5, 1)
+            measurement_weight = float(np.clip((n_real - 5) / denom, 0.0, 1.0))
+            p_est = (1.0 - measurement_weight) * p_est + measurement_weight * p_fit
+            v_est = (1.0 - measurement_weight) * v_model + measurement_weight * v_fit
+        return p_est, v_est, t_ref

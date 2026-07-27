@@ -26,6 +26,7 @@ setup(
         "console_scripts": [
             "hope_planner_node = hope_planner.node:main",
             "hope_bag_to_csv = hope_planner.bag_to_csv:main",
+            "hope_planner_eval = hope_planner.evaluation:main",
         ],
     },
 )

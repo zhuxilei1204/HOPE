@@ -126,6 +126,21 @@ class PlannerConfig:
                                   # motion-capture sample rate. The actual rate is a property
                                   # of the rig; the rate-coupled knob is fit_window above.
 
+    # Outlier gate (state estimation). Protects the position/velocity fit buffer
+    # from a single implausible mocap frame (mis-tracked marker, reflection,
+    # dropped-then-stale sample); table bounces do NOT trip this, since ball
+    # position is continuous through a bounce (only the velocity changes) --
+    # see BallStateEstimator._is_outlier.
+    outlier_max_speed: float = 15.0  # m/s, max plausible frame-to-frame ball speed.
+                                      # Real rally speeds are well under 10 m/s (HITTER
+                                      # reports >5 m/s for fast shots); this is a generous
+                                      # ceiling that only catches teleports/mis-tracks, not
+                                      # fast legitimate shots.
+    outlier_max_consecutive_reject: int = 3  # give up gating and resynchronize after this
+                                              # many consecutive rejects, so a genuine large
+                                              # step (mocap rig re-lock, wrong ball_pose_index
+                                              # briefly resolved) is not stuck rejected forever.
+
     # Trajectory prediction
     dt_integrate: float = 0.001   # integration time step (s)
     max_predict_time: float = 2.0  # forward prediction horizon (s)
@@ -139,9 +154,25 @@ class PlannerConfig:
     )                             # fixed landing target (opponent-half centre); z = ball radius,
                                   # the CENTROID height at table contact (same convention as the
                                   # bounce planes everywhere else)
-    delta_t_flight: float = 0.5   # desired post-strike flight time (s)
+    delta_t_flight: float = 0.5   # desired (nominal) post-strike flight time (s)
     C_r: float = 0.654            # paddle normal restitution
     racket_radius: float = 0.075  # m, paddle radius
+
+    # Net clearance (racket planning). For a fixed p_strike -> target_land pair,
+    # a LONGER post-strike flight time lofts the arc higher at the net (more
+    # hang time to rise and fall back to the same landing point) and, as a
+    # side effect, asks less peak speed of the racket than a fast flat drive
+    # would. So when the nominal delta_t_flight would clip the net,
+    # RacketTargetPlanner extends delta_t_flight (up to this ceiling) just
+    # enough to clear it, still aiming at the same target_land -- see
+    # RacketTargetPlanner._solve_flight_time.
+    net_clearance_margin: float = 0.03  # m, required height above the net top at
+                                         # the net-crossing time (safety pad beyond
+                                         # bare geometric clearance; > ball radius)
+    delta_t_flight_max: float = 1.0     # s, ceiling the search may lengthen
+                                         # delta_t_flight to before giving up on
+                                         # full clearance (best-available margin)
+    net_search_iters: int = 8           # bisection iterations for the delta_t search
 
     # Simplified paddle tangential contact (used by ball_contact.py)
     paddle_a_t: float = 0.52      # tangential damping fraction

@@ -12,7 +12,7 @@ hope_planner:
     # --- Strike plane ---
     # Fixed virtual hitting-plane x (m). Set to your robot placement + reach so
     # the incoming ball crosses this plane in front of the robot. Example only.
-    x_hit: 0.2
+    x_hit: 0.10
 
     # --- Forehand / backhand selection ---
     # The side is chosen once per incoming ball by splitting the predicted
@@ -35,15 +35,36 @@ hope_planner:
     # Every mocap sample feeds the estimator; the predict+plan solve runs at most
     # every solve_period_s (<= 50 Hz). 0.0 solves on every sample.
     solve_period_s: 0.02
+    tracking_gap_reset_s: 0.25
     max_predict_time: 2.0          # forward prediction horizon (s)
+    dt_integrate: 0.005            # 5 ms: <1 ms strike-time error, ~5x faster on HDU
     # Velocity-fit window IN SAMPLES. Real 360 Hz Motive captures from
     # /mnt/ssd/zxl/拍1动捕数据.zip and 拍2动捕数据.zip validated best at 67
     # samples for 50-500 ms ahead prediction.
     fit_window: 67
+    # Real-robot replay gate (session 20260726_142055_389966836): 20 samples
+    # preserves 18/19 credible tasks while suppressing low-confidence startup.
+    # Fixed-population replay (147 trajectories / 151 crossings, 2026-07-28):
+    # 12 samples covered 40.4% of crossings with 48.2 mm median error at
+    # 0-50 ms, while 20 samples covered only 11.9%. Six samples covered more
+    # events but increased startup-velocity risk, so 12 is the deployed tradeoff.
+    min_ready_samples: 12
+    revision_gate_initial_consecutive: 2
+    revision_gate_initial_position_tolerance_m: 0.10
+    revision_gate_max_position_jump_m: 0.10
+    revision_gate_max_velocity_jump_mps: 1.50
+    revision_gate_freeze_tts_s: 0.20
+    revision_gate_max_strike_time_jump_s: 0.040
     # Bounce detection for centre-tracked balls. The 40 mm ball centre is near
     # z=0.02 m at contact; real captures had enough noise/curvature that 0.11 m
     # caught table bounces more consistently than the older 0.05 m threshold.
     bounce_center_z_max: 0.11
+    # A three-frame local minimum alone is too sensitive to mocap jitter. At
+    # 360 Hz, require at least 2 mm of descent and rebound, reject triplets
+    # spanning a dropped-frame gap, and allow at most one impact per 80 ms.
+    bounce_min_vertical_delta: 0.002
+    bounce_refractory_s: 0.08
+    bounce_max_sample_gap_s: 0.01
 
     # --- Table placement ---
     # Table's +y edge in the play frame (table occupies y in [y_max - width, y_max]).

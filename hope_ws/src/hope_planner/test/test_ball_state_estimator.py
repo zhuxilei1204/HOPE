@@ -85,6 +85,32 @@ def test_no_false_bounce_on_low_flat_or_monotonic_flight():
     assert len(est.t_buffer) == 12 and len(est2.t_buffer) == 6
 
 
+def test_low_amplitude_mocap_jitter_does_not_repeatedly_reset():
+    cfg = PlannerConfig(
+        min_ready_samples=20,
+        bounce_min_vertical_delta=0.002,
+    )
+    est = BallStateEstimator(cfg)
+    dt = _dt()
+    # Alternating 1 mm local minima are below the deployed 2 mm evidence
+    # threshold even though every other frame satisfies the old detector.
+    for i in range(30):
+        z = 0.04 + (0.0005 if i % 2 == 0 else -0.0005)
+        est.push(i * dt, np.array([0.2 - i * dt, 0.0, z]))
+        assert not est.bounce_detected
+    assert est.ready
+    assert len(est.t_buffer) == 30
+
+
+def test_bounce_is_not_inferred_across_tracking_gap():
+    cfg = PlannerConfig(bounce_max_sample_gap_s=0.01)
+    est = BallStateEstimator(cfg)
+    est.push(0.000, np.array([0.0, 0.0, 0.04]))
+    est.push(0.003, np.array([0.0, 0.0, 0.02]))
+    est.push(0.033, np.array([0.0, 0.0, 0.04]))
+    assert not est.bounce_detected
+
+
 def test_fewer_than_six_samples_not_ready():
     cfg = PlannerConfig()
     est = BallStateEstimator(cfg)
@@ -213,6 +239,44 @@ def test_bridge_after_bounce_gives_immediate_post_bounce_estimate():
     assert np.allclose(v_est, v_post_true, atol=0.15)
 
 
+def test_high_confidence_bounce_prior_does_not_pollute_real_sample_buffer():
+    """With the deployed 20-sample confidence gate, a trusted pre-impact
+    state must remain usable immediately after reset, but model-generated
+    samples must never be inserted into the post-impact measurement buffer."""
+    cfg = PlannerConfig(min_ready_samples=20, fit_window=67)
+    physics = BallPhysics()
+    est = BallStateEstimator(cfg, physics)
+    dt = _dt()
+    radius = physics.radius
+    vx_in, vz_in = -2.0, 3.0
+    n_pre = 24
+
+    for k in range(n_pre, 0, -1):
+        t = (n_pre - k) * dt
+        est.push(t, np.array([vx_in * t, 0.0, radius + vz_in * dt * k]))
+    assert est.ready
+
+    t_dip = n_pre * dt
+    x_dip = vx_in * t_dip
+    est.push(t_dip, np.array([x_dip, 0.0, radius]))
+    t_rise = t_dip + dt
+    p_rise = np.array([
+        x_dip + physics.C_h * vx_in * dt,
+        0.0,
+        radius + physics.C_v * vz_in * dt,
+    ])
+    est.push(t_rise, p_rise)
+
+    assert est.bounce_detected
+    assert est.ready
+    assert len(est.t_buffer) == 1
+    assert np.allclose(est.p_buffer[0], p_rise)
+
+    v_post_true = np.array([physics.C_h * vx_in, 0.0, physics.C_v * vz_in])
+    _, v_est, _ = est.estimate()
+    assert np.allclose(v_est, v_post_true, atol=0.15)
+
+
 def test_bridge_does_not_engage_when_pre_bounce_buffer_was_not_ready():
     """The bridge must not fabricate a velocity from an unreliable pre-bounce
     fit: with < 6 pre-bounce samples (as in the existing toy dip tests above),
@@ -239,3 +303,23 @@ def test_min_ready_samples_delays_ready_without_changing_fit_window():
     assert not est.ready
     est.push(11 * dt, p0 + v * (11 * dt))
     assert est.ready
+
+
+def test_reset_stream_removes_old_ball_and_outlier_reference():
+    cfg = PlannerConfig(min_ready_samples=6)
+    est = BallStateEstimator(cfg)
+    dt = _dt()
+    for i in range(8):
+        est.push(i * dt, np.array([0.2 + i * dt, 0.0, 0.5]))
+    assert est.ready
+
+    est.reset_stream()
+    assert not est.ready
+    assert len(est.t_buffer) == 0
+    assert not est.outlier_rejected
+
+    # A distant first sample from the next physical ball is a new reference,
+    # not an implausible jump from the old ball.
+    est.push(5.0, np.array([2.0, -1.0, 1.2]))
+    assert len(est.t_buffer) == 1
+    assert not est.outlier_rejected

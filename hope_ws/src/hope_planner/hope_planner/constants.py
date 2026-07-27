@@ -146,6 +146,9 @@ class PlannerConfig:
     max_predict_time: float = 2.0  # forward prediction horizon (s)
     bounce_z_tol: float = 0.005   # z threshold for a point-ball bounce dip (m)
     bounce_center_z_max: float = 0.11  # local-minimum height for a centre-tracked bounce (m)
+    bounce_min_vertical_delta: float = 0.002  # required fall and rise around a centre minimum (m)
+    bounce_refractory_s: float = 0.08  # suppress repeated minima from contact/noise (s)
+    bounce_max_sample_gap_s: float = 0.01  # never infer a 3-point bounce across a tracking gap
 
     # Racket planning
     x_hit: float = 0.0            # fixed virtual hitting-plane x coordinate (m)

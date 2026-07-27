@@ -9,14 +9,16 @@ publishes the typed ``hope_msgs/RacketCommand``.
 Lifecycle: each new incoming ball gets a new ``task_id``; pre-strike updates
 keep that id and increase ``task_revision``; ``swing_side`` is chosen once per
 task and locked within it. The first sample seeds position and subsequent
-samples enable the velocity fit, after which commands are published directly —
-there is no readiness/validity/failure state.
+samples enable the velocity fit. Live commands then pass a convergence,
+revision-jump, and near-strike freeze gate before publication.
 """
 
 import numpy as np
 import rclpy
 from geometry_msgs.msg import PoseArray
 from hope_msgs.msg import RacketCommand
+
+from .command_stability_gate import CommandStabilityConfig, CommandStabilityGate
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile, ReliabilityPolicy
 
@@ -49,18 +51,34 @@ class HOPEPlannerNode(Node):
         self.declare_parameter("target_land_y", -0.7625)  # fixed landing target y (m)
         self.declare_parameter("delta_t_flight", 0.5)     # desired post-strike flight time (s)
         self.declare_parameter("max_predict_time", 2.0)   # prediction horizon (s)
+        self.declare_parameter("dt_integrate", 0.005)     # trajectory integration step (s)
         # Velocity-fit window IN SAMPLES — coupled to the mocap sample rate. The
         # bundled 360 Hz Motive captures validated best at 67 samples for
         # 50-500 ms ahead prediction.
         self.declare_parameter("fit_window", 67)
         # Optional confidence gate. Default 6 preserves legacy behaviour; raise
         # only after validating the delay/accuracy tradeoff on real captures.
-        self.declare_parameter("min_ready_samples", 6)
+        self.declare_parameter("min_ready_samples", 12)
+        # Live revision stability gate. Values were selected by replaying the
+        # 2026-07-26 real-robot HDU/MDU session, not by changing robot limits.
+        self.declare_parameter("revision_gate_initial_consecutive", 2)
+        self.declare_parameter("revision_gate_initial_position_tolerance_m", 0.10)
+        self.declare_parameter("revision_gate_max_position_jump_m", 0.10)
+        self.declare_parameter("revision_gate_max_velocity_jump_mps", 1.50)
+        self.declare_parameter("revision_gate_freeze_tts_s", 0.20)
+        self.declare_parameter("revision_gate_max_strike_time_jump_s", 0.040)
         self.declare_parameter("bounce_z_tol", 0.005)
         self.declare_parameter("bounce_center_z_max", 0.11)
+        self.declare_parameter("bounce_min_vertical_delta", 0.002)
+        self.declare_parameter("bounce_refractory_s", 0.08)
+        self.declare_parameter("bounce_max_sample_gap_s", 0.01)
         # Push every mocap sample into the estimator; run the predict+plan solve
         # at most every solve_period_s (<= 50 Hz). 0.0 = solve on every sample.
         self.declare_parameter("solve_period_s", 0.02)
+        # /poses pauses while the rigid body is lost. A long gap therefore
+        # marks a new physical tracking stream and must not become a revision
+        # of the previously accepted ball.
+        self.declare_parameter("tracking_gap_reset_s", 0.25)
         # Table's +y edge in the play frame (table occupies y in [y_max - width, y_max]).
         self.declare_parameter("table_y_max", 0.0)
         # Optional explicit path to configs/ball_physics.yaml ("" = auto-discover).
@@ -76,6 +94,9 @@ class HOPEPlannerNode(Node):
         self._split_y = float(self.get_parameter("swing_side_split_y").value)
         self._hysteresis_y = max(0.0, float(self.get_parameter("swing_side_hysteresis_y").value))
         self._solve_period = float(self.get_parameter("solve_period_s").value)
+        self._tracking_gap_reset = max(
+            0.0, float(self.get_parameter("tracking_gap_reset_s").value)
+        )
 
         physics_path = str(self.get_parameter("ball_physics_path").value) or None
         physics = load_ball_physics(physics_path)
@@ -100,24 +121,46 @@ class HOPEPlannerNode(Node):
             ]),
             delta_t_flight=float(self.get_parameter("delta_t_flight").value),
             max_predict_time=float(self.get_parameter("max_predict_time").value),
+            dt_integrate=float(self.get_parameter("dt_integrate").value),
             fit_window=int(self.get_parameter("fit_window").value),
             min_ready_samples=int(self.get_parameter("min_ready_samples").value),
             bounce_z_tol=float(self.get_parameter("bounce_z_tol").value),
             bounce_center_z_max=float(self.get_parameter("bounce_center_z_max").value),
+            bounce_min_vertical_delta=float(self.get_parameter(
+                "bounce_min_vertical_delta").value),
+            bounce_refractory_s=float(self.get_parameter("bounce_refractory_s").value),
+            bounce_max_sample_gap_s=float(self.get_parameter(
+                "bounce_max_sample_gap_s").value),
             C_r=paddle["C_r"],
             paddle_a_t=paddle["paddle_a_t"],
             paddle_b_t=paddle["paddle_b_t"],
             paddle_mu=paddle["paddle_mu"],
         )
         self.planner = HOPEPlanner(physics=physics, config=config, table=table)
+        self._command_gate = CommandStabilityGate(CommandStabilityConfig(
+            initial_consecutive=int(self.get_parameter(
+                "revision_gate_initial_consecutive").value),
+            initial_position_tolerance_m=float(self.get_parameter(
+                "revision_gate_initial_position_tolerance_m").value),
+            max_position_jump_m=float(self.get_parameter(
+                "revision_gate_max_position_jump_m").value),
+            max_velocity_jump_mps=float(self.get_parameter(
+                "revision_gate_max_velocity_jump_mps").value),
+            freeze_time_to_strike_s=float(self.get_parameter(
+                "revision_gate_freeze_tts_s").value),
+            max_strike_time_jump_s=float(self.get_parameter(
+                "revision_gate_max_strike_time_jump_s").value),
+        ))
 
         # --- Task lifecycle state ---
         self._task_id = 0
         self._task_revision = 0
+        self._candidate_active = False
         self._task_active = False
         self._locked_side = RacketCommand.FOREHAND
         self._prev_side = 0            # side of the previous task (for hysteresis); 0 = none
         self._last_solve_t = None
+        self._last_pose_t = None
 
         mocap_qos = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
@@ -165,11 +208,26 @@ class HOPEPlannerNode(Node):
         step observable for on-site debugging (e.g. a wrong ball_pose_index,
         a reflection, or a mocap dropout showing up as repeated rejections).
         """
-        if self.planner.estimator.outlier_rejected:
+        # Some deployed HDU estimator builds predate the optional outlier
+        # diagnostic property.  It is observability-only, so absence must not
+        # terminate the planning callback (and therefore the whole stack).
+        if getattr(self.planner.estimator, "outlier_rejected", False):
             self.get_logger().warning(
                 "ball pose sample rejected by the outlier gate (implausible jump or "
                 "non-finite value); check the mocap feed (ball_pose_index, reflections, "
                 "dropouts)", throttle_duration_sec=2.0)
+
+    def _reset_tracking_stream(self, gap_s: float) -> None:
+        """End the old ball after a mocap pause without reusing stale state."""
+        self.planner.reset_stream()
+        self._task_active = False
+        self._candidate_active = False
+        self._command_gate.reset()
+        self._last_solve_t = None
+        self.get_logger().info(
+            f"tracking stream reset after {gap_s:.3f}s pose gap; "
+            "next accepted command starts a new task"
+        )
 
     def _poses_cb(self, msg: PoseArray) -> None:
         if len(msg.poses) <= self._ball_index:
@@ -177,6 +235,16 @@ class HOPEPlannerNode(Node):
         t = msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9
         pose = msg.poses[self._ball_index]
         p_ball = np.array([pose.position.x, pose.position.y, pose.position.z])
+
+        if self._last_pose_t is not None:
+            gap_s = t - self._last_pose_t
+            if (
+                (self._tracking_gap_reset > 0.0
+                 and gap_s > self._tracking_gap_reset)
+                or gap_s < -1e-6
+            ):
+                self._reset_tracking_stream(gap_s)
+        self._last_pose_t = t
 
         # Feed every sample to the estimator, but rate-limit the solve.
         if (self._solve_period > 0.0 and self._last_solve_t is not None
@@ -201,6 +269,20 @@ class HOPEPlannerNode(Node):
             # ball starts a fresh task_id.
             if self.planner.ball_incoming is False:
                 self._task_active = False
+                self._candidate_active = False
+                self._command_gate.reset()
+            return
+
+        if not self._candidate_active:
+            self._candidate_active = True
+            self._command_gate.reset()
+
+        tts = self.planner.time_to_strike
+        if tts is None or not self._command_gate.consider(
+                cmd.p_intercept, cmd.v_racket, float(tts), candidate_time_s=t):
+            self.get_logger().warning(
+                f"planner command withheld by revision gate: "
+                f"{self._command_gate.last_reason}", throttle_duration_sec=1.0)
             return
 
         if not self._task_active:

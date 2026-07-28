@@ -1,0 +1,219 @@
+# Common reward/lifecycle correction for the model_22750 stability experiments.
+#
+# Both branches use this exact task. The only intended difference is whether the
+# actor receives the appended 8-D deployable stability feedback.
+
+defaults:
+  - HOPEPingPongM22494TableWidthCycleV3Old4
+  - _self_
+
+name: HOPEPingPongM22750StabilityCommonV1
+actor_obs_contract: hope_pingpong_normal114
+motion_manifest: hope_training/motions/old4_plus_deploy_ready_rebase5_20260728/manifest.tsv
+
+actor_obs:
+  racket_target_normal_w: true
+  stability_feedback: false
+
+overrides:
+  # Keep the validated old4 strike prior dominant. The accepted supplemental
+  # clips receive 10% sampling and are amplified only in the lower-body prior.
+  commands.motion.clip_sampling_weights: [0.225, 0.225, 0.225, 0.225, 0.025, 0.025, 0.016667, 0.016667, 0.016666]
+  commands.motion.core_clip_count: 4
+
+  rewards.motion_global_anchor_pos.params:
+    command_name: motion
+    std: 0.3
+    core_clip_scale: 1.0
+    supplemental_clip_scale: 0.35
+  rewards.motion_global_anchor_ori.params:
+    command_name: motion
+    std: 0.4
+    core_clip_scale: 1.0
+    supplemental_clip_scale: 0.35
+  rewards.motion_body_pos.params:
+    command_name: motion
+    std: 0.3
+    body_names: &motion_prior_bodies
+      - pelvis_link
+      - left_hip_roll_Link
+      - left_knee_Link
+      - left_ankle_roll_Link
+      - right_hip_roll_Link
+      - right_knee_Link
+      - right_ankle_roll_Link
+      - torso_Link
+      - left_shoulder_roll_Link
+      - left_elbow_Link
+      - left_wrist_yaw_Link
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+    core_clip_scale: 1.0
+    supplemental_clip_scale: 0.35
+  rewards.motion_body_ori.params:
+    command_name: motion
+    std: 0.4
+    body_names: *motion_prior_bodies
+    core_clip_scale: 1.0
+    supplemental_clip_scale: 0.35
+  rewards.motion_body_lin_vel.params:
+    command_name: motion
+    std: 1.0
+    body_names: *motion_prior_bodies
+    core_clip_scale: 1.0
+    supplemental_clip_scale: 0.15
+  rewards.motion_body_ang_vel.params:
+    command_name: motion
+    std: 3.14
+    body_names: *motion_prior_bodies
+    core_clip_scale: 1.0
+    supplemental_clip_scale: 0.15
+  rewards.imitation.params:
+    command_name: motion
+    std_pos: 0.3
+    std_ori: 0.4
+    body_names:
+      - torso_Link
+      - left_shoulder_roll_Link
+      - left_elbow_Link
+      - left_wrist_yaw_Link
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+    core_clip_scale: 1.0
+    supplemental_clip_scale: 0.35
+  rewards.phase_lower_body_motion_prior.params:
+    motion_command_name: motion
+    racket_command_name: racket_target
+    std_pos: 0.30
+    std_ori: 0.48
+    body_names:
+      - pelvis_link
+      - left_hip_roll_Link
+      - left_knee_Link
+      - left_ankle_roll_Link
+      - right_hip_roll_Link
+      - right_knee_Link
+      - right_ankle_roll_Link
+    pre_strike_scale: 0.32
+    strike_scale: 0.12
+    recovery_scale: 1.0
+    hold_scale: 1.15
+    core_clip_scale: 0.75
+    supplemental_clip_scale: 1.35
+
+  # Dynamic station is authoritative throughout approach and recovery. This
+  # removes the old fixed-startup-station versus next-station tug of war.
+  rewards.follow_through_recovery.weight: 0.80
+  rewards.follow_through_recovery.params:
+    command_name: racket_target
+    std: 0.46
+    station_std: 0.25
+    use_dynamic_station: true
+  rewards.recovery_health.weight: 1.00
+  rewards.recovery_health.params:
+    command_name: racket_target
+    height_std: 0.095
+    upright_std: 0.26
+    lin_vel_std: 0.24
+    ang_vel_std: 0.70
+    station_std: 0.21
+    use_dynamic_station: true
+  rewards.next_ball_readiness.weight: 1.25
+  rewards.next_swing_ready_bonus.weight: 1.35
+
+  # Replace pelvis-only proxies with direct torso and COM/support objectives.
+  rewards.strike_balance.weight: 0.0
+  rewards.lower_body_support.weight: 0.0
+  rewards.torso_com_balance.weight: 0.42
+  rewards.torso_com_balance.params:
+    command_name: racket_target
+    phase: strike
+    pre_window_s: 0.34
+    post_window_s: 0.20
+    torso_pitch_std: 0.22
+    torso_roll_std: 0.22
+    torso_ang_vel_std: 1.45
+    com_x_std: 0.15
+    com_y_std: 0.18
+    start_step: 0
+    warmup_steps: 800
+    start_scale: 0.25
+  rewards.torso_com_recovery_balance.weight: 0.48
+  rewards.torso_com_recovery_balance.params:
+    command_name: racket_target
+    phase: recovery_hold
+    pre_window_s: 0.34
+    post_window_s: 0.20
+    torso_pitch_std: 0.20
+    torso_roll_std: 0.22
+    torso_ang_vel_std: 0.95
+    com_x_std: 0.13
+    com_y_std: 0.16
+    start_step: 0
+    warmup_steps: 800
+    start_scale: 0.25
+  rewards.prestrike_station_progress.weight: 0.30
+  rewards.prestrike_station_progress.params:
+    command_name: racket_target
+    speed_scale: 0.35
+    arrival_radius: 0.12
+    stop_window_s: 0.10
+    start_step: 0
+    warmup_steps: 500
+    start_scale: 0.30
+
+  # Preserve arm freedom and allow legs to make fast small balance corrections.
+  rewards.phase_action_rate.weight: 0.0
+  rewards.post_strike_lower_body_action_rate.weight: 0.0
+  rewards.phase_action_rate_waist.weight: -0.10
+  rewards.phase_action_rate_waist.params:
+    command_name: racket_target
+    joint_names: [waist_yaw_joint, waist_roll_joint, waist_pitch_joint]
+    pre_strike_scale: 0.025
+    strike_scale: 0.006
+    recovery_scale: 0.09
+    hold_scale: 0.12
+  rewards.phase_action_rate_upper.weight: -0.035
+  rewards.phase_action_rate_upper.params:
+    command_name: racket_target
+    joint_names:
+      - head_yaw_joint
+      - head_pitch_joint
+      - left_shoulder_pitch_joint
+      - left_shoulder_roll_joint
+      - left_shoulder_yaw_joint
+      - left_elbow_joint
+      - left_wrist_roll_joint
+      - left_wrist_pitch_joint
+      - left_wrist_yaw_joint
+      - right_shoulder_pitch_joint
+      - right_shoulder_roll_joint
+      - right_shoulder_yaw_joint
+      - right_elbow_joint
+      - right_wrist_roll_joint
+      - right_wrist_pitch_joint
+      - right_wrist_yaw_joint
+    pre_strike_scale: 0.02
+    strike_scale: 0.002
+    recovery_scale: 0.06
+    hold_scale: 0.08
+  rewards.phase_action_rate_legs.weight: -0.015
+  rewards.phase_action_rate_legs.params:
+    command_name: racket_target
+    joint_names:
+      - left_hip_pitch_joint
+      - left_hip_roll_joint
+      - left_hip_yaw_joint
+      - left_knee_joint
+      - left_ankle_pitch_joint
+      - left_ankle_roll_joint
+      - right_hip_pitch_joint
+      - right_hip_roll_joint
+      - right_hip_yaw_joint
+      - right_knee_joint
+      - right_ankle_pitch_joint
+      - right_ankle_roll_joint
+    pre_strike_scale: 0.012
+    strike_scale: 0.001
+    recovery_scale: 0.025
+    hold_scale: 0.04

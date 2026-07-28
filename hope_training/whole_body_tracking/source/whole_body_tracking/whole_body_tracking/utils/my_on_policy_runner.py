@@ -10,7 +10,12 @@ progress from rsl_rl is preserved; the only shipped machine-readable metric is `
 
 from __future__ import annotations
 
+import os
+
+import torch
 from rsl_rl.runners import OnPolicyRunner
+
+from whole_body_tracking.utils.actor_anchor import ActorParameterAnchor
 
 
 class _LocalNullWriter:
@@ -56,6 +61,37 @@ class _LocalNullWriter:
 
 class HOPEOnPolicyRunner(OnPolicyRunner):
     """rsl_rl OnPolicyRunner with local-only, offline logging (no W&B / TensorBoard)."""
+
+    def configure_actor_anchor(self, checkpoint_path: str, coefficient: float) -> None:
+        """Anchor the actor to the actor stored in ``checkpoint_path``."""
+        path = os.path.abspath(checkpoint_path)
+        checkpoint = torch.load(path, map_location=self.device, weights_only=False)
+        model_state = checkpoint.get("model_state_dict")
+        if not isinstance(model_state, dict):
+            raise ValueError(f"checkpoint has no model_state_dict: {path}")
+        reference_actor_state = {
+            name.removeprefix("actor."): tensor
+            for name, tensor in model_state.items()
+            if name.startswith("actor.")
+        }
+        actor = getattr(self.alg.policy, "actor", None)
+        if actor is None:
+            raise ValueError("actor anchoring requires the policy to expose an actor module")
+        self.actor_anchor = ActorParameterAnchor(actor, reference_actor_state, coefficient)
+
+        original_update = self.alg.update
+
+        def anchored_update():
+            losses = original_update()
+            losses.update(self.actor_anchor.metrics())
+            return losses
+
+        self.alg.update = anchored_update
+        print(
+            f"[train.py] actor anchor enabled: coefficient={float(coefficient):.6g}, "
+            f"reference={path}",
+            flush=True,
+        )
 
     def _prepare_logging_writer(self) -> None:
         if self.log_dir is not None and self.writer is None and not self.disable_logs:

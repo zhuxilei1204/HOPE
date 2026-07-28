@@ -30,7 +30,7 @@ hope_world:
 
   planner:
     # Fixed virtual hit-plane x (m); publish it as a frame for visualization.
-    x_hit: 0.0
+    x_hit: 0.2
 
   mocap_to_base_link:
     # Static transform from the robot's mocap marker-cluster frame to its URDF

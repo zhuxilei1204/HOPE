@@ -21,6 +21,8 @@ policy:
 action_adapter:
   # The shared adapter config (also read by the training package).
   config_path: action_adapter.yaml
+  # Must match the policy's training task. Existing released policies use raw.
+  last_action_feedback_mode: raw
 
 simulation:
   # The a3_pingpong MJCF shipped with this repo (loaded directly by the MuJoCo

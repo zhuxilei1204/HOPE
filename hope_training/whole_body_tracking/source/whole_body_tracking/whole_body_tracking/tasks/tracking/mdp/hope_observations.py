@@ -58,16 +58,59 @@ def swing_side(env: ManagerBasedRLEnv, command_name: str) -> torch.Tensor:
 
 
 def applied_last_action(env: ManagerBasedRLEnv, action_name: str = "joint_pos") -> torch.Tensor:
-    """Previous tick's applied raw action (31), including the zeroed passive-head columns.
+    """Previous tick's configured action feedback (31), with passive-head columns zero.
 
-    Reads the action term's deploy-faithful ``applied_raw_actions`` rather than Isaac Lab's global
-    ``last_action`` so the passive-head zeroing is reflected in the feedback the actor sees.
+    ``raw`` remains the default contract. Experimental tasks may select ``effective``, the residual
+    represented by the clamped q_des, to remove unrealizable action aliases from the feedback loop.
     """
     action_term = env.action_manager.get_term(action_name)
-    applied = getattr(action_term, "applied_raw_actions", None)
-    if applied is None:
-        raise RuntimeError(f"Action term {action_name!r} does not expose applied_raw_actions")
-    return applied
+    feedback = getattr(action_term, "feedback_actions", None)
+    if feedback is None:
+        feedback = getattr(action_term, "applied_raw_actions", None)
+    if feedback is None:
+        raise RuntimeError(f"Action term {action_name!r} does not expose action feedback")
+    return feedback
+
+
+def stability_feedback(env: ManagerBasedRLEnv, command_name: str) -> torch.Tensor:
+    """Deployable base/torso/support feedback appended by the 122-D contract.
+
+    Layout: base linear velocity body XY, torso projected gravity XY, whole-body
+    COM relative to the midpoint of the feet in the base-heading frame XY, and
+    left/right foot contact flags.
+    """
+    cmd = _cmd(env, command_name)
+    motion = cmd._motion()
+    data = cmd.robot.data
+
+    torso_idx = motion.cfg.body_names.index("torso_Link")
+    torso_quat_w = motion.robot_body_quat_w[:, torso_idx]
+    gravity_w = torch.zeros(cmd.num_envs, 3, device=cmd.device)
+    gravity_w[:, 2] = -1.0
+    torso_gravity_xy = quat_rotate_inverse(torso_quat_w, gravity_w)[:, :2]
+
+    masses = data.default_mass.to(device=data.body_com_pos_w.device)
+    com_w = (data.body_com_pos_w * masses.unsqueeze(-1)).sum(dim=1) / masses.sum(
+        dim=1, keepdim=True
+    ).clamp_min(1.0e-6)
+    foot_ids = [
+        motion.cfg.body_names.index("left_ankle_roll_Link"),
+        motion.cfg.body_names.index("right_ankle_roll_Link"),
+    ]
+    support_xy = motion.robot_body_pos_w[:, foot_ids, :2].mean(dim=1)
+    com_delta_w = torch.zeros_like(com_w)
+    com_delta_w[:, :2] = com_w[:, :2] - support_xy
+    com_support_b_xy = quat_rotate_inverse(yaw_quat(cmd.base_quat_w), com_delta_w)[:, :2]
+
+    return torch.cat(
+        (
+            data.root_lin_vel_b[:, :2],
+            torso_gravity_xy,
+            com_support_b_xy,
+            cmd.feet_contact_state,
+        ),
+        dim=-1,
+    )
 
 
 # --- privileged (critic-only) terms --------------------------------------------------------- #

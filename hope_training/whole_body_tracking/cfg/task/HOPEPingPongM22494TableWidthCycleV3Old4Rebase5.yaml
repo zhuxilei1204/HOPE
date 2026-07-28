@@ -1,0 +1,16 @@
+# Same table-width continuous-cycle task as Old4, with a side-balanced
+# 70% old4 / 30% deploy-ready rebase5 motion-prior mixture.
+
+defaults:
+  - HOPEPingPongM22494TableWidthCycleV3Old4
+  - _self_
+
+name: HOPEPingPongM22494TableWidthCycleV3Old4Rebase5
+
+motion_manifest: hope_training/motions/old4_plus_deploy_ready_rebase5_20260728/manifest.tsv
+
+overrides:
+  # old4: 0.70 total, balanced 0.35 FH / 0.35 BH.
+  # rebase5: 0.30 total, balanced 0.15 FH / 0.15 BH.
+  commands.motion.clip_sampling_weights: [0.175, 0.175, 0.175, 0.175, 0.075, 0.075, 0.05, 0.05, 0.05]
+  commands.motion.core_clip_count: 4

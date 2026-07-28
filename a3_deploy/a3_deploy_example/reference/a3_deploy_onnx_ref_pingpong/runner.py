@@ -7,12 +7,12 @@ Per tick, in order:
   2. poll the latest RacketCommand and advance the swing lifecycle;
   3. assemble the 111-D observation;
   4. run the ONNX actor -> raw_action[31];
-  5. zero the passive head columns (idx 3, 4) to form the APPLIED action, and feed
-     that back as the next last_action — matching training, where the zeroed
-     applied action (not the actor's raw output) is the last_action observation;
+  5. zero the passive head columns (idx 3, 4) to form the APPLIED raw action;
   6. pass the applied action through the shared ActionAdapter -> 31 joint targets
      (holding the passive neck at its default);
-  7. write the targets (with the example PD gains) and step the sim.
+  7. feed back either the applied raw action or the residual represented by the
+     clamped target, according to the runtime contract;
+  8. write the targets (with the example PD gains) and step the sim.
 
 There are deliberately NO gates, failure checks, rejections, state resets between
 tasks, or reference playback here -- a single continuous 111-D control path.
@@ -28,7 +28,13 @@ import numpy as np
 from .config import RuntimeConfig
 from .joint_order import HEAD_INDICES, NUM_JOINTS
 from .lifecycle import SwingLifecycle
-from .observation import build_observation
+from .observation import (
+    OBS_DIM_NORMAL114,
+    OBS_DIM_STABILITY122,
+    build_observation,
+    build_observation_normal114,
+    build_observation_stability122,
+)
 from .onnx_policy import OnnxPolicy
 from .racket_command import RacketCommandSource
 from .sim_bridge import SimBridge
@@ -48,6 +54,16 @@ class PingPongReferenceRunner:
         self.bridge = bridge
         self.source = command_source
         self.policy = policy or OnnxPolicy(cfg.onnx_path)
+        policy_feedback_mode = getattr(self.policy, "last_action_feedback_mode", None)
+        if (
+            policy_feedback_mode is not None
+            and policy_feedback_mode != cfg.last_action_feedback_mode
+        ):
+            raise ValueError(
+                "Runtime last_action feedback does not match the ONNX policy contract: "
+                f"runtime={cfg.last_action_feedback_mode!r}, "
+                f"policy={policy_feedback_mode!r}"
+            )
         self.lifecycle = SwingLifecycle(cfg.lifecycle)
 
         self.default_q = cfg.action_adapter.default_q.copy()
@@ -76,9 +92,19 @@ class PingPongReferenceRunner:
                 cmd = self.source.poll()
                 target = self.lifecycle.update(cmd, state)
 
-                obs = build_observation(
-                    state, target, self.last_action, self.default_q, self.fixed_station_xy
-                )
+                policy_obs_dim = getattr(self.policy, "obs_dim", 111)
+                if policy_obs_dim == OBS_DIM_STABILITY122:
+                    obs = build_observation_stability122(
+                        state, target, self.last_action, self.default_q, self.fixed_station_xy
+                    )
+                elif policy_obs_dim == OBS_DIM_NORMAL114:
+                    obs = build_observation_normal114(
+                        state, target, self.last_action, self.default_q, self.fixed_station_xy
+                    )
+                else:
+                    obs = build_observation(
+                        state, target, self.last_action, self.default_q, self.fixed_station_xy
+                    )
                 raw_action = self.policy.infer(obs)
                 # The APPLIED action: with a passive neck the head columns are never
                 # actuated, so they are zeroed before feedback — training exposes the
@@ -86,11 +112,16 @@ class PingPongReferenceRunner:
                 applied_action = np.asarray(raw_action, dtype=np.float64).copy()
                 if self.cfg.passive_neck:
                     applied_action[_HEAD_IDX] = 0.0
-                self.last_action = applied_action.copy()
 
                 q_des = self.cfg.action_adapter.decode(applied_action)
                 if self.cfg.passive_neck:
                     q_des[_HEAD_IDX] = self.default_q[_HEAD_IDX]
+                if self.cfg.last_action_feedback_mode == "effective":
+                    self.last_action = self.cfg.action_adapter.encode_effective(q_des)
+                    if self.cfg.passive_neck:
+                        self.last_action[_HEAD_IDX] = 0.0
+                else:
+                    self.last_action = applied_action.copy()
 
                 self.bridge.write_targets(q_des, self.kp, self.kd)
                 self.bridge.step()

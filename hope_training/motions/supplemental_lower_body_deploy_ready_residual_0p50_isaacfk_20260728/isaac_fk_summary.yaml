@@ -1,0 +1,8 @@
+clips: 5
+train_ready: 5
+body_position_error_p50_m_before_regeneration: 7.864080315223212e-07
+body_position_error_p95_m_before_regeneration: 2.527663652222801e-06
+body_position_error_max_m_before_regeneration: 7.035368289794684e-06
+body_orientation_error_p50_deg_before_regeneration: 3.231217143390853e-05
+body_orientation_error_p95_deg_before_regeneration: 6.270371120585785e-05
+body_orientation_error_max_deg_before_regeneration: 0.0001060709614046263

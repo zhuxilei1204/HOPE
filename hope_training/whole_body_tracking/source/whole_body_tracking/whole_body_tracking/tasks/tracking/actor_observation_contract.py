@@ -28,6 +28,10 @@ function) during training, but they NEVER enter this actor/deployed observation.
 Experimental normal-visible layout:
 
     hope_pingpong_normal114 = hope_pingpong + [111:114] racket_target_normal_w
+
+Experimental stability-visible layout:
+
+    hope_pingpong_stability122 = hope_pingpong_normal114 + [114:122] stability_feedback
 """
 
 from __future__ import annotations
@@ -103,10 +107,25 @@ HOPE_PINGPONG_NORMAL114 = ActorObservationContract(
     ),
 )
 
+HOPE_PINGPONG_STABILITY122 = ActorObservationContract(
+    name="hope_pingpong_stability122",
+    total_dim=122,
+    terms=HOPE_PINGPONG_NORMAL114.terms
+    + (
+        ActorObservationTerm(
+            "stability_feedback",
+            8,
+            "imu_kinematics_contacts",
+            "base velocity XY, torso gravity XY, COM support offset XY, left/right foot contacts",
+        ),
+    ),
+)
+
 # Keyed for lookup convenience.
 CONTRACTS = {
     HOPE_PINGPONG.name: HOPE_PINGPONG,
     HOPE_PINGPONG_NORMAL114.name: HOPE_PINGPONG_NORMAL114,
+    HOPE_PINGPONG_STABILITY122.name: HOPE_PINGPONG_STABILITY122,
 }
 
 

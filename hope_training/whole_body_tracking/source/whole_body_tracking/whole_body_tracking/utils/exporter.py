@@ -26,8 +26,10 @@ import os
 # ---------------------------------------------------------------------------------------------------
 CONTRACT_NAME = "hope_pingpong"
 CONTRACT_NAME_NORMAL114 = "hope_pingpong_normal114"
+CONTRACT_NAME_STABILITY122 = "hope_pingpong_stability122"
 OBS_DIM = 111
 OBS_DIM_NORMAL114 = 114
+OBS_DIM_STABILITY122 = 122
 ACTION_DIM = 31
 CONTROL_RATE_HZ = 50
 # The ActionAdapter constants (default_q, action_scale, clamp limits) are shipped as an editable
@@ -57,11 +59,17 @@ OBSERVATION_LAYOUT_NORMAL114 = OBSERVATION_LAYOUT + [
     {"name": "racket_target_normal_w", "slice": [111, 114], "dim": 3},
 ]
 
+OBSERVATION_LAYOUT_STABILITY122 = OBSERVATION_LAYOUT_NORMAL114 + [
+    {"name": "stability_feedback", "slice": [114, 122], "dim": 8},
+]
+
 
 def _resolve_contract(contract_name: str | None, actor_obs_dim: int | None = None) -> tuple[str, int, list[dict]]:
     """Return ``(contract_name, obs_dim, observation_layout)`` for supported actor layouts."""
     if contract_name in (None, "", "auto"):
-        if actor_obs_dim == OBS_DIM_NORMAL114:
+        if actor_obs_dim == OBS_DIM_STABILITY122:
+            contract_name = CONTRACT_NAME_STABILITY122
+        elif actor_obs_dim == OBS_DIM_NORMAL114:
             contract_name = CONTRACT_NAME_NORMAL114
         else:
             contract_name = CONTRACT_NAME
@@ -69,9 +77,12 @@ def _resolve_contract(contract_name: str | None, actor_obs_dim: int | None = Non
         return CONTRACT_NAME, OBS_DIM, OBSERVATION_LAYOUT
     if contract_name == CONTRACT_NAME_NORMAL114:
         return CONTRACT_NAME_NORMAL114, OBS_DIM_NORMAL114, OBSERVATION_LAYOUT_NORMAL114
+    if contract_name == CONTRACT_NAME_STABILITY122:
+        return CONTRACT_NAME_STABILITY122, OBS_DIM_STABILITY122, OBSERVATION_LAYOUT_STABILITY122
     raise ValueError(
         f"unsupported actor observation contract {contract_name!r}; "
-        f"expected {CONTRACT_NAME!r}, {CONTRACT_NAME_NORMAL114!r}, or 'auto'"
+        f"expected {CONTRACT_NAME!r}, {CONTRACT_NAME_NORMAL114!r}, "
+        f"{CONTRACT_NAME_STABILITY122!r}, or 'auto'"
     )
 
 
@@ -175,8 +186,13 @@ def build_manifest(
     observation_normalization: str = "none",
     onnx_filename: str = "hope_pingpong.onnx",
     contract_name: str | None = CONTRACT_NAME,
+    last_action_feedback_mode: str = "raw",
 ) -> dict:
     """Assemble the ``policy_manifest.json`` dictionary for the exported policy."""
+    if last_action_feedback_mode not in ("raw", "effective"):
+        raise ValueError(
+            f"last_action_feedback_mode must be raw or effective, got {last_action_feedback_mode!r}"
+        )
     if joint_names is None:
         joint_names = _default_joint_order()
     resolved_contract, obs_dim, observation_layout = _resolve_contract(contract_name)
@@ -195,6 +211,7 @@ def build_manifest(
         "joint_order_source": JOINT_ORDER_CONFIG,
         "joint_order": list(joint_names) if joint_names else None,
         "action_adapter_config": ACTION_ADAPTER_CONFIG,
+        "last_action_feedback_mode": last_action_feedback_mode,
     }
     return manifest
 
@@ -206,10 +223,17 @@ def write_policy_manifest(
     onnx_filename: str = "hope_pingpong.onnx",
     manifest_filename: str = "policy_manifest.json",
     contract_name: str | None = CONTRACT_NAME,
+    last_action_feedback_mode: str = "raw",
 ) -> str:
     """Write ``policy_manifest.json`` next to the ONNX. Returns the absolute manifest path."""
     os.makedirs(path, exist_ok=True)
-    manifest = build_manifest(joint_names, observation_normalization, onnx_filename, contract_name)
+    manifest = build_manifest(
+        joint_names,
+        observation_normalization,
+        onnx_filename,
+        contract_name,
+        last_action_feedback_mode,
+    )
     manifest_path = os.path.join(path, manifest_filename)
     with open(manifest_path, "w", encoding="utf-8") as f:
         json.dump(manifest, f, indent=2, sort_keys=False)
@@ -219,7 +243,8 @@ def write_policy_manifest(
 
 def attach_onnx_metadata(onnx_path: str, joint_names: list[str] | None = None,
                          observation_normalization: str = "none",
-                         contract_name: str | None = CONTRACT_NAME) -> None:
+                         contract_name: str | None = CONTRACT_NAME,
+                         last_action_feedback_mode: str = "raw") -> None:
     """Embed the compact contract fields into the ONNX file's metadata (for the deploy backend).
 
     Only contract-level fields are embedded (dims, control rate, joint order, contract name, action
@@ -237,6 +262,7 @@ def attach_onnx_metadata(onnx_path: str, joint_names: list[str] | None = None,
         "control_rate_hz": str(CONTROL_RATE_HZ),
         "observation_normalization": observation_normalization,
         "action_adapter_config": ACTION_ADAPTER_CONFIG,
+        "last_action_feedback_mode": last_action_feedback_mode,
         "joint_order": ",".join(joint_names) if joint_names else "",
     }
     model = onnx.load(onnx_path)
@@ -255,6 +281,7 @@ def export_policy(
     onnx_filename: str = "hope_pingpong.onnx",
     verbose: bool = False,
     contract_name: str | None = CONTRACT_NAME,
+    last_action_feedback_mode: str = "raw",
 ) -> tuple[str, str]:
     """Export the ONNX policy + write ``policy_manifest.json`` + embed ONNX metadata.
 
@@ -267,6 +294,19 @@ def export_policy(
     # ``auto`` is resolved from the actor shape once here, then reused for manifest/metadata.
     inferred_contract, _, _ = _resolve_contract(contract_name, _build_exporter_module(actor_critic, normalizer).in_features)
     onnx_path = export_policy_as_onnx(actor_critic, path, onnx_filename, normalizer, verbose, inferred_contract)
-    attach_onnx_metadata(onnx_path, joint_names, obs_norm, inferred_contract)
-    manifest_path = write_policy_manifest(path, joint_names, obs_norm, onnx_filename, contract_name=inferred_contract)
+    attach_onnx_metadata(
+        onnx_path,
+        joint_names,
+        obs_norm,
+        inferred_contract,
+        last_action_feedback_mode,
+    )
+    manifest_path = write_policy_manifest(
+        path,
+        joint_names,
+        obs_norm,
+        onnx_filename,
+        contract_name=inferred_contract,
+        last_action_feedback_mode=last_action_feedback_mode,
+    )
     return onnx_path, manifest_path

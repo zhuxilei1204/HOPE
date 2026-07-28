@@ -1,0 +1,49 @@
+name: supp_forehand_long_translate_hit2
+source_motion: /mnt/ssd/zxl/HOPE_latest_20260721/data/motion_pipeline/supplemental_lower_body_20260728/gmr_segments/supp_forehand_long_translate_hit2_agibot_a3.pkl
+source_video: /mnt/ssd/zxl/HOPE_latest_20260721/data/motion_pipeline/supplemental_lower_body_20260728/clips/supp_forehand_long_translate.mp4
+source_crop_frames:
+- 69
+- 205
+fps: 50.0
+frame_count: 226
+strike_frame: 100
+strike_phase: 0.4444444444444444
+swing_side: 1
+motion_type: long_translate
+train_tier: tier2
+acceptance: review
+review_reasons:
+- contact_foot_speed
+- com_support
+- ik_contact
+- leg_speed
+- leg_acceleration
+retarget:
+  method: a3_contact_aware_root_leg_jacobian_ik_v1
+  ground_site:
+  - left_foot
+  - right_foot
+  ground_z: 0.001
+  output_fps: 50.0
+  pre_strike_s: 2.0
+  post_strike_s: 2.5
+  correction_smoothing_frames: 11
+  upper_body_preserved: true
+metrics:
+  frames: 226
+  fps: 50.0
+  left_contact_fraction: 0.8672566371681416
+  right_contact_fraction: 0.9690265486725663
+  double_support_fraction: 0.8362831858407079
+  single_support_fraction: 0.16371681415929204
+  contact_foot_speed_p95_m_s: 0.18129489467656057
+  contact_foot_height_error_p95_m: 0.0017552873497541106
+  com_support_margin_p05_m: -0.04013023151464171
+  com_outside_support_fraction: 0.12831858407079647
+  ik_contact_error_p95_m: 0.016359570207403668
+  root_correction_p95_m: 0.23241390754978564
+  leg_correction_rms_p95_rad: 0.16707228713879482
+  joint_limit_min_margin_rad: 0.020000000000000018
+  upper_body_max_abs_change_rad: 0.0
+  leg_speed_norm_p95_rad_s: 6.6753961127232255
+  leg_acceleration_norm_p95_rad_s2: 134.41784061410138

@@ -1,0 +1,9 @@
+# F1 treatment: identical to F0 except last_action represents the clamped q_des.
+defaults:
+  - HOPEPingPongM25493LBPhaseCatchR2A
+  - _self_
+
+name: HOPEPingPongM25493ActionFeedbackEffectiveF1
+
+overrides:
+  actions.joint_pos.feedback_mode: effective

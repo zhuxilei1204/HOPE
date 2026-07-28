@@ -1,0 +1,245 @@
+# =============================================================================
+# M25493 safety-first delayed-hit V1.
+#
+# Starts from the continuous no-fall model_25493 line.  The objective is not to
+# maximize isolated contact immediately; it is to keep the robot deployable first
+# and only pay meaningful hit reward after the return has led into a stable next
+# pre-strike state.
+#
+# Main rule:
+#   small immediate hit shaping, large delayed cycle reward.
+# =============================================================================
+
+defaults:
+  - HOPEPingPongM22494CycleStateV2FixedNoResetBHContactNetMarginV1
+  - _self_
+
+name: HOPEPingPongM25493SafetyFirstDelayedHitV1
+
+overrides:
+  # Full episodes keep failed post-hit states in the rollout distribution.
+  episode_length_s: 18.0
+  terminations.cycle_v2_ready_timeout.params:
+    command_name: racket_target
+    enabled: false
+    start_step: 0
+
+  # Continuous-cycle readiness is the gate for meaningful hit credit.  These
+  # thresholds are stricter than the stable baseline but not as hard as the
+  # earlier reset-based V2 branch.
+  commands.racket_target.cycle_v2_enabled: true
+  commands.racket_target.cycle_v2_required_outcome: opponent_bounce
+  commands.racket_target.cycle_v2_ready_mode: core_hard_soft
+  commands.racket_target.cycle_v2_ready_threshold: 0.72
+  commands.racket_target.cycle_v2_visible_deadline_steps: 48
+  commands.racket_target.cycle_v2_total_deadline_steps: 170
+  commands.racket_target.cycle_v2_count_no_command_as_visible: false
+  commands.racket_target.cycle_v2_fail_on_strike_without_ready: true
+  commands.racket_target.cycle_v2_max_height_error: 0.095
+  commands.racket_target.cycle_v2_max_upright_error: 0.24
+  commands.racket_target.cycle_v2_max_base_lin_vel: 0.24
+  commands.racket_target.cycle_v2_max_base_ang_vel: 0.85
+  commands.racket_target.cycle_v2_min_feet_contact: 0.50
+
+  # Ability curriculum should not advance from single-shot contact alone.
+  commands.racket_target.ability_curriculum_require_side_contact: true
+  commands.racket_target.ability_curriculum_require_side_net: true
+  commands.racket_target.ability_curriculum_require_side_success: true
+  commands.racket_target.ability_curriculum_forehand_contact_threshold: 0.58
+  commands.racket_target.ability_curriculum_backhand_contact_threshold: 0.44
+  commands.racket_target.ability_curriculum_forehand_net_threshold: 0.40
+  commands.racket_target.ability_curriculum_backhand_net_threshold: 0.22
+  commands.racket_target.ability_curriculum_forehand_success_threshold: 0.30
+  commands.racket_target.ability_curriculum_backhand_success_threshold: 0.12
+  commands.racket_target.ability_curriculum_cycle_success_threshold: 0.50
+  commands.racket_target.ability_curriculum_cycle_attempt_threshold: 0.18
+  commands.racket_target.ability_curriculum_advance_rate: 0.003
+  commands.racket_target.ability_curriculum_regress_rate: 0.018
+
+  # Immediate hit shaping is only an exploration/maintenance signal.  It must not
+  # be large enough for the policy to profit from a hit that leaves a bad posture.
+  rewards.racket_position.weight: 3.80
+  rewards.backhand_racket_position.weight: 0.80
+  rewards.racket_velocity.weight: 1.35
+  rewards.racket_velocity_projection.weight: 1.20
+  rewards.impact_forward_lift.weight: 1.45
+  rewards.impact_outgoing_velocity.weight: 1.80
+  rewards.blade_direction.weight: 1.05
+  rewards.soft_ball_contact.weight: 1.20
+  rewards.backhand_soft_ball_contact.weight: 0.70
+  rewards.contact_net_margin.weight: 0.65
+  rewards.ball_contact.weight: 0.25
+  rewards.net_cross.weight: 0.35
+  rewards.opponent_bounce.weight: 0.45
+
+  # No early balanced-hit reward in this branch.  Strike balance is rewarded as a
+  # body objective below; hit credit comes from delayed cycle readiness.
+  rewards.balanced_soft_ball_contact.weight: 0.0
+  rewards.balanced_ball_contact.weight: 0.0
+  rewards.balanced_net_cross.weight: 0.0
+  rewards.balanced_opponent_bounce.weight: 0.0
+
+  # Delayed rewards: contact/net/return only matter when the next command-visible
+  # pre-strike state is usable.  This is the main objective of this branch.
+  rewards.cycle_contact_ready.weight: 1.60
+  rewards.cycle_contact_ready.params:
+    command_name: racket_target
+    outcome: contact
+    window_steps: 22
+    height_std: 0.085
+    upright_std: 0.22
+    lin_vel_std: 0.20
+    ang_vel_std: 0.56
+    station_std: 0.18
+    racket_vel_std: 0.58
+    arm_pos_std: 0.34
+    arm_ori_std: 0.78
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    start_step: 0
+    warmup_steps: 1200
+    start_scale: 0.50
+  rewards.cycle_net_ready.weight: 4.20
+  rewards.cycle_net_ready.params:
+    command_name: racket_target
+    outcome: net_cross
+    window_steps: 22
+    height_std: 0.085
+    upright_std: 0.22
+    lin_vel_std: 0.20
+    ang_vel_std: 0.56
+    station_std: 0.18
+    racket_vel_std: 0.58
+    arm_pos_std: 0.34
+    arm_ori_std: 0.78
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    start_step: 500
+    warmup_steps: 1800
+    start_scale: 0.35
+  rewards.cycle_return_ready.weight: 8.50
+  rewards.cycle_return_ready.params:
+    command_name: racket_target
+    outcome: opponent_bounce
+    window_steps: 22
+    height_std: 0.085
+    upright_std: 0.22
+    lin_vel_std: 0.20
+    ang_vel_std: 0.56
+    station_std: 0.18
+    racket_vel_std: 0.58
+    arm_pos_std: 0.34
+    arm_ori_std: 0.78
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    start_step: 1000
+    warmup_steps: 2500
+    start_scale: 0.25
+  rewards.cycle_success_bonus.weight: 7.50
+  rewards.cycle_success_bonus.params:
+    command_name: racket_target
+    outcome: opponent_bounce
+    window_steps: 22
+    ready_threshold: 0.72
+    ready_temperature: 0.035
+    height_std: 0.085
+    upright_std: 0.22
+    lin_vel_std: 0.20
+    ang_vel_std: 0.56
+    station_std: 0.18
+    racket_vel_std: 0.58
+    arm_pos_std: 0.34
+    arm_ori_std: 0.78
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    start_step: 1000
+    warmup_steps: 2500
+    start_scale: 0.25
+  rewards.cycle_v2_ready_success_bonus.weight: 12.0
+  rewards.cycle_v2_ready_success_bonus.params:
+    command_name: racket_target
+    start_step: 0
+    warmup_steps: 2500
+    start_scale: 0.35
+  rewards.cycle_v2_ready_fail.weight: -18.0
+  rewards.cycle_v2_ready_fail.params:
+    command_name: racket_target
+    start_step: 0
+    warmup_steps: 2500
+    start_scale: 0.35
+
+  # Stable body is the first-class objective.  These terms target trunk/base and
+  # next-start usability without directly suppressing the right arm's strike range.
+  rewards.no_command_ready_stability.weight: 1.35
+  rewards.next_prestrike_reachable.weight: 1.20
+  rewards.strike_balance.weight: 0.78
+  rewards.strike_balance.params:
+    command_name: racket_target
+    pre_window_s: 0.36
+    post_window_s: 0.24
+    pitch_std: 0.16
+    upright_std: 0.24
+    ang_vel_std: 0.95
+    backward_std: 0.18
+    backward_vel_std: 0.48
+    start_step: 0
+    warmup_steps: 1200
+    start_scale: 0.45
+  rewards.lower_body_support.weight: 0.55
+  rewards.lower_body_support.params:
+    command_name: racket_target
+    pre_window_s: 0.38
+    post_window_s: 0.26
+    station_std: 0.24
+    backward_std: 0.18
+    backward_vel_std: 0.50
+    min_feet_contact: 0.55
+    start_step: 0
+    warmup_steps: 1200
+    start_scale: 0.35
+  rewards.post_strike_base_ang_vel.weight: 1.35
+  rewards.post_strike_base_ang_vel.params:
+    command_name: racket_target
+    std: 0.92
+    include_hold: true
+    early_prestrike_window_steps: 24
+    start_step: 0
+    warmup_steps: 1800
+    start_scale: 0.45
+
+  # Outcome-conditioned recovery is still paid after weaker outcomes, but return
+  # recovery is the largest dense term.
+  rewards.post_contact_recovery_ready.weight: 2.10
+  rewards.post_net_recovery_ready.weight: 2.20
+  rewards.post_return_recovery_ready.weight: 3.80
+  rewards.post_contact_arm_racket_ready.weight: 0.40
+  rewards.post_net_arm_racket_ready.weight: 0.60
+  rewards.post_return_arm_racket_ready.weight: 0.95
+
+  # Falls/table-touch remain hard safety failures.  Cycle-v2 timeout is not a reset
+  # in this branch; it is a strong soft signal so bad states remain trainable.
+  rewards.termination_penalty.weight: -28.0
+  rewards.termination_penalty.params:
+    term_keys:
+      - base_too_low
+      - base_tilted
+      - anchor_pos
+      - anchor_ori
+      - ee_body_pos
+      - table_touch
+
+  rewards.phase_action_rate.weight: -0.42
+  rewards.phase_action_rate.params:
+    command_name: racket_target
+    pre_strike_scale: 0.020
+    strike_scale: 0.0030
+    recovery_scale: 0.150
+    hold_scale: 0.210

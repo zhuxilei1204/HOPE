@@ -1,0 +1,134 @@
+# =============================================================================
+# M22494 Cycle Objective V1.
+#
+# Start from model_22494 and change only the task success definition:
+#   single return is not enough; the sparse cycle bonus requires previous return
+#   success plus a reusable next pre-strike ready state.
+#
+# This keeps the 114-D actor contract, four-motion set, synthetic one-bounce
+# command generator, and main hit rewards from the model_22494 task line.
+# =============================================================================
+
+defaults:
+  - HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionNormal114B17996ExplicitRecoveryV1
+  - _self_
+
+name: HOPEPingPongM22494CycleObjectiveV1
+
+overrides:
+  episode_length_s: 18.0
+
+  commands.racket_target.cycle_success_diag_window_steps: 24
+  commands.racket_target.cycle_success_diag_ready_threshold: 0.72
+  commands.racket_target.cycle_success_diag_ready_temperature: 0.04
+
+  # Ability-based curriculum now uses a cycle condition, not only single-swing
+  # contact/net/success.  The start scales are close to full range because this
+  # is a fine-tune from a capable checkpoint, not scratch training.
+  commands.racket_target.ability_curriculum_enabled: true
+  commands.racket_target.ability_curriculum_use_cycle_success: true
+  commands.racket_target.ability_curriculum_start_racket_pos_scale: [0.92, 0.92, 0.95]
+  commands.racket_target.ability_curriculum_start_ball_scale: 0.90
+  commands.racket_target.ability_curriculum_start_planner_perturb_scale: 0.85
+  commands.racket_target.ability_curriculum_ema_rate: 0.025
+  commands.racket_target.ability_curriculum_advance_rate: 0.010
+  commands.racket_target.ability_curriculum_regress_rate: 0.018
+  commands.racket_target.ability_curriculum_contact_threshold: 0.58
+  commands.racket_target.ability_curriculum_net_threshold: 0.42
+  commands.racket_target.ability_curriculum_success_threshold: 0.30
+  commands.racket_target.ability_curriculum_recovery_threshold: 0.72
+  commands.racket_target.ability_curriculum_recovery_floor: 0.60
+  commands.racket_target.ability_curriculum_cycle_success_threshold: 0.20
+  commands.racket_target.ability_curriculum_cycle_ready_threshold: 0.72
+
+  # Make continuous cycle completion the sparse high-value event.
+  rewards.cycle_success_bonus.weight: 4.00
+  rewards.cycle_success_bonus.params:
+    command_name: racket_target
+    outcome: opponent_bounce
+    window_steps: 24
+    ready_threshold: 0.72
+    ready_temperature: 0.04
+    height_std: 0.095
+    upright_std: 0.26
+    lin_vel_std: 0.24
+    ang_vel_std: 0.70
+    station_std: 0.21
+    racket_vel_std: 0.68
+    arm_pos_std: 0.34
+    arm_ori_std: 0.78
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    start_step: 0
+    warmup_steps: 4000
+    start_scale: 0.30
+
+  # Keep dense cycle shaping, but make contact->ready visible too.  This helps
+  # early learning before full opponent-bounce cycles are frequent.
+  rewards.cycle_contact_ready.weight: 0.90
+  rewards.cycle_contact_ready.params:
+    command_name: racket_target
+    outcome: contact
+    window_steps: 20
+    height_std: 0.095
+    upright_std: 0.26
+    lin_vel_std: 0.24
+    ang_vel_std: 0.70
+    station_std: 0.21
+    racket_vel_std: 0.68
+    arm_pos_std: 0.34
+    arm_ori_std: 0.78
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    start_step: 0
+    warmup_steps: 2500
+    start_scale: 0.25
+
+  rewards.cycle_net_ready.weight: 2.15
+  rewards.cycle_net_ready.params:
+    command_name: racket_target
+    outcome: net_cross
+    window_steps: 22
+    height_std: 0.095
+    upright_std: 0.26
+    lin_vel_std: 0.24
+    ang_vel_std: 0.70
+    station_std: 0.21
+    racket_vel_std: 0.68
+    arm_pos_std: 0.34
+    arm_ori_std: 0.78
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    start_step: 0
+    warmup_steps: 3500
+    start_scale: 0.30
+
+  rewards.cycle_return_ready.weight: 4.20
+  rewards.cycle_return_ready.params:
+    command_name: racket_target
+    outcome: opponent_bounce
+    window_steps: 24
+    height_std: 0.095
+    upright_std: 0.26
+    lin_vel_std: 0.24
+    ang_vel_std: 0.70
+    station_std: 0.21
+    racket_vel_std: 0.68
+    arm_pos_std: 0.34
+    arm_ori_std: 0.78
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    start_step: 1000
+    warmup_steps: 5000
+    start_scale: 0.30
+
+  # Preserve hit incentives while slightly strengthening hard-failure aversion.
+  rewards.termination_penalty.weight: -14.0

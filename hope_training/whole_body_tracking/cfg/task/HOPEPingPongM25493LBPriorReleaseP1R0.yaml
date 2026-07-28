@@ -1,0 +1,55 @@
+# P1/R0: release the retargeted clip's root XY and lower-body body tracking.
+# Pelvis height/orientation and the upper-body swing prior remain active.
+defaults:
+  - HOPEPingPongM25493LBControlP0R0
+  - _self_
+
+name: HOPEPingPongM25493LBPriorReleaseP1R0
+
+overrides:
+  rewards.motion_global_anchor_pos.weight: 0.0
+  rewards.motion_anchor_height.weight: 0.5
+  rewards.motion_body_pos.params:
+    command_name: motion
+    std: 0.3
+    body_names:
+      - pelvis_link
+      - torso_Link
+      - left_shoulder_roll_Link
+      - left_elbow_Link
+      - left_wrist_yaw_Link
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+  rewards.motion_body_ori.params:
+    command_name: motion
+    std: 0.4
+    body_names:
+      - pelvis_link
+      - torso_Link
+      - left_shoulder_roll_Link
+      - left_elbow_Link
+      - left_wrist_yaw_Link
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+  rewards.motion_body_lin_vel.params:
+    command_name: motion
+    std: 1.0
+    body_names:
+      - pelvis_link
+      - torso_Link
+      - left_shoulder_roll_Link
+      - left_elbow_Link
+      - left_wrist_yaw_Link
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+  rewards.motion_body_ang_vel.params:
+    command_name: motion
+    std: 3.14
+    body_names:
+      - pelvis_link
+      - torso_Link
+      - left_shoulder_roll_Link
+      - left_elbow_Link
+      - left_wrist_yaw_Link
+      - right_shoulder_roll_Link
+      - right_elbow_Link

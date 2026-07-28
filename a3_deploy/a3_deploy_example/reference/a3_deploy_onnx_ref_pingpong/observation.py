@@ -42,6 +42,7 @@ from .joint_order import NUM_JOINTS
 
 OBS_DIM: int = 111
 OBS_DIM_NORMAL114: int = 114
+OBS_DIM_STABILITY122: int = 122
 _ACTION_DIM: int = NUM_JOINTS
 
 
@@ -59,6 +60,7 @@ class RobotState:
     base_ang_vel_b: np.ndarray  # (3,) pelvis gyro, body frame rad/s
     q: np.ndarray               # (31,) joint positions, joint order
     qd: np.ndarray              # (31,) joint velocities, joint order
+    stability_feedback: np.ndarray | None = None  # optional deployable 8-D balance state
 
 
 @dataclass
@@ -132,4 +134,26 @@ def build_observation_normal114(
     out = np.empty(OBS_DIM_NORMAL114, dtype=np.float32)
     out[:OBS_DIM] = obs111
     out[OBS_DIM:OBS_DIM_NORMAL114] = _target_normal_or_fallback(target).astype(np.float32)
+    return out
+
+
+def build_observation_stability122(
+    state: RobotState,
+    target: ObsTarget,
+    last_action: np.ndarray,
+    default_q: np.ndarray,
+    fixed_station_xy: np.ndarray,
+) -> np.ndarray:
+    """Return the 122-D normal + explicit stability observation."""
+    obs114 = build_observation_normal114(
+        state, target, last_action, default_q, fixed_station_xy
+    )
+    feedback = np.asarray(state.stability_feedback, dtype=np.float64).reshape(-1)
+    if feedback.shape != (8,):
+        raise ValueError(
+            "122-D policy requires RobotState.stability_feedback with shape (8,)"
+        )
+    out = np.empty(OBS_DIM_STABILITY122, dtype=np.float32)
+    out[:OBS_DIM_NORMAL114] = obs114
+    out[OBS_DIM_NORMAL114:OBS_DIM_STABILITY122] = feedback.astype(np.float32)
     return out

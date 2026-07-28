@@ -1,0 +1,51 @@
+# =============================================================================
+# M22494 Cycle State V2 fixed/no-reset experiment.
+#
+# Starts from the same model_22494 line as CycleStateV2, but fixes the two issues
+# observed in the first 3000-iter run:
+# - cycle curriculum is updated from all cycle-v2 attempt/resolve events instead
+#   of only survivor wrap samples;
+# - cycle recovery failure remains a strong soft objective instead of an episode
+#   reset source, so failed continuous states stay in the rollout distribution.
+# =============================================================================
+
+defaults:
+  - HOPEPingPongM22494CycleStateV2
+  - _self_
+
+name: HOPEPingPongM22494CycleStateV2FixedNoReset
+
+overrides:
+  # Count cycle attempts/resolutions as events. This prevents hard-reset survivor
+  # bias and gives a direct denominator for continuous-cycle ability.
+  commands.racket_target.ability_curriculum_cycle_v2_update_mode: events
+  commands.racket_target.ability_curriculum_cycle_success_threshold: 0.42
+  commands.racket_target.ability_curriculum_cycle_attempt_threshold: 0.18
+
+  # Keep the important body safety gates hard, but do not fail a cycle only
+  # because station/racket/arm are slightly outside a hard threshold. Those are
+  # already part of recovery_ready_score and dense recovery shaping.
+  commands.racket_target.cycle_v2_ready_mode: core_hard_soft
+  commands.racket_target.cycle_v2_ready_threshold: 0.68
+  commands.racket_target.cycle_v2_visible_deadline_steps: 40
+  commands.racket_target.cycle_v2_total_deadline_steps: 150
+  commands.racket_target.cycle_v2_max_base_lin_vel: 0.30
+  commands.racket_target.cycle_v2_max_base_ang_vel: 1.10
+
+  # This branch tests continuous recovery without converting every failed cycle
+  # into a reset. Falls/table-touch remain hard safety terminations.
+  terminations.cycle_v2_ready_timeout.params:
+    command_name: racket_target
+    enabled: false
+    start_step: 0
+  rewards.termination_penalty.params:
+    term_keys:
+      - base_too_low
+      - base_tilted
+      - anchor_pos
+      - anchor_ori
+      - ee_body_pos
+      - table_touch
+
+  rewards.cycle_v2_ready_success_bonus.weight: 3.5
+  rewards.cycle_v2_ready_fail.weight: -8.0

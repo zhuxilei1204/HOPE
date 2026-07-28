@@ -21,6 +21,9 @@ from __future__ import annotations
 
 import os
 import re
+from pathlib import Path
+
+import yaml
 
 from isaaclab.managers import EventTermCfg as EventTerm
 from isaaclab.managers import ObservationGroupCfg as ObsGroup
@@ -51,6 +54,7 @@ A3_CANONICAL_JOINT_ORDER = tuple(load_joint_order())
 A3_RACKET_FREE_BODIES = (A3_WRIST_BODY,)
 A3_MOTION_PRIOR_BODIES = tuple(name for name in A3_TRACKED_BODIES if name not in A3_RACKET_FREE_BODIES)
 A3_SWING_PRIOR_BODIES = tuple(name for name in A3_UPPER_TRACKED if name not in A3_RACKET_FREE_BODIES)
+A3_LOWER_BODY_PRIOR_BODIES = tuple(name for name in A3_TRACKED_BODIES if name not in A3_UPPER_TRACKED)
 A3_SOFT_RACKET_PRIOR_BODIES = tuple(A3_RACKET_FREE_BODIES)
 A3_REFERENCE_RESET_BODIES = tuple(A3_FEET_BODIES)
 A3_RIGHT_ARM_READY_BODIES = ("right_shoulder_roll_Link", "right_elbow_Link", "right_wrist_yaw_Link")
@@ -91,8 +95,31 @@ def _find_motion_clip(name: str) -> str:
     return os.path.join("hope_training", "motions", "preprocessed", name)
 
 
+def _load_table_frame_config() -> dict:
+    """Load the shared canonical table/simulator transform without importing an Isaac task."""
+    here = Path(__file__).resolve()
+    for parent in here.parents:
+        path = parent / "configs" / "table_frame.yaml"
+        if path.is_file():
+            with path.open("r", encoding="utf-8") as fh:
+                doc = yaml.safe_load(fh) or {}
+            translation = tuple(
+                float(v) for v in doc["simulation"]["table_to_world_translation_xyz"]
+            )
+            quaternion = tuple(
+                float(v) for v in doc["simulation"]["table_to_world_quaternion_wxyz"]
+            )
+            if len(translation) != 3 or quaternion != (1.0, 0.0, 0.0, 0.0):
+                raise ValueError(
+                    "whole-body tracking currently requires an axis-aligned table transform"
+                )
+            return {"translation": translation, "path": str(path)}
+    raise FileNotFoundError("configs/table_frame.yaml not found from HOPE training package")
+
+
 FOREHAND_CLIP = _find_motion_clip("hope_forehand.npz")
 BACKHAND_CLIP = _find_motion_clip("hope_backhand.npz")
+_TABLE_FRAME = _load_table_frame_config()
 
 
 @configclass
@@ -140,6 +167,8 @@ class CommandsCfg:
         ballistic_flight_time_range=(0.45, 0.75),
         ballistic_land_x_range=(2.05, 2.95),
         ballistic_land_y_range=(-0.45, 0.45),
+        table_near_x=_TABLE_FRAME["translation"][0],
+        table_surface_z=_TABLE_FRAME["translation"][2],
         feet_body_names=tuple(A3_FEET_BODIES),
         recovery_diag_arm_body_names=tuple(A3_RIGHT_ARM_READY_BODIES),
     )
@@ -193,6 +222,8 @@ class ObservationsCfg:
         # Disabled by default to preserve the deployed 111-D baseline contract. Task YAML can enable
         # this term through train.py's actor_obs.racket_target_normal_w switch.
         racket_target_normal_w = None
+        # Optional 8-D deployable stability feedback, appended after target normal.
+        stability_feedback = None
 
         def __post_init__(self):
             self.enable_corruption = True
@@ -241,6 +272,11 @@ class RewardsCfg:
         func=mdp.motion_global_anchor_position_error_exp,
         weight=0.5,
         params={"command_name": "motion", "std": 0.3},
+    )
+    motion_anchor_height = RewTerm(
+        func=mdp.motion_anchor_height_error_exp,
+        weight=0.0,
+        params={"command_name": "motion", "std": 0.12},
     )
     motion_global_anchor_ori = RewTerm(
         func=mdp.motion_global_anchor_orientation_error_exp,
@@ -301,6 +337,23 @@ class RewardsCfg:
         weight=1.0,
         params={"command_name": "motion", "std_pos": 0.3, "std_ori": 0.4, "body_names": list(A3_SWING_PRIOR_BODIES)},
     )
+    phase_lower_body_motion_prior = RewTerm(
+        func=mdp.phase_lower_body_motion_prior,
+        weight=0.0,
+        params={
+            "motion_command_name": "motion",
+            "racket_command_name": "racket_target",
+            "std_pos": 0.28,
+            "std_ori": 0.45,
+            "body_names": list(A3_LOWER_BODY_PRIOR_BODIES),
+            "pre_strike_scale": 0.35,
+            "strike_scale": 0.15,
+            "recovery_scale": 1.0,
+            "hold_scale": 1.15,
+            "core_clip_scale": 0.8,
+            "supplemental_clip_scale": 1.15,
+        },
+    )
     racket_wrist_motion_pos = RewTerm(
         func=mdp.wrist_motion_pos_release,
         weight=0.35,
@@ -327,6 +380,11 @@ class RewardsCfg:
     )
     racket_position = RewTerm(
         func=mdp.racket_position, weight=6.0, params={"command_name": "racket_target", "std": 0.24}
+    )
+    backhand_racket_position = RewTerm(
+        func=mdp.side_racket_position,
+        weight=0.0,
+        params={"command_name": "racket_target", "std": 0.22, "swing_side": -1.0},
     )
     racket_velocity = RewTerm(
         func=mdp.racket_velocity, weight=2.0, params={"command_name": "racket_target", "std": 2.5}
@@ -374,6 +432,117 @@ class RewardsCfg:
             "normal_speed": 0.0,
             "normal_std": 0.75,
             "window_s": 0.22,
+        },
+    )
+    backhand_soft_ball_contact = RewTerm(
+        func=mdp.side_soft_ball_contact,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "pos_std": 0.20,
+            "approach_speed": 0.08,
+            "approach_std": 0.80,
+            "normal_speed": -0.05,
+            "normal_std": 0.85,
+            "window_s": 0.24,
+            "swing_side": -1.0,
+        },
+    )
+    contact_net_margin = RewTerm(
+        func=mdp.contact_net_margin,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "pos_std": 0.17,
+            "approach_speed": 0.08,
+            "approach_std": 0.80,
+            "normal_speed": -0.05,
+            "normal_std": 0.85,
+            "window_s": 0.20,
+            "min_forward_speed": 2.05,
+            "forward_std": 0.38,
+            "min_upward_speed": 0.95,
+            "upward_std": 0.38,
+            "min_clearance": 0.03,
+            "clearance_std": 0.07,
+            "swing_side": 0.0,
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
+        },
+    )
+    balanced_soft_ball_contact = RewTerm(
+        func=mdp.balanced_soft_ball_contact,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "pos_std": 0.18,
+            "approach_speed": 0.08,
+            "approach_std": 0.80,
+            "normal_speed": -0.05,
+            "normal_std": 0.85,
+            "window_s": 0.22,
+            "pre_window_s": 0.34,
+            "post_window_s": 0.18,
+            "pitch_std": 0.18,
+            "upright_std": 0.30,
+            "ang_vel_std": 1.25,
+            "backward_std": 0.20,
+            "backward_vel_std": 0.55,
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
+        },
+    )
+    balanced_ball_contact = RewTerm(
+        func=mdp.balanced_ball_contact,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "pre_window_s": 0.34,
+            "post_window_s": 0.18,
+            "pitch_std": 0.18,
+            "upright_std": 0.30,
+            "ang_vel_std": 1.25,
+            "backward_std": 0.20,
+            "backward_vel_std": 0.55,
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
+        },
+    )
+    balanced_net_cross = RewTerm(
+        func=mdp.balanced_net_cross,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "pre_window_s": 0.34,
+            "post_window_s": 0.18,
+            "pitch_std": 0.18,
+            "upright_std": 0.30,
+            "ang_vel_std": 1.25,
+            "backward_std": 0.20,
+            "backward_vel_std": 0.55,
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
+        },
+    )
+    balanced_opponent_bounce = RewTerm(
+        func=mdp.balanced_opponent_bounce,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "pre_window_s": 0.34,
+            "post_window_s": 0.18,
+            "pitch_std": 0.18,
+            "upright_std": 0.30,
+            "ang_vel_std": 1.25,
+            "backward_std": 0.20,
+            "backward_vel_std": 0.55,
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
         },
     )
     ball_contact = RewTerm(func=mdp.ball_contact, weight=4.0, params={"command_name": "racket_target"})
@@ -433,6 +602,43 @@ class RewardsCfg:
             "arm_pos_std": 0.32,
             "arm_ori_std": 0.75,
             "arm_body_names": list(A3_RIGHT_ARM_READY_BODIES),
+        },
+    )
+    no_command_ready_stability = RewTerm(
+        func=mdp.no_command_ready_stability,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "height_std": 0.09,
+            "upright_std": 0.22,
+            "lin_vel_std": 0.18,
+            "ang_vel_std": 0.55,
+            "station_std": 0.18,
+            "racket_vel_std": 0.55,
+            "arm_pos_std": 0.34,
+            "arm_ori_std": 0.78,
+            "arm_body_names": list(A3_RIGHT_ARM_READY_BODIES),
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
+        },
+    )
+    next_prestrike_reachable = RewTerm(
+        func=mdp.next_prestrike_reachable,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "window_steps": 20,
+            "reach_std": 0.30,
+            "feasible_speed": 2.60,
+            "feasible_speed_std": 0.45,
+            "min_time_to_strike": 0.18,
+            "max_time_to_strike": 1.20,
+            "station_std": 0.24,
+            "upright_std": 0.28,
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
         },
     )
     post_contact_recovery_ready = RewTerm(
@@ -600,6 +806,62 @@ class RewardsCfg:
             "arm_body_names": list(A3_RIGHT_ARM_READY_BODIES),
         },
     )
+    cycle_success_bonus = RewTerm(
+        func=mdp.cycle_success_bonus,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "outcome": "opponent_bounce",
+            "window_steps": 20,
+            "ready_threshold": 0.72,
+            "ready_temperature": 0.04,
+            "height_std": 0.095,
+            "upright_std": 0.26,
+            "lin_vel_std": 0.24,
+            "ang_vel_std": 0.70,
+            "station_std": 0.21,
+            "racket_vel_std": 0.68,
+            "arm_pos_std": 0.34,
+            "arm_ori_std": 0.78,
+            "arm_body_names": list(A3_RIGHT_ARM_READY_BODIES),
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
+        },
+    )
+    cycle_v2_ready_success_bonus = RewTerm(
+        func=mdp.cycle_v2_ready_success_bonus,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "tier_multipliers": (1.0, 1.0, 1.0),
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
+        },
+    )
+    cycle_v2_streak_bonus = RewTerm(
+        func=mdp.cycle_v2_streak_bonus,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "min_streak": 2,
+            "min_ability_level": 0.70,
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
+        },
+    )
+    cycle_v2_ready_fail = RewTerm(
+        func=mdp.cycle_v2_ready_fail,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
+        },
+    )
     post_strike_base_ang_vel = RewTerm(
         func=mdp.post_strike_base_angular_velocity,
         weight=0.0,
@@ -625,6 +887,55 @@ class RewardsCfg:
             "ang_vel_std": 1.05,
             "backward_std": 0.16,
             "backward_vel_std": 0.42,
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
+        },
+    )
+    torso_com_balance = RewTerm(
+        func=mdp.torso_com_balance,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "phase": "strike",
+            "pre_window_s": 0.36,
+            "post_window_s": 0.22,
+            "torso_pitch_std": 0.20,
+            "torso_roll_std": 0.20,
+            "torso_ang_vel_std": 1.30,
+            "com_x_std": 0.13,
+            "com_y_std": 0.16,
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
+        },
+    )
+    torso_com_recovery_balance = RewTerm(
+        func=mdp.torso_com_balance,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "phase": "recovery_hold",
+            "pre_window_s": 0.36,
+            "post_window_s": 0.22,
+            "torso_pitch_std": 0.18,
+            "torso_roll_std": 0.20,
+            "torso_ang_vel_std": 0.85,
+            "com_x_std": 0.11,
+            "com_y_std": 0.14,
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
+        },
+    )
+    prestrike_station_progress = RewTerm(
+        func=mdp.prestrike_station_progress,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "speed_scale": 0.35,
+            "arrival_radius": 0.12,
+            "stop_window_s": 0.10,
             "start_step": 0,
             "warmup_steps": 0,
             "start_scale": 1.0,
@@ -692,6 +1003,72 @@ class RewardsCfg:
             "hold_scale": 0.16,
         },
     )
+    phase_action_rate_waist = RewTerm(
+        func=mdp.phase_action_rate_l2,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "joint_names": ["waist_yaw_joint", "waist_roll_joint", "waist_pitch_joint"],
+            "pre_strike_scale": 0.04,
+            "strike_scale": 0.015,
+            "recovery_scale": 0.12,
+            "hold_scale": 0.16,
+        },
+    )
+    phase_action_rate_upper = RewTerm(
+        func=mdp.phase_action_rate_l2,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "joint_names": [
+                "head_yaw_joint",
+                "head_pitch_joint",
+                "left_shoulder_pitch_joint",
+                "left_shoulder_roll_joint",
+                "left_shoulder_yaw_joint",
+                "left_elbow_joint",
+                "left_wrist_roll_joint",
+                "left_wrist_pitch_joint",
+                "left_wrist_yaw_joint",
+                "right_shoulder_pitch_joint",
+                "right_shoulder_roll_joint",
+                "right_shoulder_yaw_joint",
+                "right_elbow_joint",
+                "right_wrist_roll_joint",
+                "right_wrist_pitch_joint",
+                "right_wrist_yaw_joint",
+            ],
+            "pre_strike_scale": 0.04,
+            "strike_scale": 0.015,
+            "recovery_scale": 0.12,
+            "hold_scale": 0.16,
+        },
+    )
+    phase_action_rate_legs = RewTerm(
+        func=mdp.phase_action_rate_l2,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "joint_names": [
+                "left_hip_pitch_joint",
+                "left_hip_roll_joint",
+                "left_hip_yaw_joint",
+                "left_knee_joint",
+                "left_ankle_pitch_joint",
+                "left_ankle_roll_joint",
+                "right_hip_pitch_joint",
+                "right_hip_roll_joint",
+                "right_hip_yaw_joint",
+                "right_knee_joint",
+                "right_ankle_pitch_joint",
+                "right_ankle_roll_joint",
+            ],
+            "pre_strike_scale": 0.04,
+            "strike_scale": 0.015,
+            "recovery_scale": 0.12,
+            "hold_scale": 0.16,
+        },
+    )
     joint_limit = RewTerm(
         func=mdp.joint_pos_limits, weight=-10.0, params={"asset_cfg": _a3_joint_entity()}
     )
@@ -739,6 +1116,14 @@ class TerminationsCfg:
             "above_surface_margin": 0.04,
             "min_steps": 75,
             "enabled": False,
+        },
+    )
+    cycle_v2_ready_timeout = DoneTerm(
+        func=mdp.cycle_v2_ready_timeout,
+        params={
+            "command_name": "racket_target",
+            "enabled": False,
+            "start_step": 0,
         },
     )
 

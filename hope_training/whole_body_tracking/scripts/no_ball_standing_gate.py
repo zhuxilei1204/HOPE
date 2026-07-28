@@ -37,7 +37,8 @@ def _diagnostic_args(args: argparse.Namespace, *, mode: str, seconds: float) -> 
         tilt_threshold=float(args.tilt_threshold),
         kp_scale=float(args.kp_scale),
         kd_scale=float(args.kd_scale),
-        near_edge_x=float(args.near_edge_x),
+        last_action_feedback_mode=args.last_action_feedback_mode,
+        near_edge_x=None if args.near_edge_x is None else float(args.near_edge_x),
         seed=int(args.seed),
         stop_on_fall=True,
         view=False,
@@ -74,7 +75,18 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--tilt-threshold", type=float, default=0.85)
     parser.add_argument("--kp-scale", type=float, default=1.0)
     parser.add_argument("--kd-scale", type=float, default=1.0)
-    parser.add_argument("--near-edge-x", type=float, default=0.30)
+    parser.add_argument(
+        "--last-action-feedback-mode",
+        choices=["auto", "raw", "effective"],
+        default="auto",
+        help="Actor last-action feedback contract. auto prefers ONNX metadata, then runtime config.",
+    )
+    parser.add_argument(
+        "--near-edge-x",
+        type=float,
+        default=None,
+        help="Optional eval-only override; default uses configs/table_frame.yaml.",
+    )
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--mujoco-gl", default="egl")
     parser.add_argument("--json-out", default=None)

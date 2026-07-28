@@ -1,0 +1,85 @@
+# =============================================================================
+# Scratch real-planner continuous mainline.
+#
+# Goal:
+#   Train from random initialization with the deployment semantics present from
+#   the beginning:
+#     - no-command/ready states are part of the task;
+#     - one-bounce incoming ball geometry is the default;
+#     - planner-derived target velocity/normal are visible to the 114-D actor;
+#     - state is carried across swing wraps (continuous rally);
+#     - ball-route difficulty grows from measured ability, not iteration count.
+#
+# This config intentionally does not rely on a checkpoint.  Use it as a scratch
+# task; pass checkpoint_path only for explicit ablations.
+# =============================================================================
+
+defaults:
+  - HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionNormal114DeployReadyNoCommand
+  - _self_
+
+name: HOPEPingPongScratchRealPlannerContinuousAbility
+
+overrides:
+  # Disable the old iteration-count target spread curriculum.  The command term
+  # below owns the ability-based curriculum.
+  commands.racket_target.racket_pos_curriculum_start_scale: [1.0, 1.0, 1.0]
+  commands.racket_target.racket_pos_curriculum_steps: 0
+
+  # Ability-based ball-route curriculum.  The scalar curriculum level is updated
+  # only at swing boundaries from actual contact/net/success/recovery EMA.
+  commands.racket_target.ability_curriculum_enabled: true
+  commands.racket_target.ability_curriculum_start_racket_pos_scale: [0.45, 0.45, 0.65]
+  commands.racket_target.ability_curriculum_start_ball_scale: 0.35
+  commands.racket_target.ability_curriculum_start_planner_perturb_scale: 0.0
+  commands.racket_target.ability_curriculum_ema_rate: 0.025
+  commands.racket_target.ability_curriculum_advance_rate: 0.012
+  commands.racket_target.ability_curriculum_regress_rate: 0.030
+  commands.racket_target.ability_curriculum_contact_threshold: 0.55
+  commands.racket_target.ability_curriculum_net_threshold: 0.35
+  commands.racket_target.ability_curriculum_success_threshold: 0.20
+  commands.racket_target.ability_curriculum_recovery_threshold: 0.70
+  commands.racket_target.ability_curriculum_recovery_floor: 0.45
+  commands.racket_target.ability_curriculum_max_height_error: 0.10
+  commands.racket_target.ability_curriculum_max_upright_error: 0.28
+
+  # Start with a real but learnable continuous task: long ready holds are kept,
+  # but the ball itself is not fully random until ability improves.
+  commands.motion.hold_steps_range: [90, 145]
+  # Scratch deployment training should not use reference-state-init from random
+  # mid-swing frames.  Every true episode reset starts from the robot default
+  # ready pose; swing wraps still carry the previous physical state forward.
+  commands.motion.stand_start_prob: 1.0
+  commands.motion.stand_start_min_hold: 90
+  commands.racket_target.deploy_ready_hold_prob: 0.65
+
+  # Keep the collision-enhanced hit objective and recovery closure from the
+  # B+deploy mainline; the new variable here is curriculum semantics, not a new
+  # reward rewrite.
+  rewards.racket_position.weight: 4.5
+  rewards.racket_velocity.weight: 2.4
+  rewards.impact_outgoing_velocity.weight: 4.6
+  rewards.blade_direction.weight: 2.4
+  rewards.soft_ball_contact.weight: 7.0
+  rewards.ball_contact.weight: 3.0
+  rewards.net_cross.weight: 3.8
+  rewards.opponent_bounce.weight: 4.2
+
+  rewards.follow_through_recovery.weight: 1.48
+  rewards.recovery_health.weight: 1.82
+  rewards.next_ball_readiness.weight: 2.12
+  rewards.next_swing_ready_bonus.weight: 2.35
+  rewards.post_contact_recovery_ready.weight: 1.90
+  rewards.cycle_net_ready.weight: 1.85
+  rewards.cycle_return_ready.weight: 3.35
+
+  # Keep recovery/hold damping phase-specific.  Strike remains lightly damped so
+  # the scratch policy can still discover an effective swing.
+  rewards.action_rate.weight: -0.004
+  rewards.phase_action_rate.weight: -0.46
+  rewards.phase_action_rate.params:
+    command_name: racket_target
+    pre_strike_scale: 0.024
+    strike_scale: 0.004
+    recovery_scale: 0.115
+    hold_scale: 0.165

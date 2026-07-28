@@ -40,6 +40,11 @@ run_name: null
 #   checkpoint_path=logs/rsl_rl/hope_pingpong/<run>/model_<iter>.pt
 checkpoint_path: null
 
+# Optional deployment-preserving fine-tune anchor. The reference checkpoint is
+# normally the selected MuJoCo-valid baseline, not the latest continuation.
+actor_anchor_coefficient: 0.0
+actor_anchor_checkpoint_path: null
+
 # Video capture (off by default).
 video: false
 video_length: 200

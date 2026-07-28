@@ -1080,7 +1080,12 @@ def parse_args() -> argparse.Namespace:
     cmp.add_argument("--gain-source", choices=["runtime", "isaac"], default="runtime")
     cmp.add_argument("--kp-scale", type=float, default=1.0)
     cmp.add_argument("--kd-scale", type=float, default=1.0)
-    cmp.add_argument("--near-edge-x", type=float, default=0.30)
+    cmp.add_argument(
+        "--near-edge-x",
+        type=float,
+        default=None,
+        help="Optional eval-only override; default uses configs/table_frame.yaml.",
+    )
     cmp.add_argument("--fall-base-z", type=float, default=0.40)
     cmp.add_argument("--out-csv", required=True)
     cmp.add_argument("--out-joints-csv", default=None)

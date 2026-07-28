@@ -35,6 +35,9 @@ def test_contract_dims():
     assert exporter.ACTION_DIM == 31
     assert exporter.CONTROL_RATE_HZ == 50
     assert exporter.CONTRACT_NAME == "hope_pingpong"
+    assert exporter.OBS_DIM_NORMAL114 == 114
+    assert exporter.OBS_DIM_STABILITY122 == 122
+    assert exporter.CONTRACT_NAME_STABILITY122 == "hope_pingpong_stability122"
 
 
 def test_observation_layout_covers_111_contiguously():
@@ -51,6 +54,17 @@ def test_observation_layout_covers_111_contiguously():
     assert layout[-1]["name"] == "swing_side" and layout[-1]["dim"] == 1
 
 
+def test_stability122_layout_extends_normal114_contiguously():
+    layout = exporter.OBSERVATION_LAYOUT_STABILITY122
+    assert sum(t["dim"] for t in layout) == 122
+    assert layout[: len(exporter.OBSERVATION_LAYOUT_NORMAL114)] == exporter.OBSERVATION_LAYOUT_NORMAL114
+    assert layout[-1] == {
+        "name": "stability_feedback",
+        "slice": [114, 122],
+        "dim": 8,
+    }
+
+
 def test_manifest_schema():
     joint_names = [f"j{i}" for i in range(31)]
     manifest = exporter.build_manifest(joint_names=joint_names)
@@ -60,12 +74,21 @@ def test_manifest_schema():
     assert manifest["control_rate_hz"] == 50
     assert manifest["observation_normalization"] == "none"
     assert manifest["action_adapter_config"].endswith("action_adapter.yaml")
+    assert manifest["last_action_feedback_mode"] == "raw"
     sig = manifest["onnx_signature"]
     assert sig["input"]["shape"] == [1, 111] and sig["output"]["shape"] == [1, 31]
     assert manifest["joint_order"] == joint_names
     # No lineage / recipe / metric / wandb fields.
     forbidden = {"recipe", "lineage", "receipt", "wandb", "metrics", "success_rate", "version"}
     assert not (forbidden & set(manifest.keys()))
+
+
+def test_manifest_records_effective_feedback_contract():
+    manifest = exporter.build_manifest(
+        joint_names=[f"j{i}" for i in range(31)],
+        last_action_feedback_mode="effective",
+    )
+    assert manifest["last_action_feedback_mode"] == "effective"
 
 
 def test_joint_order_yaml_has_31_unique_joints():

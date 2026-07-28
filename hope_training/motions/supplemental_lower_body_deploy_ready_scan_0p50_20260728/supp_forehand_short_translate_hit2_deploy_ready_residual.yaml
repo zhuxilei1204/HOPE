@@ -1,0 +1,47 @@
+name: supp_forehand_short_translate_hit2
+source_motion: /mnt/ssd/zxl/HOPE_latest_20260721/hope_training/motions/supplemental_lower_body_contact_aware_isaacfk_20260728/supp_forehand_short_translate_hit2_contact_aware.npz
+fps: 50.0
+frame_count: 226
+strike_frame: 100
+strike_phase: 0.4444444444444444
+swing_side: 1
+motion_type: short_translate
+train_tier: tier1
+acceptance: review
+review_reasons:
+- contact_foot_speed
+retarget:
+  method: a3_deploy_ready_lower_body_temporal_residual_v1
+  ready_blend: 0.5
+  stored_support_contacts_preserved: true
+  ground_and_com_ik_reapplied: true
+  upper_body_joint_trajectory_preserved: true
+metrics:
+  frames: 226
+  fps: 50.0
+  left_contact_fraction: 1.0
+  right_contact_fraction: 0.9380530973451328
+  double_support_fraction: 0.9380530973451328
+  single_support_fraction: 0.061946902654867256
+  contact_foot_speed_p95_m_s: 0.07331871700741369
+  contact_foot_height_error_p95_m: 0.0004495666020202232
+  com_support_margin_p05_m: 0.02645533846440989
+  com_outside_support_fraction: 0.0
+  ik_contact_error_p95_m: 0.002593283463919639
+  root_correction_p95_m: 0.023032323875880025
+  leg_correction_rms_p95_rad: 0.03928137500124995
+  joint_limit_min_margin_rad: 0.04045842366561936
+  upper_body_max_abs_change_rad: 0.0
+  leg_speed_norm_p95_rad_s: 1.8175771415290898
+  leg_acceleration_norm_p95_rad_s2: 44.85716339354283
+  source_ready_leg_rms_from_default_rad: 0.6251511539320259
+  target_ready_leg_rms_from_default_rad: 0.31257557696601296
+  source_ready_root_z_m: 0.8505158126354218
+  target_ready_root_z_before_ground_ik_m: 0.9594529063177109
+  final_ready_leg_rms_from_default_rad: 0.3088446820085469
+  final_ready_root_z_m: 0.9986720783730276
+  strike_racket_x_m: 0.6467263229261546
+  strike_racket_y_m: -0.36648640492749635
+  strike_racket_z_m: 1.34963044042398
+  strike_pelvis_pitch_deg: -4.11802633838255
+  strike_torso_pitch_deg: 9.194508173993047

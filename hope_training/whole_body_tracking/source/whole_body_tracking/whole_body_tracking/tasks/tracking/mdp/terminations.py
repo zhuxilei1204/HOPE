@@ -144,3 +144,16 @@ def body_inside_table_zone(
 
     inside = (x >= x_min) & (x <= x_max) & (y >= y_min) & (y <= y_max) & (z >= z_min) & (z <= z_max)
     return inside.any(dim=1) & _past_episode_steps(env, min_steps)
+
+
+def cycle_v2_ready_timeout(
+    env: ManagerBasedRLEnv,
+    command_name: str,
+    enabled: bool = False,
+    start_step: int = 0,
+) -> torch.Tensor:
+    """Terminate when cycle-v2 marks a useful previous return as not ready for the next swing."""
+    command: RacketTargetCommand = env.command_manager.get_term(command_name)
+    if not enabled or int(getattr(env, "common_step_counter", 0)) < int(start_step):
+        return torch.zeros(command.num_envs, dtype=torch.bool, device=command.device)
+    return command.cycle_v2_ready_fail_latch

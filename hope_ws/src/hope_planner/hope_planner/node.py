@@ -42,7 +42,7 @@ class HOPEPlannerNode(Node):
         self.declare_parameter("ball_pose_index", 0)
 
         # --- Planner geometry / tuning ---
-        self.declare_parameter("x_hit", 0.0)              # fixed strike-plane x (m)
+        self.declare_parameter("x_hit", 0.2)              # fixed strike-plane x (m)
         self.declare_parameter("swing_side_split_y", -0.7625)   # FH/BH split on predicted y (m)
         self.declare_parameter("swing_side_hysteresis_y", 0.0)  # optional band around the split (m)
         self.declare_parameter("target_land_x", 2.055)   # fixed landing target x (m)

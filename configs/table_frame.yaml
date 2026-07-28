@@ -1,0 +1,28 @@
+# HOPE canonical table-frame contract and nominal simulator placement.
+#
+# Canonical coordinates are the deployment contract shared by Motive, the
+# planner, policy observations, training metrics, and evaluation:
+#   origin: near-side left corner of the table surface from P1's perspective
+#   +x: toward P2, +y: left from P1, +z: up
+#   table surface: z = 0
+#
+# The planner always publishes in this canonical table frame.  The transform
+# below is only for robot-centred simulators whose floor is z = 0 and whose
+# nominal robot base starts at world x/y = 0.  It must not be added to real
+# planner commands after Motive has already calibrated them into table frame.
+
+canonical:
+  frame_id: world
+  table_origin: near_side_left_surface_corner
+  axes: {x: toward_p2, y: left_from_p1, z: up}
+
+nominal_robot:
+  # Horizontal pelvis/base-link placement expressed in canonical table frame.
+  base_xy_table: [-0.50, -0.7625]
+
+simulation:
+  # p_sim_world = p_table + translation.  Rotation is identity because the
+  # simulator axes use the same REP-103 convention as the table frame.
+  table_to_world_translation_xyz: [0.50, 0.7625, 0.76]
+  table_to_world_quaternion_wxyz: [1.0, 0.0, 0.0, 0.0]
+

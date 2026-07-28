@@ -1,0 +1,93 @@
+# =============================================================================
+# B17996 post-strike ready recovery V1.
+#
+# Small fine-tune from the validated B17996 explicit-recovery checkpoint
+# (model_22494).  The experiment targets the remaining deploy gap found by the
+# MuJoCo rest-interval scan:
+#   hit residual state -> deploy-ready/no-command hold -> next usable swing.
+#
+# It deliberately keeps the 114-D actor contract, four-motion set, planner command
+# and collision/return rewards from B17996ExplicitRecoveryV1.  The changes are
+# limited to increasing post-wrap ready/no-command exposure and strengthening
+# body/readiness rewards after useful outcomes without directly damping the
+# right-arm strike.
+# =============================================================================
+
+defaults:
+  - HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionNormal114B17996ExplicitRecoveryV1
+  - _self_
+
+name: HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionNormal114B17996PostStrikeReadyV1
+
+overrides:
+  # Give each continuous episode more real wrap cycles, and make the post-wrap
+  # hold long enough for residual base/racket velocity to be learned away.
+  episode_length_s: 18.0
+  commands.motion.hold_steps_range: [105, 165]
+  commands.motion.stand_start_prob: 0.20
+  commands.motion.stand_start_min_hold: 105
+
+  # Most holds should look like deploy READY/no-command.  This amplifies the
+  # state distribution that MuJoCo exposes between consecutive balls.
+  commands.racket_target.deploy_ready_hold_prob: 0.85
+
+  # Stronger no-command ready stability, but still gated only while no-command is
+  # actually active.  This should not reward standing still during a valid strike
+  # command.
+  rewards.no_command_ready_stability.weight: 1.15
+  rewards.no_command_ready_stability.params.ang_vel_std: 0.48
+  rewards.no_command_ready_stability.params.lin_vel_std: 0.16
+  rewards.no_command_ready_stability.params.racket_vel_std: 0.62
+  rewards.no_command_ready_stability.params.start_scale: 0.60
+
+  # The next sampled ball must be reachable from the carried recovery state.
+  rewards.next_prestrike_reachable.weight: 0.90
+  rewards.next_prestrike_reachable.params.window_steps: 28
+  rewards.next_prestrike_reachable.params.station_std: 0.22
+  rewards.next_prestrike_reachable.params.start_scale: 0.45
+
+  # Body-only balance during strike and early post-strike.  These terms constrain
+  # trunk/base motion without directly shrinking the right-arm swing.
+  rewards.strike_balance.weight: 0.44
+  rewards.strike_balance.params.ang_vel_std: 1.25
+  rewards.strike_balance.params.backward_std: 0.21
+  rewards.strike_balance.params.backward_vel_std: 0.55
+  rewards.strike_balance.params.start_scale: 0.35
+
+  rewards.lower_body_support.weight: 0.34
+  rewards.lower_body_support.params.station_std: 0.28
+  rewards.lower_body_support.params.backward_std: 0.21
+  rewards.lower_body_support.params.backward_vel_std: 0.58
+  rewards.lower_body_support.params.start_scale: 0.30
+
+  # Outcome-conditioned recovery: only after useful ball outcomes do we add extra
+  # pressure to be upright/quiet/ready.  This avoids the trivial "stand and avoid
+  # swinging" local optimum.
+  rewards.post_contact_recovery_ready.weight: 2.05
+  rewards.post_contact_recovery_ready.params.ang_vel_std: 0.62
+  rewards.post_contact_recovery_ready.params.racket_vel_std: 0.76
+  rewards.post_contact_recovery_ready.params.start_scale: 0.45
+
+  rewards.post_net_recovery_ready.weight: 1.05
+  rewards.post_net_recovery_ready.params.ang_vel_std: 0.62
+  rewards.post_net_recovery_ready.params.racket_vel_std: 0.76
+  rewards.post_net_recovery_ready.params.start_scale: 0.35
+
+  rewards.post_return_recovery_ready.weight: 1.45
+  rewards.post_return_recovery_ready.params.ang_vel_std: 0.62
+  rewards.post_return_recovery_ready.params.racket_vel_std: 0.76
+  rewards.post_return_recovery_ready.params.start_scale: 0.30
+
+  # Existing B17996 already has this term through PostStrikeSettleB.  Increase it
+  # modestly and keep the right arm out of this penalty.
+  rewards.post_strike_base_ang_vel.weight: 0.96
+  rewards.post_strike_base_ang_vel.params.std: 1.18
+  rewards.post_strike_base_ang_vel.params.early_prestrike_window_steps: 24
+  rewards.post_strike_base_ang_vel.params.start_scale: 0.40
+
+  # Hold/recovery smoothing goes up slightly; strike remains nearly free.
+  rewards.phase_action_rate.weight: -0.47
+  rewards.phase_action_rate.params.pre_strike_scale: 0.024
+  rewards.phase_action_rate.params.strike_scale: 0.0035
+  rewards.phase_action_rate.params.recovery_scale: 0.13
+  rewards.phase_action_rate.params.hold_scale: 0.19

@@ -105,6 +105,19 @@ def test_zero_action_returns_default_pose_within_clamp():
     assert np.all(training.default_q <= training.clamp_upper)
 
 
+def test_effective_action_round_trip_preserves_clamped_q_des():
+    deploy, _training = _both()
+    rng = np.random.default_rng(7)
+    for raw in (
+        rng.uniform(-3.0, 3.0, NUM_JOINTS),
+        np.full(NUM_JOINTS, 50.0),
+        np.full(NUM_JOINTS, -50.0),
+    ):
+        q_des = deploy.decode(raw)
+        effective = deploy.encode_effective(q_des)
+        np.testing.assert_allclose(deploy.decode(effective), q_des, rtol=0, atol=1.0e-15)
+
+
 def test_cfg_dict_views_round_trip():
     """The dict views hope_env_cfg feeds into Isaac Lab reproduce the same arrays."""
     _deploy, training = _both()

@@ -341,9 +341,6 @@ def _apply_actor_observation_options(env_cfg, actor_obs, applied: list) -> None:
     if actor_obs is None:
         return
     actor_obs = OmegaConf.to_container(actor_obs, resolve=True)
-    if not bool(actor_obs.get("racket_target_normal_w", False)):
-        return
-
     from isaaclab.managers import ObservationTermCfg as ObsTerm
 
     import whole_body_tracking.tasks.tracking.mdp as mdp
@@ -352,8 +349,16 @@ def _apply_actor_observation_options(env_cfg, actor_obs, applied: list) -> None:
     if policy is None:
         print("[train.py] WARNING: actor_obs provided but env_cfg.observations.policy is missing; skipped.", flush=True)
         return
-    policy.racket_target_normal_w = ObsTerm(func=mdp.racket_target_normal_w, params={"command_name": "racket_target"})
-    applied.append("observations.policy.racket_target_normal_w = enabled")
+    if bool(actor_obs.get("racket_target_normal_w", False)):
+        policy.racket_target_normal_w = ObsTerm(
+            func=mdp.racket_target_normal_w, params={"command_name": "racket_target"}
+        )
+        applied.append("observations.policy.racket_target_normal_w = enabled")
+    if bool(actor_obs.get("stability_feedback", False)):
+        policy.stability_feedback = ObsTerm(
+            func=mdp.stability_feedback, params={"command_name": "racket_target"}
+        )
+        applied.append("observations.policy.stability_feedback = enabled")
 
 
 def _expand_two_side_boxes(boxes, sides: list[float]) -> tuple | None:
@@ -574,6 +579,21 @@ def _run(cfg):
             f"[train.py] resumed from checkpoint: {ckpt} "
             f"(load_optimizer={load_optimizer})",
             flush=True,
+        )
+
+    actor_anchor_coefficient = float(getattr(cfg, "actor_anchor_coefficient", 0.0))
+    if actor_anchor_coefficient > 0.0:
+        actor_anchor_checkpoint = getattr(cfg, "actor_anchor_checkpoint_path", None)
+        if actor_anchor_checkpoint is None:
+            actor_anchor_checkpoint = ckpt
+        if actor_anchor_checkpoint is None:
+            raise ValueError(
+                "actor_anchor_coefficient > 0 requires actor_anchor_checkpoint_path "
+                "or checkpoint_path"
+            )
+        runner.configure_actor_anchor(
+            os.path.abspath(str(actor_anchor_checkpoint)),
+            actor_anchor_coefficient,
         )
 
     # 7) dump the resolved configuration + train.

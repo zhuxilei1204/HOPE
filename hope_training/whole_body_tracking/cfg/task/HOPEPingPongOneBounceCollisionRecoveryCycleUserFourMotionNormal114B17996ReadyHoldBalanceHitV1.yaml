@@ -1,0 +1,179 @@
+# =============================================================================
+# B17996 ready-hold + balance/hit V1.
+#
+# Clean branch from model_22494.  Uses the same ready-hold distribution as
+# ReadyHoldOnlyV1, then adds correctly-applied full-dict reward params for:
+#   - no-command ready stability;
+#   - body-only strike/post-strike balance;
+#   - lower-body support without freezing leg compensation;
+#   - outcome-conditioned recovery readiness;
+#   - slightly stronger contact/net/return hitting pressure.
+#
+# Unlike the previous post-strike-ready experiment, this file does not use
+# unsupported nested params overrides such as rewards.foo.params.bar.
+# =============================================================================
+
+defaults:
+  - HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionNormal114B17996ExplicitRecoveryV1
+  - _self_
+
+name: HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionNormal114B17996ReadyHoldBalanceHitV1
+
+overrides:
+  commands.motion.hold_steps_range: [105, 165]
+  commands.motion.stand_start_min_hold: 105
+  commands.racket_target.deploy_ready_hold_prob: 0.85
+
+  # Preserve hitting pressure while adding recovery pressure.  The deltas are
+  # deliberately small so the policy does not shrink the swing just to stand.
+  rewards.racket_position.weight: 4.65
+  rewards.racket_velocity.weight: 2.55
+  rewards.racket_velocity_projection.weight: 2.35
+  rewards.impact_forward_lift.weight: 2.65
+  rewards.impact_outgoing_velocity.weight: 4.90
+  rewards.blade_direction.weight: 2.55
+  rewards.soft_ball_contact.weight: 7.40
+  rewards.ball_contact.weight: 3.10
+  rewards.net_cross.weight: 4.05
+  rewards.opponent_bounce.weight: 4.45
+
+  rewards.no_command_ready_stability.weight: 1.18
+  rewards.no_command_ready_stability.params:
+    command_name: racket_target
+    height_std: 0.09
+    upright_std: 0.20
+    lin_vel_std: 0.16
+    ang_vel_std: 0.48
+    station_std: 0.18
+    racket_vel_std: 0.60
+    arm_pos_std: 0.36
+    arm_ori_std: 0.82
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    start_step: 0
+    warmup_steps: 1000
+    start_scale: 0.60
+
+  rewards.next_prestrike_reachable.weight: 0.86
+  rewards.next_prestrike_reachable.params:
+    command_name: racket_target
+    window_steps: 24
+    reach_std: 0.30
+    feasible_speed: 2.60
+    feasible_speed_std: 0.45
+    min_time_to_strike: 0.18
+    max_time_to_strike: 1.20
+    station_std: 0.22
+    upright_std: 0.26
+    start_step: 0
+    warmup_steps: 1500
+    start_scale: 0.45
+
+  rewards.strike_balance.weight: 0.42
+  rewards.strike_balance.params:
+    command_name: racket_target
+    pre_window_s: 0.30
+    post_window_s: 0.18
+    pitch_std: 0.20
+    upright_std: 0.30
+    ang_vel_std: 1.25
+    backward_std: 0.22
+    backward_vel_std: 0.55
+    start_step: 0
+    warmup_steps: 1500
+    start_scale: 0.35
+
+  rewards.lower_body_support.weight: 0.34
+  rewards.lower_body_support.params:
+    command_name: racket_target
+    pre_window_s: 0.34
+    post_window_s: 0.22
+    station_std: 0.28
+    backward_std: 0.22
+    backward_vel_std: 0.58
+    min_feet_contact: 0.50
+    start_step: 0
+    warmup_steps: 1500
+    start_scale: 0.30
+
+  rewards.post_contact_recovery_ready.weight: 1.95
+  rewards.post_contact_recovery_ready.params:
+    command_name: racket_target
+    outcome: contact
+    height_std: 0.095
+    upright_std: 0.24
+    lin_vel_std: 0.22
+    ang_vel_std: 0.62
+    station_std: 0.21
+    racket_vel_std: 0.72
+    arm_pos_std: 0.36
+    arm_ori_std: 0.82
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    start_step: 0
+    warmup_steps: 1500
+    start_scale: 0.45
+
+  rewards.post_net_recovery_ready.weight: 1.05
+  rewards.post_net_recovery_ready.params:
+    command_name: racket_target
+    outcome: net_cross
+    height_std: 0.095
+    upright_std: 0.24
+    lin_vel_std: 0.22
+    ang_vel_std: 0.62
+    station_std: 0.21
+    racket_vel_std: 0.72
+    arm_pos_std: 0.36
+    arm_ori_std: 0.82
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    start_step: 750
+    warmup_steps: 2000
+    start_scale: 0.35
+
+  rewards.post_return_recovery_ready.weight: 1.40
+  rewards.post_return_recovery_ready.params:
+    command_name: racket_target
+    outcome: opponent_bounce
+    height_std: 0.095
+    upright_std: 0.24
+    lin_vel_std: 0.22
+    ang_vel_std: 0.62
+    station_std: 0.21
+    racket_vel_std: 0.72
+    arm_pos_std: 0.36
+    arm_ori_std: 0.82
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    start_step: 1500
+    warmup_steps: 3000
+    start_scale: 0.30
+
+  rewards.post_strike_base_ang_vel.weight: 0.98
+  rewards.post_strike_base_ang_vel.params:
+    command_name: racket_target
+    std: 1.18
+    include_hold: true
+    early_prestrike_window_steps: 24
+    start_step: 0
+    warmup_steps: 4000
+    start_scale: 0.40
+
+  # Keep this conservative.  The body rewards above should do most of the work;
+  # a strong action-rate penalty previously shrank the upper-body swing.
+  rewards.phase_action_rate.weight: -0.46
+  rewards.phase_action_rate.params:
+    command_name: racket_target
+    pre_strike_scale: 0.022
+    strike_scale: 0.0035
+    recovery_scale: 0.125
+    hold_scale: 0.175

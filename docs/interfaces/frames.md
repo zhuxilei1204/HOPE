@@ -27,13 +27,16 @@ duplicated by hand.
 
 ## Training / evaluation placement
 
-- Each Isaac Lab environment's local origin sits at the table-surface height, so
-  an asset's environment-local position **is** its world-frame position; with
-  multiple environments, every environment is an independent court anchored at
-  its own origin.
-- The robot stands on the P1 side, on the floor (`z = -0.76` m), centered on the
-  table width (`y = -0.7625` m) at `x = -0.5` m (behind the near table end),
-  facing +x toward P2. The root body is `pelvis_link`.
+- The canonical placement is expressed in table frame: the robot stands on the
+  P1 side, centered on the table width at base XY
+  `(-0.5, -0.7625)` m, facing +x toward P2. The root body is
+  `pelvis_link`.
+- Robot-centred Isaac whole-body environments and MuJoCo keep the robot's
+  startup XY at their local world origin. They therefore use the explicit
+  axis-aligned transform `p_sim = p_table + (0.5, 0.7625, 0.76)`. Its single
+  source of truth is [`configs/table_frame.yaml`](../../configs/table_frame.yaml).
+  The modular table-tennis task may use table frame directly; consumers must
+  transform at the boundary instead of changing planner coordinates.
 - The racket is mounted on the right wrist (`right_wrist_yaw_Link`); the
   dedicated racket body is `pingpang_red_Link` where the asset keeps it (URDF
   import usually merges fixed joints into the wrist body — the code falls back
@@ -42,6 +45,10 @@ duplicated by hand.
   racket-target observation terms are expressed in this world frame — see
   [POLICY_INTERFACE.md](../POLICY_INTERFACE.md) and
   [PLANNER_INTERFACE.md](../PLANNER_INTERFACE.md).
+- On real hardware Motive establishes this table frame and both the ball and
+  `P1_base_link` must be reported in it. The simulator translation above is a
+  nominal robot-placement transform, not an offset to add to planner commands
+  during deployment.
 
 ## Mocap frame
 

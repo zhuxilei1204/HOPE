@@ -1,0 +1,53 @@
+name: user_backhand_translate_30fps_contact125_50hz_a3fk_aligned
+swing_side: -1
+fps: 50.0
+frame_count: 151
+duration_s: 3.02
+strike_frame: 60
+strike_phase: 0.4
+ready_interval_frames:
+- 0
+- 20
+follow_through_end_frame: 105
+recover_end_frame: 150
+tracked_bodies:
+- pelvis_link
+- left_hip_roll_Link
+- left_knee_Link
+- left_ankle_roll_Link
+- right_hip_roll_Link
+- right_knee_Link
+- right_ankle_roll_Link
+- torso_Link
+- left_shoulder_roll_Link
+- left_elbow_Link
+- left_wrist_yaw_Link
+- right_shoulder_roll_Link
+- right_elbow_Link
+- right_wrist_yaw_Link
+root_body: pelvis_link
+racket_link: right_wrist_yaw_Link
+racket_body: pingpang_red_Link
+mount_offset_xyz:
+- 0.20999999344348907
+- 0.03200000151991844
+- 0.03200000151991844
+blade_normal_axis: y
+blade_normal_sign: -1 (black/backhand face)
+racket_pos_range:
+- - 0.24768139362335206
+  - 0.46768139362335204
+- - 0.3142589211463928
+  - 0.7142589211463928
+- - 1.2454794979095458
+  - 1.425479497909546
+source:
+  full_aligned_motion: /mnt/ssd/zxl/HOPE_latest_20260721/hope_training/motions/user_four_motion_a3fk_yaw_leg_stabilized_20260724/user_backhand_translate_30fps_agibot_a3_a3fk_aligned.npz
+  source_video: "/mnt/ssd/zxl/\u53CD\u624B\u5E73\u79FB.mp4"
+  normalized_video: /mnt/ssd/zxl/HOPE_latest_20260721/data/motion_pipeline/user_four_motion_20260724/clips/user_backhand_translate_30fps.mp4
+  contact_frame_30fps: 125
+  mapped_motion_contact_frame_50hz: 207
+  crop_start_frame_50hz: 147
+  crop_end_frame_50hz: 297
+  pre_pad_frames: 0
+  post_pad_frames: 0

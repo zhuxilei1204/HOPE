@@ -1,0 +1,15 @@
+name: user_backhand_hit01_contact174_50hz_a3fk_aligned
+source_motion: /mnt/ssd/zxl/HOPE_latest_20260721/hope_training/motions/user_recorded_two_motion_a3fk_yaw_leg_stabilized_20260723/user_backhand_full_30fps_agibot_a3_a3fk_aligned.npz
+source_video: /mnt/ssd/zxl/HOPE_latest_20260721/backhand.mp4
+source_video_fps: 25.0
+original_contact_frame_0based: 174
+mapped_motion_contact_frame: 348
+crop_start_frame: 313
+crop_end_frame: 357
+pre_pad_frames: 0
+post_pad_frames: 26
+frames: 71
+fps: 50.0
+swing_side: -1
+strike_frame: 35
+strike_phase: 0.500000000

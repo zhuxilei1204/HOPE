@@ -1,0 +1,33 @@
+# =============================================================================
+# B17996 explicit recovery V1 + clip-aware soft planner-plane target sampling.
+#
+# This is the conservative follow-up to the failed hard x_hit=0.20 plane fine-tune.
+# It keeps planner x as a weak prior instead of forcing every motion clip onto the
+# same strike plane.  The target command bundle remains self-consistent: once the
+# hidden strike x is softly adjusted, the existing one-bounce incoming velocity,
+# impact-inverse racket velocity, and racket target normal are recomputed from that
+# same strike position.
+#
+# Clip order from the four-motion manifest:
+#   0 forehand raised
+#   1 backhand raised
+#   2 forehand translate
+#   3 backhand translate
+# =============================================================================
+
+defaults:
+  - HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionNormal114B17996ExplicitRecoveryV1
+  - _self_
+
+name: HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionNormal114B17996ExplicitRecoveryV1ClipAwarePlaneX020
+
+overrides:
+  commands.racket_target.planner_hit_plane_mode: fixed_x_hit
+  commands.racket_target.planner_hit_plane_x: 0.20
+  commands.racket_target.planner_hit_plane_x_jitter_range: [-0.015, 0.015]
+
+  # Soft per-clip blend toward x_hit=0.20.  Translation clips are deliberately low so the policy
+  # must keep the recorded footwork/body shape instead of solving by side-facing with the torso.
+  commands.racket_target.planner_hit_plane_blend_start_per_clip: [0.10, 0.10, 0.05, 0.00]
+  commands.racket_target.planner_hit_plane_blend_per_clip: [0.45, 0.45, 0.25, 0.12]
+  commands.racket_target.planner_hit_plane_blend_warmup_steps: 6000

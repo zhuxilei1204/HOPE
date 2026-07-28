@@ -151,8 +151,10 @@ def run(args) -> dict:
     from a3_deploy_onnx_ref_pingpong.lifecycle import SwingLifecycle
     from a3_deploy_onnx_ref_pingpong.observation import (
         OBS_DIM_NORMAL114,
+        OBS_DIM_STABILITY122,
         build_observation,
         build_observation_normal114,
+        build_observation_stability122,
     )
     from a3_deploy_onnx_ref_pingpong.onnx_policy import OnnxPolicy
     from a3_deploy_onnx_ref_pingpong.racket_command import BACKHAND, FOREHAND, QueueRacketCommandSource, RacketCommand
@@ -168,6 +170,9 @@ def run(args) -> dict:
     robot_xml = args.model_xml or str(runtime_cfg.model_xml_path)
     ball_cfg = load_ball_physics_config()
     policy = OnnxPolicy(args.onnx or str(runtime_cfg.onnx_path))
+    feedback_mode = getattr(args, "last_action_feedback_mode", "auto")
+    if feedback_mode == "auto":
+        feedback_mode = policy.last_action_feedback_mode or runtime_cfg.last_action_feedback_mode
     scene = PingPongRealPhysicsScene(
         robot_xml,
         ball_cfg,
@@ -198,7 +203,14 @@ def run(args) -> dict:
     rows = _load_serve_manifest(args.serve_manifest)
 
     scene.reset_stand()
-    scene.set_ball([scene.near_edge_x + scene.length + 1.0, 0.0, scene.table_height + 1.0], [0.0, 0.0, 0.0])
+    scene.set_ball(
+        [
+            scene.near_edge_x + scene.length + 1.0,
+            scene.table_center_y,
+            scene.table_surface_z + 1.0,
+        ],
+        [0.0, 0.0, 0.0],
+    )
     lifecycle = SwingLifecycle(runtime_cfg.lifecycle)
     source = QueueRacketCommandSource()
     last_action = np.zeros(31, dtype=np.float64)
@@ -279,7 +291,11 @@ def run(args) -> dict:
         state = scene.read_robot_state()
         target = lifecycle.update(source.poll(), state)
         station_xy = fixed_station_xy
-        if getattr(policy, "obs_dim", 111) == OBS_DIM_NORMAL114:
+        if getattr(policy, "obs_dim", 111) == OBS_DIM_STABILITY122:
+            obs = build_observation_stability122(
+                state, target, last_action, default_q, station_xy
+            )
+        elif getattr(policy, "obs_dim", 111) == OBS_DIM_NORMAL114:
             obs = build_observation_normal114(state, target, last_action, default_q, station_xy)
         else:
             obs = build_observation(state, target, last_action, default_q, station_xy)
@@ -295,7 +311,12 @@ def run(args) -> dict:
             q_des[head_idx] = default_q[head_idx]
         scene.write_targets(q_des, kp, kd)
         scene.step()
-        last_action = applied_action
+        if feedback_mode == "effective":
+            last_action = runtime_cfg.action_adapter.encode_effective(q_des)
+            if runtime_cfg.passive_neck:
+                last_action[head_idx] = 0.0
+        else:
+            last_action = applied_action
         if recorder is not None:
             recorder.capture(scene)
 
@@ -371,6 +392,8 @@ def run(args) -> dict:
     result = {
         "mode": args.mode,
         "controller": args.controller,
+        "last_action_feedback_mode": feedback_mode,
+        "table_frame_origin_world_xyz": [float(value) for value in scene.offset],
         "seconds_requested": float(args.seconds),
         "seconds_simulated": elapsed_s,
         "fell_low": first_low_tick is not None,
@@ -412,7 +435,18 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--tilt-threshold", type=float, default=0.85)
     parser.add_argument("--kp-scale", type=float, default=1.0)
     parser.add_argument("--kd-scale", type=float, default=1.0)
-    parser.add_argument("--near-edge-x", type=float, default=0.30)
+    parser.add_argument(
+        "--last-action-feedback-mode",
+        choices=["auto", "raw", "effective"],
+        default="auto",
+        help="Actor last-action feedback contract. auto prefers ONNX metadata, then runtime config.",
+    )
+    parser.add_argument(
+        "--near-edge-x",
+        type=float,
+        default=None,
+        help="Optional eval-only override; default uses configs/table_frame.yaml.",
+    )
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--stop-on-fall", action="store_true")
     parser.add_argument("--view", action="store_true")

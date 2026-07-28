@@ -1,0 +1,160 @@
+# =============================================================================
+# B17996 explicit recovery V1.
+#
+# Start from the validated B17996 deploy-ready/no-command baseline and make the
+# missing deploy abilities explicit in the reward:
+#   - no-command ready stability, gated only while no target is exposed;
+#   - body-only strike balance and lower-body support, without damping the right arm;
+#   - outcome-conditioned recovery, so stable recovery is rewarded after useful hits;
+#   - next-prestrike reachability, so the carried recovery state must be usable for
+#     the next sampled ball.
+#
+# This is intentionally a short, conservative fine-tune task.  It does not change
+# the 114-D actor contract, motion set, hit/collision rewards, or hard safety
+# terminations from the B17996 baseline.
+# =============================================================================
+
+defaults:
+  - HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionNormal114DeployReadyNoCommand
+  - _self_
+
+name: HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionNormal114B17996ExplicitRecoveryV1
+
+overrides:
+  rewards.no_command_ready_stability.weight: 0.90
+  rewards.no_command_ready_stability.params:
+    command_name: racket_target
+    height_std: 0.09
+    upright_std: 0.22
+    lin_vel_std: 0.18
+    ang_vel_std: 0.55
+    station_std: 0.18
+    racket_vel_std: 0.55
+    arm_pos_std: 0.34
+    arm_ori_std: 0.78
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    start_step: 0
+    warmup_steps: 1000
+    start_scale: 0.50
+
+  rewards.next_prestrike_reachable.weight: 0.70
+  rewards.next_prestrike_reachable.params:
+    command_name: racket_target
+    window_steps: 20
+    reach_std: 0.30
+    feasible_speed: 2.60
+    feasible_speed_std: 0.45
+    min_time_to_strike: 0.18
+    max_time_to_strike: 1.20
+    station_std: 0.24
+    upright_std: 0.28
+    start_step: 0
+    warmup_steps: 1500
+    start_scale: 0.30
+
+  rewards.strike_balance.weight: 0.35
+  rewards.strike_balance.params:
+    command_name: racket_target
+    pre_window_s: 0.30
+    post_window_s: 0.14
+    pitch_std: 0.22
+    upright_std: 0.32
+    ang_vel_std: 1.45
+    backward_std: 0.24
+    backward_vel_std: 0.62
+    start_step: 0
+    warmup_steps: 1500
+    start_scale: 0.25
+
+  rewards.lower_body_support.weight: 0.28
+  rewards.lower_body_support.params:
+    command_name: racket_target
+    pre_window_s: 0.34
+    post_window_s: 0.20
+    station_std: 0.32
+    backward_std: 0.24
+    backward_vel_std: 0.65
+    min_feet_contact: 0.45
+    start_step: 0
+    warmup_steps: 1500
+    start_scale: 0.20
+
+  # Keep recovery tied to successful task outcomes.  Contact gets the strongest early
+  # signal; net/return are lower and warm in so the policy is not rewarded for simply
+  # standing still.
+  rewards.post_contact_recovery_ready.weight: 1.70
+  rewards.post_contact_recovery_ready.params:
+    command_name: racket_target
+    outcome: contact
+    height_std: 0.095
+    upright_std: 0.26
+    lin_vel_std: 0.24
+    ang_vel_std: 0.70
+    station_std: 0.22
+    racket_vel_std: 0.68
+    arm_pos_std: 0.35
+    arm_ori_std: 0.80
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    start_step: 0
+    warmup_steps: 1500
+    start_scale: 0.35
+
+  rewards.post_net_recovery_ready.weight: 0.80
+  rewards.post_net_recovery_ready.params:
+    command_name: racket_target
+    outcome: net_cross
+    height_std: 0.095
+    upright_std: 0.26
+    lin_vel_std: 0.24
+    ang_vel_std: 0.70
+    station_std: 0.22
+    racket_vel_std: 0.68
+    arm_pos_std: 0.35
+    arm_ori_std: 0.80
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    start_step: 750
+    warmup_steps: 2000
+    start_scale: 0.25
+
+  rewards.post_return_recovery_ready.weight: 1.20
+  rewards.post_return_recovery_ready.params:
+    command_name: racket_target
+    outcome: opponent_bounce
+    height_std: 0.095
+    upright_std: 0.26
+    lin_vel_std: 0.24
+    ang_vel_std: 0.70
+    station_std: 0.22
+    racket_vel_std: 0.68
+    arm_pos_std: 0.35
+    arm_ori_std: 0.80
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    start_step: 1500
+    warmup_steps: 3000
+    start_scale: 0.20
+
+  # Slightly reduce right-arm ready pressure relative to the inherited B17996 task,
+  # because MuJoCo videos showed over-stabilizing the upper arm can weaken the hit.
+  rewards.post_contact_arm_racket_ready.weight: 0.35
+  rewards.post_net_arm_racket_ready.weight: 0.45
+  rewards.post_return_arm_racket_ready.weight: 0.65
+
+  rewards.phase_action_rate.weight: -0.46
+  rewards.phase_action_rate.params:
+    command_name: racket_target
+    pre_strike_scale: 0.022
+    strike_scale: 0.0035
+    recovery_scale: 0.125
+    hold_scale: 0.175

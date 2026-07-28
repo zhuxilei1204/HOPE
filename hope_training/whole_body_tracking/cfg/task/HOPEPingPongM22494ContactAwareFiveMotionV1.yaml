@@ -1,0 +1,16 @@
+# =============================================================================
+# Controlled motion-prior ablation from model_22494.
+#
+# Keep the 114-D actor, planner command, ball distribution, rewards, termination,
+# deploy-ready lifecycle, and continuous motion lifecycle unchanged.  The only
+# task-level change is replacing the old four-motion manifest with the five
+# contact-aware clips that passed the independent lower-body quality gates.
+# =============================================================================
+
+defaults:
+  - HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionNormal114B17996ExplicitRecoveryV1
+  - _self_
+
+name: HOPEPingPongM22494ContactAwareFiveMotionV1
+
+motion_manifest: hope_training/motions/supplemental_lower_body_contact_aware_isaacfk_20260728/manifest_train_ready_with_task_boxes.tsv

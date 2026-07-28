@@ -1,0 +1,22 @@
+# =============================================================================
+# B17996 ready-hold-only V1.
+#
+# Clean branch from model_22494 that isolates one variable:
+#   longer post-wrap ready hold + higher deploy-ready/no-command hold probability.
+#
+# No reward weights, reward params, hit objective, actor inputs, planner command,
+# motion set, or hard terminations are changed.  This tells us whether the longer
+# ready/no-command distribution alone is responsible for the MuJoCo hitting drop
+# seen in the previous post-strike-ready experiment.
+# =============================================================================
+
+defaults:
+  - HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionNormal114B17996ExplicitRecoveryV1
+  - _self_
+
+name: HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionNormal114B17996ReadyHoldOnlyV1
+
+overrides:
+  commands.motion.hold_steps_range: [105, 165]
+  commands.motion.stand_start_min_hold: 105
+  commands.racket_target.deploy_ready_hold_prob: 0.85

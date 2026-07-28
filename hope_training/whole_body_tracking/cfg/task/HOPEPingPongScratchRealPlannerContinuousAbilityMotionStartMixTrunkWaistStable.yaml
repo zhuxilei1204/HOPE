@@ -1,0 +1,46 @@
+# =============================================================================
+# Motion-start-mix continuation with trunk/waist high-frequency damping.
+#
+# Goal:
+#   Reduce the visible torso/waist shake during recovery and ready hold while
+#   preserving leg compensation authority and right-arm swing freedom.
+#
+# Difference from the parent task:
+#   - keep the 114-D actor, real one-bounce planner command, four-motion set,
+#     deploy-ready/no-command semantics, and ability-based curriculum;
+#   - change the inherited post_strike_lower_body_action_rate term so it only
+#     acts on the three waist joints;
+#   - ease the global phase action-rate pressure so hip/knee/ankle joints can
+#     still make fast balance corrections after a swing.
+# =============================================================================
+
+defaults:
+  - HOPEPingPongScratchRealPlannerContinuousAbilityMotionStartMix
+  - _self_
+
+name: HOPEPingPongScratchRealPlannerContinuousAbilityMotionStartMixTrunkWaistStable
+
+overrides:
+  rewards.post_strike_lower_body_action_rate.weight: -0.078
+  rewards.post_strike_lower_body_action_rate.params:
+    command_name: racket_target
+    joint_names:
+      - waist_yaw_joint
+      - waist_roll_joint
+      - waist_pitch_joint
+    include_hold: true
+    early_prestrike_window_steps: 18
+    start_step: 0
+    warmup_steps: 5000
+    start_scale: 0.35
+
+  # Keep strike essentially free, and reduce recovery/hold global smoothing so
+  # the legs are not made artificially stiff. The waist-only term above carries
+  # the extra high-frequency damping.
+  rewards.phase_action_rate.weight: -0.38
+  rewards.phase_action_rate.params:
+    command_name: racket_target
+    pre_strike_scale: 0.020
+    strike_scale: 0.004
+    recovery_scale: 0.085
+    hold_scale: 0.120

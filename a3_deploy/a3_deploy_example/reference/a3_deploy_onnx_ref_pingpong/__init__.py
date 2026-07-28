@@ -26,7 +26,16 @@ from .action_adapter import ActionAdapter
 from .config import RuntimeConfig
 from .joint_order import JOINT_NAMES, NUM_JOINTS
 from .lifecycle import LifecycleConfig, Phase, SwingLifecycle
-from .observation import OBS_DIM, ObsTarget, RobotState, build_observation
+from .observation import (
+    OBS_DIM,
+    OBS_DIM_NORMAL114,
+    OBS_DIM_STABILITY122,
+    ObsTarget,
+    RobotState,
+    build_observation,
+    build_observation_normal114,
+    build_observation_stability122,
+)
 from .racket_command import (
     BACKHAND,
     FOREHAND,
@@ -46,9 +55,13 @@ __all__ = [
     "Phase",
     "SwingLifecycle",
     "OBS_DIM",
+    "OBS_DIM_NORMAL114",
+    "OBS_DIM_STABILITY122",
     "ObsTarget",
     "RobotState",
     "build_observation",
+    "build_observation_normal114",
+    "build_observation_stability122",
     "BACKHAND",
     "FOREHAND",
     "ExampleCommandFeed",

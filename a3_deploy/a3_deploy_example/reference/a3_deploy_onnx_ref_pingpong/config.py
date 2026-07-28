@@ -39,6 +39,7 @@ class RuntimeConfig:
     sim_kd: np.ndarray
     lifecycle: LifecycleConfig
     passive_neck: bool = True
+    last_action_feedback_mode: str = "raw"
     config_dir: Path = field(default_factory=Path)
 
     @property
@@ -65,6 +66,12 @@ class RuntimeConfig:
         model_xml_path = _resolve(cfg_dir, doc["simulation"]["model_xml_path"])
         adapter_path = _resolve(cfg_dir, doc["action_adapter"]["config_path"])
         adapter = ActionAdapter.from_yaml(adapter_path)
+        feedback_mode = str(doc["action_adapter"].get("last_action_feedback_mode", "raw")).lower()
+        if feedback_mode not in ("raw", "effective"):
+            raise ValueError(
+                "action_adapter.last_action_feedback_mode must be 'raw' or 'effective', "
+                f"got {feedback_mode!r}"
+            )
 
         sim_kp, sim_kd = _expand_pd_gains(doc["simulation"]["pd_gains"])
 
@@ -90,6 +97,7 @@ class RuntimeConfig:
             sim_kd=sim_kd,
             lifecycle=lifecycle,
             passive_neck=bool(doc.get("passive_neck", True)),
+            last_action_feedback_mode=feedback_mode,
             config_dir=cfg_dir,
         )
 

@@ -1,0 +1,113 @@
+name: user_backhand_full_30fps_agibot_a3_a3fk_aligned
+swing_side: -1
+fps: 50.0
+frame_count: 430
+frame_time_s: 0.02
+duration_s: 8.6
+strike_frame: 214
+strike_phase: 0.4988344988344988
+ready_interval_frames:
+- 0
+- 64
+follow_through_end_frame: 322
+recover_end_frame: 429
+joint_order:
+- waist_yaw_joint
+- waist_roll_joint
+- waist_pitch_joint
+- head_yaw_joint
+- head_pitch_joint
+- left_shoulder_pitch_joint
+- left_shoulder_roll_joint
+- left_shoulder_yaw_joint
+- left_elbow_joint
+- left_wrist_roll_joint
+- left_wrist_pitch_joint
+- left_wrist_yaw_joint
+- right_shoulder_pitch_joint
+- right_shoulder_roll_joint
+- right_shoulder_yaw_joint
+- right_elbow_joint
+- right_wrist_roll_joint
+- right_wrist_pitch_joint
+- right_wrist_yaw_joint
+- left_hip_pitch_joint
+- left_hip_roll_joint
+- left_hip_yaw_joint
+- left_knee_joint
+- left_ankle_pitch_joint
+- left_ankle_roll_joint
+- right_hip_pitch_joint
+- right_hip_roll_joint
+- right_hip_yaw_joint
+- right_knee_joint
+- right_ankle_pitch_joint
+- right_ankle_roll_joint
+tracked_bodies:
+- pelvis_link
+- left_hip_roll_Link
+- left_knee_Link
+- left_ankle_roll_Link
+- right_hip_roll_Link
+- right_knee_Link
+- right_ankle_roll_Link
+- torso_Link
+- left_shoulder_roll_Link
+- left_elbow_Link
+- left_wrist_yaw_Link
+- right_shoulder_roll_Link
+- right_elbow_Link
+- right_wrist_yaw_Link
+anchor_body: torso_Link
+root_body: pelvis_link
+racket_link: right_wrist_yaw_Link
+racket_body: pingpang_red_Link
+mount_offset_xyz:
+- 0.21
+- 0.032
+- 0.032
+blade_normal_axis: y
+blade_normal_sign: -1 (black/backhand face)
+source:
+  schema: old_hope_articulation_31j_full_32b
+  file: /mnt/ssd/zxl/HOPE_latest_20260721/data/motion_pipeline/user_recorded_two_motion_20260723/old_schema_npz/user_backhand_full_30fps_agibot_a3.npz
+  joint_reorder: old articulation -> canonical using CANONICAL_TO_ARTICULATION
+  body_crop: old 32 articulation bodies -> current 14 tracked bodies
+manual_review:
+  phase_annotation_needed: true
+  note: Generated strike/phase fields are midpoint heuristics; review before long
+    training.
+alignment:
+  method: a3_fk_ground_scale_root_root_yaw_canonical_lower_body_stabilized_v1
+  source_motion: /mnt/ssd/zxl/HOPE_latest_20260721/hope_training/motions/user_recorded_two_motion_20260723_canonical/user_backhand_full_30fps_agibot_a3.npz
+  dataset_vertical_scale: 1.2742685425510216
+  target_ground_z: 0.008768368512392044
+  default_root_xy:
+  - -0.00496673583984375
+  - 0.0343475341796875
+  default_root_yaw_rad: 0.025133325745483288
+  ready_root_yaw_rad: 1.973471871778871
+  root_yaw_correction_rad: -1.9483385460333877
+  root_yaw_mode: ready_to_default
+  ready_frames: 10
+  lower_body_mode: stabilize
+  lower_body_blend: 0.2
+  lower_body_joints:
+  - left_hip_pitch_joint
+  - left_hip_roll_joint
+  - left_hip_yaw_joint
+  - left_knee_joint
+  - left_ankle_pitch_joint
+  - left_ankle_roll_joint
+  - right_hip_pitch_joint
+  - right_hip_roll_joint
+  - right_hip_yaw_joint
+  - right_knee_joint
+  - right_ankle_pitch_joint
+  - right_ankle_roll_joint
+  regenerated_fields:
+  - body_pos_w
+  - body_quat_w
+  - body_lin_vel_w
+  - body_ang_vel_w
+  - joint_vel

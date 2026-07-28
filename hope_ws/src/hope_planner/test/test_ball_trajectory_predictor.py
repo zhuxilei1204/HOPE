@@ -17,7 +17,7 @@ def test_incoming_trajectory_crosses_hit_plane():
     v0 = np.array([-4.0, 0.0, 2.0])
     strike = pred.predict(p0, v0, 0.0)
     assert strike.valid
-    assert abs(strike.p_ball[0] - 0.0) < 1e-6   # x_hit default = 0.0
+    assert abs(strike.p_ball[0] - 0.2) < 1e-6   # deployed x_hit default = 0.2
     assert strike.num_bounces == 0
     assert 0.05 < strike.t_strike < 0.4
 
@@ -41,12 +41,12 @@ def test_table_bounce_reverses_z_velocity():
 
 def test_bounce_then_cross_hit_plane_path():
     pred = _predictor()
-    p0 = np.array([0.2, -0.7625, 0.03])
+    p0 = np.array([0.4, -0.7625, 0.03])
     v0 = np.array([-1.5, 0.0, -2.0])
     strike = pred.predict(p0, v0, 0.0)
     assert strike.valid
     assert strike.num_bounces == 1
-    assert abs(strike.p_ball[0]) < 1e-6
+    assert abs(strike.p_ball[0] - 0.2) < 1e-6
     assert strike.p_ball[2] > 0.0
 
 
@@ -66,7 +66,7 @@ def test_bounce_contact_plane_is_ball_radius():
     shift every post-bounce prediction.
     """
     physics = BallPhysics(k=0.0)          # pure gravity -> closed-form expectations
-    pred = BallTrajectoryPredictor(physics, PlannerConfig(), TableParams())
+    pred = BallTrajectoryPredictor(physics, PlannerConfig(x_hit=0.0), TableParams())
     g = 9.81
     r = physics.radius
     z0, x0, vx = 0.12, 0.10, -0.5

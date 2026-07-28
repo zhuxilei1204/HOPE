@@ -1,0 +1,10 @@
+defaults:
+  - HOPEPingPongM22750StabilityCommonV1
+  - _self_
+
+name: HOPEPingPongM22750StabilityFeedback122F1
+actor_obs_contract: hope_pingpong_stability122
+
+actor_obs:
+  racket_target_normal_w: true
+  stability_feedback: true

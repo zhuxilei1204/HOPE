@@ -1,0 +1,89 @@
+# =============================================================================
+# M22494 Cycle State V2.
+#
+# Start from the model_22494 task line and make continuous readiness a real per-env
+# event, not only a soft reward.  A useful previous return opens a pending check;
+# the next command-visible pre-strike state must become ready before the deadline.
+# =============================================================================
+
+defaults:
+  - HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionNormal114B17996ExplicitRecoveryV1
+  - _self_
+
+name: HOPEPingPongM22494CycleStateV2
+
+overrides:
+  episode_length_s: 18.0
+
+  commands.racket_target.cycle_v2_enabled: true
+  commands.racket_target.cycle_v2_required_outcome: opponent_bounce
+  commands.racket_target.cycle_v2_visible_deadline_steps: 32
+  commands.racket_target.cycle_v2_total_deadline_steps: 130
+  commands.racket_target.cycle_v2_count_no_command_as_visible: false
+  commands.racket_target.cycle_v2_fail_on_strike_without_ready: true
+  commands.racket_target.cycle_v2_ready_threshold: 0.74
+  commands.racket_target.cycle_v2_max_height_error: 0.10
+  commands.racket_target.cycle_v2_max_upright_error: 0.28
+  commands.racket_target.cycle_v2_max_base_lin_vel: 0.25
+  commands.racket_target.cycle_v2_max_base_ang_vel: 0.80
+  commands.racket_target.cycle_v2_max_station_error: 0.24
+  commands.racket_target.cycle_v2_min_feet_contact: 0.45
+  commands.racket_target.cycle_v2_max_racket_speed: 0.80
+  commands.racket_target.cycle_v2_min_arm_score: 0.55
+
+  # Ability curriculum now uses the v2 event ratio.  This prevents the task from
+  # unlocking full difficulty just because single-swing success is high.
+  commands.racket_target.ability_curriculum_enabled: true
+  commands.racket_target.ability_curriculum_use_cycle_success: false
+  commands.racket_target.ability_curriculum_use_cycle_v2: true
+  commands.racket_target.ability_curriculum_start_racket_pos_scale: [0.95, 0.95, 0.98]
+  commands.racket_target.ability_curriculum_start_ball_scale: 0.92
+  commands.racket_target.ability_curriculum_start_planner_perturb_scale: 0.75
+  commands.racket_target.ability_curriculum_ema_rate: 0.025
+  commands.racket_target.ability_curriculum_advance_rate: 0.008
+  commands.racket_target.ability_curriculum_regress_rate: 0.020
+  commands.racket_target.ability_curriculum_contact_threshold: 0.58
+  commands.racket_target.ability_curriculum_net_threshold: 0.42
+  commands.racket_target.ability_curriculum_success_threshold: 0.30
+  commands.racket_target.ability_curriculum_recovery_threshold: 0.72
+  commands.racket_target.ability_curriculum_recovery_floor: 0.60
+  commands.racket_target.ability_curriculum_cycle_success_threshold: 0.55
+  commands.racket_target.ability_curriculum_cycle_attempt_threshold: 0.20
+
+  # Disable the previous pseudo-cycle sparse term in this branch.  The v2 state
+  # machine below is the source of truth for cycle success/failure.
+  rewards.cycle_success_bonus.weight: 0.0
+  rewards.cycle_v2_ready_success_bonus.weight: 4.0
+  rewards.cycle_v2_ready_success_bonus.params:
+    command_name: racket_target
+    start_step: 0
+    warmup_steps: 6000
+    start_scale: 0.30
+  rewards.cycle_v2_ready_fail.weight: -8.0
+  rewards.cycle_v2_ready_fail.params:
+    command_name: racket_target
+    start_step: 0
+    warmup_steps: 6000
+    start_scale: 0.25
+
+  # Keep the older dense cycle readiness as shaping only.  These are not the
+  # curriculum/termination source of truth in v2.
+  rewards.cycle_contact_ready.weight: 0.90
+  rewards.cycle_net_ready.weight: 1.70
+  rewards.cycle_return_ready.weight: 3.20
+
+  # Turn v2 failure into a hard episode failure after a short adaptation period.
+  terminations.cycle_v2_ready_timeout.params:
+    command_name: racket_target
+    enabled: true
+    start_step: 18000
+  rewards.termination_penalty.weight: -14.0
+  rewards.termination_penalty.params:
+    term_keys:
+      - base_too_low
+      - base_tilted
+      - anchor_pos
+      - anchor_ori
+      - ee_body_pos
+      - table_touch
+      - cycle_v2_ready_timeout

@@ -1,0 +1,17 @@
+# =============================================================================
+# Continue-training variant of the clip-aware soft planner-plane task.
+#
+# The original clip-aware task warms planner_hit_plane_blend from small per-clip
+# values.  When training is resumed in a fresh Isaac process, env.common_step_counter
+# starts from zero, so the warmup would restart and change the command distribution.
+# This variant pins the task to the final per-clip blend for true continuation.
+# =============================================================================
+
+defaults:
+  - HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionNormal114B17996ExplicitRecoveryV1ClipAwarePlaneX020
+  - _self_
+
+name: HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionNormal114B17996ExplicitRecoveryV1ClipAwarePlaneX020FixedBlend
+
+overrides:
+  commands.racket_target.planner_hit_plane_blend_warmup_steps: 0

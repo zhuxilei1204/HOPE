@@ -66,7 +66,7 @@ def test_net_spans_width_plus_overhang():
 
 
 def test_robot_stands_on_near_half():
-    assert geometry.P1_STAND_X < 0.0
+    assert math.isclose(geometry.P1_STAND_X, -0.5)
     assert math.isclose(geometry.P1_STAND_Y, -geometry.TABLE_WIDTH / 2.0)
 
 

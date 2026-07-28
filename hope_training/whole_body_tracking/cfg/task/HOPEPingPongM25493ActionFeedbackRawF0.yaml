@@ -1,0 +1,9 @@
+# F0 control: reproduce the R2A task while retaining legacy raw last_action feedback.
+defaults:
+  - HOPEPingPongM25493LBPhaseCatchR2A
+  - _self_
+
+name: HOPEPingPongM25493ActionFeedbackRawF0
+
+overrides:
+  actions.joint_pos.feedback_mode: raw

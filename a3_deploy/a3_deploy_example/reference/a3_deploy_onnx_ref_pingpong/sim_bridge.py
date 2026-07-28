@@ -104,6 +104,19 @@ class MujocoDirectBridge(SimBridge):
 
         # Pelvis gyro sensor address (base angular velocity, body frame).
         self._gyro_adr = self._sensor_adr("pelvis_imu_gyro", dim=3)
+        self._pelvis_bid = self._body_id("pelvis_link")
+        self._torso_bid = self._body_id("torso_Link")
+        self._left_foot_bid = self._body_id("left_ankle_roll_Link")
+        self._right_foot_bid = self._body_id("right_ankle_roll_Link")
+        self._floor_gid = self._geom_id("floor")
+        self._robot_mass_body_ids = np.asarray(
+            [
+                bid
+                for bid in range(1, self.model.nbody)
+                if float(self.model.body_mass[bid]) > 0.0
+            ],
+            dtype=int,
+        )
 
         # Latched targets.
         self._q_des = np.zeros(NUM_JOINTS)
@@ -131,6 +144,18 @@ class MujocoDirectBridge(SimBridge):
             return -1
         return int(self.model.sensor_adr[sid])
 
+    def _body_id(self, name: str) -> int:
+        bid = self._mj.mj_name2id(self.model, self._mj.mjtObj.mjOBJ_BODY, name)
+        if bid < 0:
+            raise ValueError(f"body '{name}' not found in the MJCF")
+        return int(bid)
+
+    def _geom_id(self, name: str) -> int:
+        gid = self._mj.mj_name2id(self.model, self._mj.mjtObj.mjOBJ_GEOM, name)
+        if gid < 0:
+            raise ValueError(f"geom '{name}' not found in the MJCF")
+        return int(gid)
+
     # -- SimBridge ----------------------------------------------------------
     def reset(self) -> None:
         if self.model.nkey > 0:
@@ -150,12 +175,47 @@ class MujocoDirectBridge(SimBridge):
             base_ang_vel = d.qvel[self._base_vadr + 3:self._base_vadr + 6].copy()
         q = d.qpos[self._q_adr].copy()
         qd = d.qvel[self._v_adr].copy()
+        pelvis_rot = d.xmat[self._pelvis_bid].reshape(3, 3)
+        base_lin_vel_b = pelvis_rot.T @ d.qvel[self._base_vadr:self._base_vadr + 3]
+        torso_rot = d.xmat[self._torso_bid].reshape(3, 3)
+        torso_gravity_b = torso_rot.T @ np.array([0.0, 0.0, -1.0])
+        masses = self.model.body_mass[self._robot_mass_body_ids]
+        com_w = np.sum(
+            d.xipos[self._robot_mass_body_ids] * masses[:, None], axis=0
+        ) / max(float(np.sum(masses)), 1.0e-9)
+        support_xy = 0.5 * (
+            d.xpos[self._left_foot_bid, :2] + d.xpos[self._right_foot_bid, :2]
+        )
+        heading = pelvis_rot[:2, 0].copy()
+        heading /= max(float(np.linalg.norm(heading)), 1.0e-9)
+        left = np.array([-heading[1], heading[0]])
+        delta = com_w[:2] - support_xy
+        contacts = np.zeros(2, dtype=np.float64)
+        for idx in range(d.ncon):
+            con = d.contact[idx]
+            if int(con.geom1) == self._floor_gid:
+                body = int(self.model.geom_bodyid[int(con.geom2)])
+            elif int(con.geom2) == self._floor_gid:
+                body = int(self.model.geom_bodyid[int(con.geom1)])
+            else:
+                continue
+            contacts[0] = max(contacts[0], float(body == self._left_foot_bid))
+            contacts[1] = max(contacts[1], float(body == self._right_foot_bid))
+        stability_feedback = np.concatenate(
+            (
+                base_lin_vel_b[:2],
+                torso_gravity_b[:2],
+                [float(np.dot(delta, heading)), float(np.dot(delta, left))],
+                contacts,
+            )
+        )
         return RobotState(
             base_pos_w=base_pos,
             base_quat_w=base_quat,
             base_ang_vel_b=base_ang_vel,
             q=q,
             qd=qd,
+            stability_feedback=stability_feedback,
         )
 
     def write_targets(self, q_des: np.ndarray, kp: np.ndarray, kd: np.ndarray) -> None:

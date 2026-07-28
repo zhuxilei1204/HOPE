@@ -28,7 +28,11 @@ from a3_deploy_onnx_ref_pingpong.joint_order import JOINT_NAMES  # noqa: E402
 from a3_deploy_onnx_ref_pingpong.onnx_policy import OnnxPolicy  # noqa: E402
 
 
-def _tiny_actor(path: str, joint_order: list[str] | None) -> str:
+def _tiny_actor(
+    path: str,
+    joint_order: list[str] | None,
+    feedback_mode: str | None = None,
+) -> str:
     from onnx import TensorProto, helper
 
     W = np.zeros((111, 31), dtype=np.float32)
@@ -45,6 +49,10 @@ def _tiny_actor(path: str, joint_order: list[str] | None) -> str:
         entry = model.metadata_props.add()
         entry.key = "joint_order"
         entry.value = ",".join(joint_order)
+    if feedback_mode is not None:
+        entry = model.metadata_props.add()
+        entry.key = "last_action_feedback_mode"
+        entry.value = feedback_mode
     onnx.save(model, path)
     return path
 
@@ -65,3 +73,12 @@ def test_permuted_joint_order_metadata_rejected(tmp_path):
 def test_metadata_less_model_accepted(tmp_path):
     path = _tiny_actor(str(tmp_path / "plain.onnx"), None)
     OnnxPolicy(path)  # must not raise
+
+
+def test_feedback_mode_metadata_exposed(tmp_path):
+    path = _tiny_actor(
+        str(tmp_path / "effective.onnx"),
+        list(JOINT_NAMES),
+        feedback_mode="effective",
+    )
+    assert OnnxPolicy(path).last_action_feedback_mode == "effective"

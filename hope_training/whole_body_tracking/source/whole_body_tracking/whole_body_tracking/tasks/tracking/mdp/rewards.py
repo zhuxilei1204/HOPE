@@ -22,57 +22,136 @@ def _get_body_indexes(command: MotionCommand, body_names: list[str] | None) -> l
     return [i for i, name in enumerate(command.cfg.body_names) if (body_names is None) or (name in body_names)]
 
 
-def motion_global_anchor_position_error_exp(env: ManagerBasedRLEnv, command_name: str, std: float) -> torch.Tensor:
+def _clip_scale(
+    command: MotionCommand,
+    value: torch.Tensor,
+    core_clip_scale: float,
+    supplemental_clip_scale: float,
+) -> torch.Tensor:
+    core_count = int(getattr(command.cfg, "core_clip_count", 0))
+    if core_count <= 0:
+        return value * float(core_clip_scale)
+    scale = torch.where(
+        command.clip_id >= core_count,
+        torch.full_like(value, float(supplemental_clip_scale)),
+        torch.full_like(value, float(core_clip_scale)),
+    )
+    return value * scale
+
+
+def motion_global_anchor_position_error_exp(
+    env: ManagerBasedRLEnv,
+    command_name: str,
+    std: float,
+    core_clip_scale: float = 1.0,
+    supplemental_clip_scale: float = 1.0,
+) -> torch.Tensor:
     command: MotionCommand = env.command_manager.get_term(command_name)
     error = torch.sum(torch.square(command.anchor_pos_w - command.robot_anchor_pos_w), dim=-1)
-    return torch.exp(-error / std**2)
+    return _clip_scale(
+        command,
+        torch.exp(-error / std**2),
+        core_clip_scale,
+        supplemental_clip_scale,
+    )
 
 
-def motion_global_anchor_orientation_error_exp(env: ManagerBasedRLEnv, command_name: str, std: float) -> torch.Tensor:
+def motion_global_anchor_orientation_error_exp(
+    env: ManagerBasedRLEnv,
+    command_name: str,
+    std: float,
+    core_clip_scale: float = 1.0,
+    supplemental_clip_scale: float = 1.0,
+) -> torch.Tensor:
     command: MotionCommand = env.command_manager.get_term(command_name)
     error = quat_error_magnitude(command.anchor_quat_w, command.robot_anchor_quat_w) ** 2
-    return torch.exp(-error / std**2)
+    return _clip_scale(
+        command,
+        torch.exp(-error / std**2),
+        core_clip_scale,
+        supplemental_clip_scale,
+    )
 
 
 def motion_relative_body_position_error_exp(
-    env: ManagerBasedRLEnv, command_name: str, std: float, body_names: list[str] | None = None
+    env: ManagerBasedRLEnv,
+    command_name: str,
+    std: float,
+    body_names: list[str] | None = None,
+    core_clip_scale: float = 1.0,
+    supplemental_clip_scale: float = 1.0,
 ) -> torch.Tensor:
     command: MotionCommand = env.command_manager.get_term(command_name)
     idx = _get_body_indexes(command, body_names)
     error = torch.sum(
         torch.square(command.body_pos_relative_w[:, idx] - command.robot_body_pos_w[:, idx]), dim=-1
     )
-    return torch.exp(-error.mean(-1) / std**2)
+    return _clip_scale(
+        command,
+        torch.exp(-error.mean(-1) / std**2),
+        core_clip_scale,
+        supplemental_clip_scale,
+    )
 
 
 def motion_global_body_linear_velocity_error_exp(
-    env: ManagerBasedRLEnv, command_name: str, std: float, body_names: list[str] | None = None
+    env: ManagerBasedRLEnv,
+    command_name: str,
+    std: float,
+    body_names: list[str] | None = None,
+    core_clip_scale: float = 1.0,
+    supplemental_clip_scale: float = 1.0,
 ) -> torch.Tensor:
     command: MotionCommand = env.command_manager.get_term(command_name)
     idx = _get_body_indexes(command, body_names)
     error = torch.sum(
         torch.square(command.body_lin_vel_w[:, idx] - command.robot_body_lin_vel_w[:, idx]), dim=-1
     )
-    return torch.exp(-error.mean(-1) / std**2)
+    return _clip_scale(
+        command,
+        torch.exp(-error.mean(-1) / std**2),
+        core_clip_scale,
+        supplemental_clip_scale,
+    )
 
 
 def motion_global_body_angular_velocity_error_exp(
-    env: ManagerBasedRLEnv, command_name: str, std: float, body_names: list[str] | None = None
+    env: ManagerBasedRLEnv,
+    command_name: str,
+    std: float,
+    body_names: list[str] | None = None,
+    core_clip_scale: float = 1.0,
+    supplemental_clip_scale: float = 1.0,
 ) -> torch.Tensor:
     command: MotionCommand = env.command_manager.get_term(command_name)
     idx = _get_body_indexes(command, body_names)
     error = torch.sum(
         torch.square(command.body_ang_vel_w[:, idx] - command.robot_body_ang_vel_w[:, idx]), dim=-1
     )
-    return torch.exp(-error.mean(-1) / std**2)
+    return _clip_scale(
+        command,
+        torch.exp(-error.mean(-1) / std**2),
+        core_clip_scale,
+        supplemental_clip_scale,
+    )
 
 
 def motion_relative_body_orientation_error_exp(
-    env: ManagerBasedRLEnv, command_name: str, std: float, body_names: list[str] | None = None
+    env: ManagerBasedRLEnv,
+    command_name: str,
+    std: float,
+    body_names: list[str] | None = None,
+    core_clip_scale: float = 1.0,
+    supplemental_clip_scale: float = 1.0,
 ) -> torch.Tensor:
     command: MotionCommand = env.command_manager.get_term(command_name)
     idx = _get_body_indexes(command, body_names)
     error = (
         quat_error_magnitude(command.body_quat_relative_w[:, idx], command.robot_body_quat_w[:, idx]) ** 2
     )
-    return torch.exp(-error.mean(-1) / std**2)
+    return _clip_scale(
+        command,
+        torch.exp(-error.mean(-1) / std**2),
+        core_clip_scale,
+        supplemental_clip_scale,
+    )

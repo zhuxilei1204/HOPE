@@ -122,6 +122,30 @@ class MotionCommand(CommandTerm):
         self.body_indexes = torch.tensor(
             self.robot.find_bodies(self.cfg.body_names, preserve_order=True)[0], dtype=torch.long, device=self.device
         )
+        body_groups = {
+            "lower": [
+                idx
+                for idx, name in enumerate(self.cfg.body_names)
+                if any(token in name.lower() for token in ("hip", "knee", "ankle"))
+            ],
+            "core": [
+                idx
+                for idx, name in enumerate(self.cfg.body_names)
+                if any(token in name.lower() for token in ("pelvis", "torso"))
+            ],
+        }
+        claimed = set(body_groups["lower"]) | set(body_groups["core"])
+        body_groups["upper"] = [idx for idx in range(len(self.cfg.body_names)) if idx not in claimed]
+        self._diagnostic_body_groups = {
+            name: torch.tensor(indices, dtype=torch.long, device=self.device)
+            for name, indices in body_groups.items()
+            if indices
+        }
+        self._diagnostic_joint_groups = {
+            "waist": torch.arange(0, 3, dtype=torch.long, device=self.device),
+            "arms": torch.arange(5, 19, dtype=torch.long, device=self.device),
+            "legs": torch.arange(19, 31, dtype=torch.long, device=self.device),
+        }
 
         self.motion = MotionLoader(self.cfg.motion_file, len(self.cfg.body_names), device=self.device)
         if self.motion.joint_pos.shape[1] != len(self.canonical_joint_names):
@@ -133,6 +157,21 @@ class MotionCommand(CommandTerm):
             raise ValueError(
                 f"motion joint_vel has {self.motion.joint_vel.shape[1]} columns but canonical order has "
                 f"{len(self.canonical_joint_names)}"
+            )
+        self._clip_sampling_weights = None
+        if self.cfg.clip_sampling_weights:
+            if len(self.cfg.clip_sampling_weights) != self.motion.num_segments:
+                raise ValueError(
+                    "clip_sampling_weights length must match the number of motion clips: "
+                    f"{len(self.cfg.clip_sampling_weights)} != {self.motion.num_segments}"
+                )
+            weights = torch.tensor(self.cfg.clip_sampling_weights, dtype=torch.float32, device=self.device)
+            if bool(torch.any(weights < 0.0)) or float(weights.sum().item()) <= 0.0:
+                raise ValueError("clip_sampling_weights must be non-negative and contain a positive weight")
+            self._clip_sampling_weights = weights / weights.sum()
+        if not 0 <= int(self.cfg.core_clip_count) <= self.motion.num_segments:
+            raise ValueError(
+                f"core_clip_count must be in [0, {self.motion.num_segments}], got {self.cfg.core_clip_count}"
             )
 
         self.time_steps = torch.zeros(self.num_envs, dtype=torch.long, device=self.device)
@@ -156,8 +195,33 @@ class MotionCommand(CommandTerm):
 
         # A small set of logging metrics (the training runner logs success_rate only, but the base
         # CommandTerm expects this dict to exist and be populated each step).
-        for key in ("error_joint_pos", "error_body_pos", "error_body_rot", "motion_phase", "in_hold"):
+        self.motion_start_reset = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
+        for key in (
+            "error_joint_pos",
+            "error_joint_vel",
+            "error_body_pos",
+            "error_body_rot",
+            "motion_phase",
+            "in_hold",
+            "motion_start_warmup_prob",
+            "motion_start_reset",
+            "motion_clip_id",
+            "motion_supplemental_clip",
+        ):
             self.metrics[key] = torch.zeros(self.num_envs, device=self.device)
+        for group_name in self._diagnostic_body_groups:
+            for prefix in (
+                "error_body_pos",
+                "error_body_rot",
+                "error_body_lin_vel",
+                "error_body_ang_vel",
+                "reference_body_lin_speed",
+                "robot_body_lin_speed",
+            ):
+                self.metrics[f"{prefix}_{group_name}"] = torch.zeros(self.num_envs, device=self.device)
+        for group_name in self._diagnostic_joint_groups:
+            for prefix in ("error_joint_pos", "error_joint_vel", "reference_joint_speed"):
+                self.metrics[f"{prefix}_{group_name}"] = torch.zeros(self.num_envs, device=self.device)
 
     # --- reference (target) state, hold-aware ------------------------------------------------- #
     @property
@@ -243,12 +307,50 @@ class MotionCommand(CommandTerm):
 
     def _update_metrics(self):
         self.metrics["error_joint_pos"] = torch.norm(self.joint_pos - self.robot_joint_pos, dim=-1)
+        self.metrics["error_joint_vel"] = torch.norm(self.joint_vel - self.robot_joint_vel, dim=-1)
         self.metrics["error_body_pos"] = torch.norm(
             self.body_pos_relative_w - self.robot_body_pos_w, dim=-1
         ).mean(dim=-1)
         self.metrics["error_body_rot"] = quat_error_magnitude(
             self.body_quat_relative_w, self.robot_body_quat_w
         ).mean(dim=-1)
+        for group_name, indices in self._diagnostic_body_groups.items():
+            ref_pos = self.body_pos_relative_w[:, indices]
+            robot_pos = self.robot_body_pos_w[:, indices]
+            ref_quat = self.body_quat_relative_w[:, indices]
+            robot_quat = self.robot_body_quat_w[:, indices]
+            ref_lin = self.body_lin_vel_w[:, indices]
+            robot_lin = self.robot_body_lin_vel_w[:, indices]
+            ref_ang = self.body_ang_vel_w[:, indices]
+            robot_ang = self.robot_body_ang_vel_w[:, indices]
+            self.metrics[f"error_body_pos_{group_name}"] = torch.norm(
+                ref_pos - robot_pos, dim=-1
+            ).mean(dim=-1)
+            self.metrics[f"error_body_rot_{group_name}"] = quat_error_magnitude(
+                ref_quat, robot_quat
+            ).mean(dim=-1)
+            self.metrics[f"error_body_lin_vel_{group_name}"] = torch.norm(
+                ref_lin - robot_lin, dim=-1
+            ).mean(dim=-1)
+            self.metrics[f"error_body_ang_vel_{group_name}"] = torch.norm(
+                ref_ang - robot_ang, dim=-1
+            ).mean(dim=-1)
+            self.metrics[f"reference_body_lin_speed_{group_name}"] = torch.norm(
+                ref_lin, dim=-1
+            ).mean(dim=-1)
+            self.metrics[f"robot_body_lin_speed_{group_name}"] = torch.norm(
+                robot_lin, dim=-1
+            ).mean(dim=-1)
+        for group_name, indices in self._diagnostic_joint_groups.items():
+            self.metrics[f"error_joint_pos_{group_name}"] = torch.norm(
+                self.joint_pos[:, indices] - self.robot_joint_pos[:, indices], dim=-1
+            )
+            self.metrics[f"error_joint_vel_{group_name}"] = torch.norm(
+                self.joint_vel[:, indices] - self.robot_joint_vel[:, indices], dim=-1
+            )
+            self.metrics[f"reference_joint_speed_{group_name}"] = torch.sqrt(
+                torch.mean(torch.square(self.joint_vel[:, indices]), dim=-1)
+            )
         self.metrics["in_hold"] = self.in_hold.float()
         if self._multiseg:
             seg_start = self.motion.seg_start[self.clip_id]
@@ -256,12 +358,25 @@ class MotionCommand(CommandTerm):
             self.metrics["motion_phase"] = (self.time_steps - seg_start).float() / (seg_len - 1).float()
         else:
             self.metrics["motion_phase"] = self.time_steps.float() / max(self.motion.time_step_total - 1, 1)
+        self.metrics["motion_start_warmup_prob"] = torch.full_like(
+            self.metrics["motion_start_warmup_prob"], self._motion_start_warmup_prob()
+        )
+        self.metrics["motion_start_reset"] = self.motion_start_reset.float()
+        self.metrics["motion_clip_id"] = self.clip_id.float()
+        core_count = int(self.cfg.core_clip_count)
+        if core_count > 0:
+            self.metrics["motion_supplemental_clip"] = (self.clip_id >= core_count).float()
+        else:
+            self.metrics["motion_supplemental_clip"].zero_()
 
     def _sample_clip_and_start(self, env_ids: torch.Tensor, at_segment_start: bool):
-        """Pick a clip per env (uniform; covers all forehand/backhand transitions) and a start frame."""
+        """Pick a clip per env and a start frame, optionally using configured clip probabilities."""
         n = len(env_ids)
         if self._multiseg:
-            new_clip = torch.randint(0, self.motion.num_segments, (n,), device=self.device)
+            if self._clip_sampling_weights is None:
+                new_clip = torch.randint(0, self.motion.num_segments, (n,), device=self.device)
+            else:
+                new_clip = torch.multinomial(self._clip_sampling_weights, n, replacement=True)
         else:
             new_clip = torch.zeros(n, dtype=torch.long, device=self.device)
         self.clip_id[env_ids] = new_clip
@@ -274,11 +389,87 @@ class MotionCommand(CommandTerm):
             frac = sample_uniform(0.0, 1.0, (n,), device=self.device)
             self.time_steps[env_ids] = seg_start + (frac * (seg_len - 1).float()).long()
 
+    @staticmethod
+    def _linear_progress(value: float, lo: float, hi: float) -> float:
+        if hi <= lo:
+            return 1.0 if value >= hi else 0.0
+        return min(max((value - lo) / (hi - lo), 0.0), 1.0)
+
+    def _motion_start_warmup_prob(self) -> float:
+        """Return the current true-reset probability for starting from a clip's first frame."""
+        if not bool(self.cfg.motion_start_warmup_enabled):
+            return 0.0
+        start_prob = min(max(float(self.cfg.motion_start_warmup_start_prob), 0.0), 1.0)
+        min_prob = min(max(float(self.cfg.motion_start_warmup_min_prob), 0.0), start_prob)
+
+        contact = 0.0
+        recovery = 0.0
+        try:
+            command = self._env.command_manager.get_term(str(self.cfg.motion_start_warmup_command_name))
+            contact_t = getattr(command, "_ability_contact_ema", None)
+            recovery_t = getattr(command, "_ability_recovery_ema", None)
+            if contact_t is not None:
+                contact = float(contact_t.item())
+            if recovery_t is not None:
+                recovery = float(recovery_t.item())
+        except Exception:
+            return start_prob
+
+        contact_progress = self._linear_progress(
+            contact,
+            float(self.cfg.motion_start_warmup_contact_low),
+            float(self.cfg.motion_start_warmup_contact_high),
+        )
+        recovery_progress = self._linear_progress(
+            recovery,
+            float(self.cfg.motion_start_warmup_recovery_low),
+            float(self.cfg.motion_start_warmup_recovery_high),
+        )
+        progress = min(contact_progress, recovery_progress)
+        return min_prob + (start_prob - min_prob) * (1.0 - progress)
+
+    def _write_motion_state_to_sim(self, env_ids: torch.Tensor, randomize: bool) -> None:
+        root_pos = self.body_pos_w[:, 0].clone()
+        root_ori = self.body_quat_w[:, 0].clone()
+        root_lin_vel = self.body_lin_vel_w[:, 0].clone()
+        root_ang_vel = self.body_ang_vel_w[:, 0].clone()
+
+        if randomize:
+            range_list = [self.cfg.pose_range.get(k, (0.0, 0.0)) for k in ("x", "y", "z", "roll", "pitch", "yaw")]
+            ranges = torch.tensor(range_list, device=self.device)
+            rand = sample_uniform(ranges[:, 0], ranges[:, 1], (len(env_ids), 6), device=self.device)
+            root_pos[env_ids] += rand[:, 0:3]
+            root_ori[env_ids] = quat_mul(quat_from_euler_xyz(rand[:, 3], rand[:, 4], rand[:, 5]), root_ori[env_ids])
+
+            range_list = [self.cfg.velocity_range.get(k, (0.0, 0.0)) for k in ("x", "y", "z", "roll", "pitch", "yaw")]
+            ranges = torch.tensor(range_list, device=self.device)
+            rand = sample_uniform(ranges[:, 0], ranges[:, 1], (len(env_ids), 6), device=self.device)
+            root_lin_vel[env_ids] += rand[:, :3]
+            root_ang_vel[env_ids] += rand[:, 3:]
+
+        joint_pos = self.joint_pos.clone()
+        joint_vel = self.joint_vel.clone()
+        if randomize:
+            joint_pos += sample_uniform(*self.cfg.joint_position_range, joint_pos.shape, joint_pos.device)
+        limits = self.robot.data.soft_joint_pos_limits.index_select(1, self._canonical_joint_ids_tensor)[env_ids]
+        joint_pos[env_ids] = torch.clip(joint_pos[env_ids], limits[:, :, 0], limits[:, :, 1])
+        self.robot.write_joint_state_to_sim(
+            joint_pos[env_ids],
+            joint_vel[env_ids],
+            joint_ids=self.canonical_joint_ids,
+            env_ids=env_ids,
+        )
+        self.robot.write_root_state_to_sim(
+            torch.cat([root_pos[env_ids], root_ori[env_ids], root_lin_vel[env_ids], root_ang_vel[env_ids]], dim=-1),
+            env_ids=env_ids,
+        )
+
     def _resample_command(self, env_ids: Sequence[int]):
         if len(env_ids) == 0:
             return
         env_ids = torch.as_tensor(env_ids, dtype=torch.long, device=self.device)
         self.steps_since_resample[env_ids] = 0
+        self.motion_start_reset[env_ids] = False
 
         # Pre-swing hold (freeze the reference at the swing's first frame for U[lo, hi] control steps).
         lo, hi = self.cfg.hold_steps_range
@@ -288,6 +479,34 @@ class MotionCommand(CommandTerm):
         # teleport — the policy physically carries its body between swings (deploy case).
         if self._resampling_from_wrap and not self.cfg.wrap_teleport:
             self._sample_clip_and_start(env_ids, at_segment_start=True)
+            return
+
+        if bool(self.cfg.motion_start_warmup_enabled):
+            prob = self._motion_start_warmup_prob()
+            motion_start_mask = torch.rand(len(env_ids), device=self.device) < prob
+            motion_start_ids = env_ids[motion_start_mask]
+            stand_ids = env_ids[~motion_start_mask]
+
+            if len(stand_ids) > 0:
+                self._sample_clip_and_start(stand_ids, at_segment_start=True)
+                default_root = self.robot.data.default_root_state[stand_ids].clone()
+                default_root[:, :3] += self._env.scene.env_origins[stand_ids]
+                default_root[:, 7:] = 0.0
+                self.robot.write_root_state_to_sim(default_root, env_ids=stand_ids)
+                self.robot.write_joint_state_to_sim(
+                    self.robot.data.default_joint_pos[stand_ids],
+                    torch.zeros_like(self.robot.data.default_joint_vel[stand_ids]),
+                    env_ids=stand_ids,
+                )
+                self.hold_counter[stand_ids] = torch.clamp(
+                    self.hold_counter[stand_ids], min=int(self.cfg.stand_start_min_hold)
+                )
+
+            if len(motion_start_ids) > 0:
+                self._sample_clip_and_start(motion_start_ids, at_segment_start=True)
+                self.hold_counter[motion_start_ids] = 0
+                self.motion_start_reset[motion_start_ids] = True
+                self._write_motion_state_to_sim(motion_start_ids, randomize=False)
             return
 
         # TRUE episode reset: DEFAULT STAND (deploy entry) or reference-state-init (RSI) onto the clip.
@@ -321,41 +540,7 @@ class MotionCommand(CommandTerm):
         # when the reference sits at a swing's first frame (stand starts and wraps), so RSI resets
         # advance the clock immediately.
         self.hold_counter[rsi_ids] = 0
-
-        root_pos = self.body_pos_w[:, 0].clone()
-        root_ori = self.body_quat_w[:, 0].clone()
-        root_lin_vel = self.body_lin_vel_w[:, 0].clone()
-        root_ang_vel = self.body_ang_vel_w[:, 0].clone()
-
-        range_list = [self.cfg.pose_range.get(k, (0.0, 0.0)) for k in ("x", "y", "z", "roll", "pitch", "yaw")]
-        ranges = torch.tensor(range_list, device=self.device)
-        rand = sample_uniform(ranges[:, 0], ranges[:, 1], (len(rsi_ids), 6), device=self.device)
-        root_pos[rsi_ids] += rand[:, 0:3]
-        root_ori[rsi_ids] = quat_mul(quat_from_euler_xyz(rand[:, 3], rand[:, 4], rand[:, 5]), root_ori[rsi_ids])
-
-        range_list = [self.cfg.velocity_range.get(k, (0.0, 0.0)) for k in ("x", "y", "z", "roll", "pitch", "yaw")]
-        ranges = torch.tensor(range_list, device=self.device)
-        rand = sample_uniform(ranges[:, 0], ranges[:, 1], (len(rsi_ids), 6), device=self.device)
-        root_lin_vel[rsi_ids] += rand[:, :3]
-        root_ang_vel[rsi_ids] += rand[:, 3:]
-
-        joint_pos = self.joint_pos.clone()
-        joint_vel = self.joint_vel.clone()
-        joint_pos += sample_uniform(*self.cfg.joint_position_range, joint_pos.shape, joint_pos.device)
-        limits = self.robot.data.soft_joint_pos_limits.index_select(1, self._canonical_joint_ids_tensor)[rsi_ids]
-        joint_pos[rsi_ids] = torch.clip(joint_pos[rsi_ids], limits[:, :, 0], limits[:, :, 1])
-        self.robot.write_joint_state_to_sim(
-            joint_pos[rsi_ids],
-            joint_vel[rsi_ids],
-            joint_ids=self.canonical_joint_ids,
-            env_ids=rsi_ids,
-        )
-        self.robot.write_root_state_to_sim(
-            torch.cat(
-                [root_pos[rsi_ids], root_ori[rsi_ids], root_lin_vel[rsi_ids], root_ang_vel[rsi_ids]], dim=-1
-            ),
-            env_ids=rsi_ids,
-        )
+        self._write_motion_state_to_sim(rsi_ids, randomize=True)
 
     def _update_command(self):
         held = self.in_hold
@@ -434,8 +619,25 @@ class MotionCommandCfg(CommandTermCfg):
     stand_start_prob: float = 0.25
     stand_start_min_hold: int = 25
 
+    # Scratch-training reset curriculum. When enabled, true episode resets use only two modes:
+    # DEFAULT STAND and MOTION FIRST FRAME. The motion-start probability fades out from measured
+    # contact/recovery ability, so the final reset distribution returns to deploy-style default ready.
+    motion_start_warmup_enabled: bool = False
+    motion_start_warmup_command_name: str = "racket_target"
+    motion_start_warmup_start_prob: float = 0.0
+    motion_start_warmup_min_prob: float = 0.0
+    motion_start_warmup_contact_low: float = 0.03
+    motion_start_warmup_contact_high: float = 0.35
+    motion_start_warmup_recovery_low: float = 0.60
+    motion_start_warmup_recovery_high: float = 0.78
+
     # Pre-swing hold: freeze the reference at the swing's first frame for U[lo, hi] control steps.
     hold_steps_range: tuple[int, int] = (0, 0)
+
+    # Optional per-clip sampling probabilities. Empty preserves uniform sampling. ``core_clip_count``
+    # only labels clips for diagnostics; clips at indices >= this value are reported as supplemental.
+    clip_sampling_weights: tuple[float, ...] = ()
+    core_clip_count: int = 0
 
     # Teleport the robot onto the new clip frame at intra-episode wraps. MUST be False for the
     # continuous-rally lifecycle (the policy physically transitions swing -> swing).

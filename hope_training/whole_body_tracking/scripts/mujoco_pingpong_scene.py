@@ -47,9 +47,40 @@ to the approximation.
 from __future__ import annotations
 
 import math
+import pathlib
 from dataclasses import dataclass, field
 
 import numpy as np
+import yaml
+
+
+def _load_shared_table_origin_world() -> np.ndarray:
+    """Return the table-frame origin expressed in the robot-centred simulator world."""
+    here = pathlib.Path(__file__).resolve()
+    for parent in here.parents:
+        path = parent / "configs" / "table_frame.yaml"
+        if path.is_file():
+            with path.open("r", encoding="utf-8") as fh:
+                doc = yaml.safe_load(fh) or {}
+            translation = np.asarray(
+                doc["simulation"]["table_to_world_translation_xyz"], dtype=np.float64
+            ).reshape(-1)
+            quaternion = np.asarray(
+                doc["simulation"]["table_to_world_quaternion_wxyz"], dtype=np.float64
+            ).reshape(-1)
+            if translation.shape != (3,):
+                raise ValueError(f"{path}: table translation must have three values")
+            if quaternion.shape != (4,) or not np.allclose(
+                quaternion, [1.0, 0.0, 0.0, 0.0], atol=1.0e-9
+            ):
+                raise ValueError(
+                    f"{path}: MuJoCo scene currently requires an identity table-frame rotation"
+                )
+            return translation
+    raise FileNotFoundError("configs/table_frame.yaml not found from MuJoCo scene")
+
+
+SHARED_TABLE_ORIGIN_WORLD = _load_shared_table_origin_world()
 
 # Physics substep applied-drag uses the ball's world-frame linear velocity. For a
 # MuJoCo free joint the first three qvel entries are exactly that world velocity.
@@ -102,6 +133,7 @@ class RobotObsState:
     base_ang_vel_b: np.ndarray
     q: np.ndarray
     qd: np.ndarray
+    stability_feedback: np.ndarray | None = None
 
 
 class PingPongRealPhysicsScene:
@@ -113,7 +145,7 @@ class PingPongRealPhysicsScene:
         ball_cfg: dict,
         joint_names,
         control_dt: float = 0.02,
-        near_edge_x: float = 0.30,
+        near_edge_x: float | None = None,
         launch_viewer: bool = False,
     ) -> None:
         import mujoco  # lazy import so the module imports without MuJoCo present
@@ -143,11 +175,13 @@ class PingPongRealPhysicsScene:
         self.velocity_clip = float(drag.get("velocity_clip", 50.0))
         self.gravity = g
 
-        self.near_edge_x = float(near_edge_x)
+        self.offset = SHARED_TABLE_ORIGIN_WORLD.copy()
+        if near_edge_x is not None:
+            self.offset[0] = float(near_edge_x)
+        self.near_edge_x = float(self.offset[0])
+        self.table_surface_z = float(self.offset[2])
+        self.table_center_y = float(self.offset[1] - self.width / 2.0)
         # mujoco_world -> table_frame is a pure translation by this offset.
-        self.offset = np.array(
-            [self.near_edge_x, self.width / 2.0, self.table_height], dtype=np.float64
-        )
         self.net_x_mujoco = self.near_edge_x + self.net_x_table
 
         # --- build the combined model via the MuJoCo spec API -------------------
@@ -160,10 +194,31 @@ class PingPongRealPhysicsScene:
         self._ball_qadr = int(m.jnt_qposadr[self._joint_id("ball_free_joint")])
         self._ball_vadr = int(m.jnt_dofadr[self._joint_id("ball_free_joint")])
         self._ball_bid = self._body_id("ball")
+        self._pelvis_bid = self._body_id("pelvis_link")
+        self._torso_bid = self._body_id("torso_Link")
+        self._right_shoulder_bid = self._body_id("right_shoulder_roll_Link")
+        self._left_foot_bid = self._body_id("left_ankle_roll_Link")
+        self._right_foot_bid = self._body_id("right_ankle_roll_Link")
         self._racket_sid = self._site_id("right_racket")
         self._ball_gid = self._geom_id("ball_geom")
         self._racket_gid = self._geom_id("right_racket_collision")
+        self._floor_gid = self._geom_id("floor")
         self._gyro_adr = self._sensor_adr("pelvis_imu_gyro")
+        excluded_bodies = {
+            self._ball_bid,
+            self._body_id("table_top"),
+            self._body_id("net_body"),
+        }
+        self._robot_mass_body_ids = np.array(
+            [
+                body_id
+                for body_id in range(1, m.nbody)
+                if body_id not in excluded_bodies and float(m.body_mass[body_id]) > 0.0
+            ],
+            dtype=np.int32,
+        )
+        self._left_foot_descendants = self._body_descendants(self._left_foot_bid)
+        self._right_foot_descendants = self._body_descendants(self._right_foot_bid)
 
         # Controlled-joint qpos/qvel addresses + driving actuator indices.
         self._q_adr = np.zeros(self.num_joints, dtype=int)
@@ -205,25 +260,28 @@ class PingPongRealPhysicsScene:
         BALL_CT, BALL_CA = 8, 15   # ball
         SURF_CT, SURF_CA = 8, 8    # table + net (share the ball's bit only)
 
-        x0, w, h, th = self.near_edge_x, self.width, self.table_height, self.table_thickness
+        x0, w, h, th = self.near_edge_x, self.width, self.table_surface_z, self.table_thickness
+        center_y = self.table_center_y
         L = self.length
 
         # Table top slab: top face at table_height (z=0 in the table frame).
-        tb = wb.add_body(name="table_top", pos=[x0 + L / 2.0, 0.0, h - th / 2.0])
+        tb = wb.add_body(name="table_top", pos=[x0 + L / 2.0, center_y, h - th / 2.0])
         tb.add_geom(
             name="table_geom", type=mujoco.mjtGeom.mjGEOM_BOX,
             size=[L / 2.0, w / 2.0, th / 2.0], contype=SURF_CT, conaffinity=SURF_CA,
             rgba=[0.10, 0.35, 0.55, 1.0],
         )
         # Net slab at the net plane, spanning the table width + overhang each side.
-        nb = wb.add_body(name="net_body", pos=[self.net_x_mujoco, 0.0, h + self.net_height / 2.0])
+        nb = wb.add_body(
+            name="net_body", pos=[self.net_x_mujoco, center_y, h + self.net_height / 2.0]
+        )
         nb.add_geom(
             name="net_geom", type=mujoco.mjtGeom.mjGEOM_BOX,
             size=[self.net_thickness / 2.0, w / 2.0 + self.net_overhang, self.net_height / 2.0],
             contype=SURF_CT, conaffinity=SURF_CA, rgba=[0.9, 0.9, 0.9, 0.35],
         )
         # Dynamic ball (free joint).
-        bb = wb.add_body(name="ball", pos=[x0 + L / 2.0, 0.0, h + 0.5])
+        bb = wb.add_body(name="ball", pos=[x0 + L / 2.0, center_y, h + 0.5])
         bb.add_freejoint(name="ball_free_joint")
         bb.add_geom(
             name="ball_geom", type=mujoco.mjtGeom.mjGEOM_SPHERE,
@@ -257,7 +315,7 @@ class PingPongRealPhysicsScene:
         if spec.keys:
             key = spec.keys[0]
             key.qpos = list(np.array(key.qpos, dtype=np.float64)) + [
-                x0 + L / 2.0, 0.0, h + 0.5, 1.0, 0.0, 0.0, 0.0
+                x0 + L / 2.0, center_y, h + 0.5, 1.0, 0.0, 0.0, 0.0
             ]
 
         self.model = spec.compile()
@@ -288,6 +346,63 @@ class PingPongRealPhysicsScene:
         sid = self._mj.mj_name2id(self.model, self._mj.mjtObj.mjOBJ_SENSOR, name)
         return int(self.model.sensor_adr[sid]) if sid >= 0 else -1
 
+    def _body_descendants(self, root_body_id: int) -> set[int]:
+        descendants = {int(root_body_id)}
+        for body_id in range(1, self.model.nbody):
+            parent = int(body_id)
+            while parent > 0:
+                if parent == root_body_id:
+                    descendants.add(int(body_id))
+                    break
+                parent = int(self.model.body_parentid[parent])
+        return descendants
+
+    @staticmethod
+    def _matrix_to_rpy_deg(xmat: np.ndarray) -> np.ndarray:
+        rot = np.asarray(xmat, dtype=np.float64).reshape(3, 3)
+        pitch = math.asin(float(np.clip(-rot[2, 0], -1.0, 1.0)))
+        roll = math.atan2(float(rot[2, 1]), float(rot[2, 2]))
+        yaw = math.atan2(float(rot[1, 0]), float(rot[0, 0]))
+        return np.rad2deg([roll, pitch, yaw])
+
+    @staticmethod
+    def _convex_hull_xy(points: np.ndarray) -> np.ndarray:
+        unique = sorted({(float(p[0]), float(p[1])) for p in np.asarray(points)})
+        if len(unique) <= 1:
+            return np.asarray(unique, dtype=np.float64)
+
+        def cross(o, a, b):
+            return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+
+        lower = []
+        for point in unique:
+            while len(lower) >= 2 and cross(lower[-2], lower[-1], point) <= 0.0:
+                lower.pop()
+            lower.append(point)
+        upper = []
+        for point in reversed(unique):
+            while len(upper) >= 2 and cross(upper[-2], upper[-1], point) <= 0.0:
+                upper.pop()
+            upper.append(point)
+        return np.asarray(lower[:-1] + upper[:-1], dtype=np.float64)
+
+    @staticmethod
+    def _signed_polygon_margin(point_xy: np.ndarray, polygon_xy: np.ndarray) -> float:
+        point = np.asarray(point_xy, dtype=np.float64)
+        polygon = np.asarray(polygon_xy, dtype=np.float64)
+        if polygon.shape[0] < 3:
+            return float("nan")
+        margins = []
+        for idx in range(polygon.shape[0]):
+            p0 = polygon[idx]
+            p1 = polygon[(idx + 1) % polygon.shape[0]]
+            edge = p1 - p0
+            edge_norm = float(np.linalg.norm(edge))
+            if edge_norm < 1.0e-12:
+                continue
+            margins.append(float(np.cross(edge, point - p0) / edge_norm))
+        return min(margins) if margins else float("nan")
+
     # -- frame transform --------------------------------------------------------
     def to_table(self, pos_w) -> np.ndarray:
         """MuJoCo world position -> table-frame position (pure translation)."""
@@ -303,7 +418,11 @@ class PingPongRealPhysicsScene:
             self._mj.mj_resetData(m, d)
         d.xfrc_applied[:] = 0.0
         # Park the ball out of play until a serve is set.
-        d.qpos[self._ball_qadr:self._ball_qadr + 3] = [self.near_edge_x + self.length / 2.0, 0.0, self.table_height + 1.0]
+        d.qpos[self._ball_qadr:self._ball_qadr + 3] = [
+            self.near_edge_x + self.length / 2.0,
+            self.table_center_y,
+            self.table_surface_z + 1.0,
+        ]
         d.qpos[self._ball_qadr + 3:self._ball_qadr + 7] = [1.0, 0.0, 0.0, 0.0]
         d.qvel[self._ball_vadr:self._ball_vadr + 6] = 0.0
         self._mj.mj_forward(m, d)
@@ -326,13 +445,120 @@ class PingPongRealPhysicsScene:
             base_ang_vel = d.sensordata[self._gyro_adr:self._gyro_adr + 3].copy()
         else:
             base_ang_vel = d.qvel[self._base_vadr + 3:self._base_vadr + 6].copy()
+        balance = self.robot_balance_diagnostics()
+        pelvis_rot = np.asarray(balance["pelvis_xmat_w"], dtype=np.float64)
+        base_lin_vel_b = pelvis_rot.T @ np.asarray(
+            balance["pelvis_lin_vel_w"], dtype=np.float64
+        )
+        torso_rot = d.xmat[self._torso_bid].reshape(3, 3)
+        torso_gravity_b = torso_rot.T @ np.array([0.0, 0.0, -1.0], dtype=np.float64)
+        support_xy = 0.5 * (
+            d.xpos[self._left_foot_bid, :2] + d.xpos[self._right_foot_bid, :2]
+        )
+        com_delta = np.asarray(balance["com_w"], dtype=np.float64)[:2] - support_xy
+        heading = pelvis_rot[:2, 0]
+        heading /= max(float(np.linalg.norm(heading)), 1.0e-9)
+        left = np.array([-heading[1], heading[0]], dtype=np.float64)
+        com_support_b = np.array(
+            [float(np.dot(com_delta, heading)), float(np.dot(com_delta, left))],
+            dtype=np.float64,
+        )
+        stability_feedback = np.concatenate(
+            (
+                base_lin_vel_b[:2],
+                torso_gravity_b[:2],
+                com_support_b,
+                np.array(
+                    [
+                        balance["left_foot_contact"],
+                        balance["right_foot_contact"],
+                    ],
+                    dtype=np.float64,
+                ),
+            )
+        )
         return RobotObsState(
             base_pos_w=base_pos,
             base_quat_w=base_quat,
             base_ang_vel_b=base_ang_vel,
             q=d.qpos[self._q_adr].copy(),
             qd=d.qvel[self._v_adr].copy(),
+            stability_feedback=stability_feedback,
         )
+
+    def robot_balance_diagnostics(self) -> dict[str, float | np.ndarray]:
+        """Return read-only whole-body balance diagnostics in the MuJoCo world frame."""
+        m, d = self.model, self.data
+        masses = m.body_mass[self._robot_mass_body_ids]
+        mass_sum = float(np.sum(masses))
+        if mass_sum > 0.0:
+            com_w = np.sum(d.xipos[self._robot_mass_body_ids] * masses[:, None], axis=0) / mass_sum
+        else:
+            com_w = np.full(3, np.nan, dtype=np.float64)
+
+        def body_velocity(body_id: int) -> tuple[np.ndarray, np.ndarray]:
+            velocity = np.zeros(6, dtype=np.float64)
+            self._mj.mj_objectVelocity(
+                m, d, self._mj.mjtObj.mjOBJ_BODY, int(body_id), velocity, 0
+            )
+            return velocity[:3].copy(), velocity[3:].copy()
+
+        pelvis_ang_w, pelvis_lin_w = body_velocity(self._pelvis_bid)
+        _, left_foot_lin_w = body_velocity(self._left_foot_bid)
+        _, right_foot_lin_w = body_velocity(self._right_foot_bid)
+
+        left_contact = False
+        right_contact = False
+        for contact_idx in range(d.ncon):
+            contact = d.contact[contact_idx]
+            if int(contact.geom1) == self._floor_gid:
+                other_geom = int(contact.geom2)
+            elif int(contact.geom2) == self._floor_gid:
+                other_geom = int(contact.geom1)
+            else:
+                continue
+            other_body = int(m.geom_bodyid[other_geom])
+            left_contact |= other_body in self._left_foot_descendants
+            right_contact |= other_body in self._right_foot_descendants
+
+        support_corners = []
+        # Fixed diagnostic footprint dimensions. They are deliberately conservative
+        # and are used only to compare policies under the same MuJoCo model.
+        foot_half_length = 0.105
+        foot_half_width = 0.050
+        for body_id, in_contact in (
+            (self._left_foot_bid, left_contact),
+            (self._right_foot_bid, right_contact),
+        ):
+            if not in_contact:
+                continue
+            center = d.xpos[body_id, :2]
+            rotation = d.xmat[body_id].reshape(3, 3)
+            axis_x = rotation[:2, 0]
+            axis_y = rotation[:2, 1]
+            for sx, sy in ((-1.0, -1.0), (-1.0, 1.0), (1.0, -1.0), (1.0, 1.0)):
+                support_corners.append(
+                    center + sx * foot_half_length * axis_x + sy * foot_half_width * axis_y
+                )
+        support_hull = self._convex_hull_xy(np.asarray(support_corners, dtype=np.float64))
+        support_margin = self._signed_polygon_margin(com_w[:2], support_hull)
+
+        pelvis_rpy = self._matrix_to_rpy_deg(d.xmat[self._pelvis_bid])
+        torso_rpy = self._matrix_to_rpy_deg(d.xmat[self._torso_bid])
+        return {
+            "com_w": com_w,
+            "support_margin": support_margin,
+            "left_foot_contact": float(left_contact),
+            "right_foot_contact": float(right_contact),
+            "left_foot_speed_xy": float(np.linalg.norm(left_foot_lin_w[:2])),
+            "right_foot_speed_xy": float(np.linalg.norm(right_foot_lin_w[:2])),
+            "pelvis_rpy_deg": pelvis_rpy,
+            "torso_rpy_deg": torso_rpy,
+            "pelvis_xmat_w": d.xmat[self._pelvis_bid].reshape(3, 3).copy(),
+            "pelvis_lin_vel_w": pelvis_lin_w,
+            "pelvis_ang_vel_w": pelvis_ang_w,
+            "right_shoulder_pos_w": d.xpos[self._right_shoulder_bid].copy(),
+        }
 
     def ball_state(self):
         """Return (pos_w, vel_w) of the ball in the MuJoCo world frame."""
@@ -375,6 +601,28 @@ class PingPongRealPhysicsScene:
         self._q_des = np.asarray(q_des, dtype=np.float64).reshape(self.num_joints)
         self._kp = np.asarray(kp, dtype=np.float64).reshape(self.num_joints)
         self._kd = np.asarray(kd, dtype=np.float64).reshape(self.num_joints)
+
+    def joint_control_diagnostics(self) -> dict[str, np.ndarray]:
+        """Return canonical-order PD tracking and torque-limit diagnostics."""
+        d = self.data
+        q = d.qpos[self._q_adr].copy()
+        qd = d.qvel[self._v_adr].copy()
+        torque_requested = self._kp * (self._q_des - q) - self._kd * qd
+        torque_applied = np.where(
+            self._ctrl_limited,
+            np.clip(torque_requested, self._ctrl_lo, self._ctrl_hi),
+            torque_requested,
+        )
+        torque_clipped = np.abs(torque_requested - torque_applied) > 1.0e-9
+        return {
+            "q": q,
+            "qd": qd,
+            "q_des": self._q_des.copy(),
+            "tracking_error": self._q_des - q,
+            "torque_requested": torque_requested,
+            "torque_applied": torque_applied,
+            "torque_clipped": torque_clipped,
+        }
 
     def _apply_pd(self) -> None:
         d = self.data

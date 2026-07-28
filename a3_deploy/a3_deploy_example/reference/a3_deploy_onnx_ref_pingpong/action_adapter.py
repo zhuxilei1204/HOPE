@@ -51,6 +51,21 @@ class ActionAdapter:
         q_des = self.default_q + raw * self.action_scale
         return np.clip(q_des, self.clamp_lower, self.clamp_upper)
 
+    def encode_effective(self, q_des: np.ndarray) -> np.ndarray:
+        """Return the residual action that exactly represents a clamped target.
+
+        This is the inverse of ``decode`` over the configured joint-position
+        clamp. It is useful for diagnostics that need to distinguish the raw
+        policy output from the action that the actuator can actually realize.
+        """
+        target = np.asarray(q_des, dtype=np.float64).reshape(-1)
+        if target.shape[0] != NUM_JOINTS:
+            raise ValueError(f"q_des must be length {NUM_JOINTS}, got {target.shape[0]}")
+        if np.any(self.action_scale == 0.0):
+            raise ValueError("action_scale must be nonzero to encode an effective action")
+        clamped = np.clip(target, self.clamp_lower, self.clamp_upper)
+        return (clamped - self.default_q) / self.action_scale
+
     @classmethod
     def from_yaml(cls, path: str | Path) -> "ActionAdapter":
         with open(path, "r", encoding="utf-8") as fh:

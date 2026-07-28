@@ -1,0 +1,22 @@
+# =============================================================================
+# M25493 safety-first delayed-hit V2.
+#
+# V1 exposed a gap: cycle_v2_ready_fail stayed at zero because unresolved pending
+# cycles could be reset at the next motion resample before a fail event fired.
+# V2 keeps the same policy interface and reward structure, but counts that case
+# as an explicit delayed-hit failure.
+# =============================================================================
+
+defaults:
+  - HOPEPingPongM25493SafetyFirstDelayedHitV1
+  - _self_
+
+name: HOPEPingPongM25493SafetyFirstDelayedHitV2
+
+overrides:
+  commands.racket_target.cycle_v2_fail_unresolved_on_resample: true
+
+  # Slightly increase the delayed binary gate.  Immediate hit rewards remain
+  # low; this branch is testing whether the missing fail event was the loophole.
+  rewards.cycle_v2_ready_success_bonus.weight: 13.0
+  rewards.cycle_v2_ready_fail.weight: -22.0

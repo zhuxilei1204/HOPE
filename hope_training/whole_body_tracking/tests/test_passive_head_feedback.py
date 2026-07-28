@@ -81,8 +81,9 @@ class _OnesPolicy:
         return np.ones(NUM_JOINTS, dtype=np.float32)
 
 
-def _run_ticks(n: int = 3):
+def _run_ticks(n: int = 3, feedback_mode: str = "raw"):
     cfg = RuntimeConfig.load(_RUNTIME_YAML)
+    cfg.last_action_feedback_mode = feedback_mode
     assert cfg.passive_neck, "shipped runtime config must keep the neck passive"
     bridge = _FakeBridge(cfg.action_adapter.default_q)
     policy = _OnesPolicy()
@@ -114,6 +115,23 @@ def test_head_targets_written_at_default():
     cfg, bridge, _policy, _runner = _run_ticks(2)
     for q_des in bridge.written_q_des:
         np.testing.assert_allclose(q_des[_HEAD], cfg.action_adapter.default_q[_HEAD])
+
+
+def test_effective_feedback_represents_the_same_clamped_target():
+    raw_cfg, raw_bridge, _raw_policy, raw_runner = _run_ticks(2, "raw")
+    effective_cfg, effective_bridge, _effective_policy, effective_runner = _run_ticks(
+        2, "effective"
+    )
+    for raw_q_des, effective_q_des in zip(
+        raw_bridge.written_q_des, effective_bridge.written_q_des
+    ):
+        np.testing.assert_allclose(raw_q_des, effective_q_des, rtol=0, atol=0)
+    expected = effective_cfg.action_adapter.encode_effective(
+        effective_bridge.written_q_des[-1]
+    )
+    expected[_HEAD] = 0.0
+    np.testing.assert_allclose(effective_runner.last_action, expected, rtol=0, atol=1.0e-15)
+    assert np.any(np.abs(raw_runner.last_action - effective_runner.last_action) > 1.0e-6)
 
 
 def main() -> int:

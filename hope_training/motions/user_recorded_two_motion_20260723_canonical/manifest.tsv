@@ -1,0 +1,3 @@
+source	output	frames	fps	duration_s	swing_side	strike_phase
+/mnt/ssd/zxl/HOPE_latest_20260721/data/motion_pipeline/user_recorded_two_motion_20260723/old_schema_npz/user_backhand_full_30fps_agibot_a3.npz	/mnt/ssd/zxl/HOPE_latest_20260721/hope_training/motions/user_recorded_two_motion_20260723_canonical/user_backhand_full_30fps_agibot_a3.npz	430	50.0	8.6	-1	0.4988344988344988
+/mnt/ssd/zxl/HOPE_latest_20260721/data/motion_pipeline/user_recorded_two_motion_20260723/old_schema_npz/user_fronthand_full_30fps_agibot_a3.npz	/mnt/ssd/zxl/HOPE_latest_20260721/hope_training/motions/user_recorded_two_motion_20260723_canonical/user_fronthand_full_30fps_agibot_a3.npz	245	50.0	4.9	1	0.5

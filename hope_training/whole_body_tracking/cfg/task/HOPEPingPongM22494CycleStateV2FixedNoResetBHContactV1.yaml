@@ -1,0 +1,49 @@
+# =============================================================================
+# M22494 fixed/no-reset + backhand contact focus.
+#
+# Starts from the validated A fixed/no-reset branch.  This variant targets the
+# current MuJoCo bottleneck where backhand reaches/contact are much worse than
+# forehand, while keeping the no-reset continuous recovery mechanism unchanged.
+# =============================================================================
+
+defaults:
+  - HOPEPingPongM22494CycleStateV2FixedNoReset
+  - _self_
+
+name: HOPEPingPongM22494CycleStateV2FixedNoResetBHContactV1
+
+overrides:
+  # Do not let forehand alone unlock full task difficulty.  The backhand contact
+  # EMA must also be healthy before the ability curriculum advances.
+  commands.racket_target.ability_curriculum_require_side_contact: true
+  commands.racket_target.ability_curriculum_forehand_contact_threshold: 0.56
+  commands.racket_target.ability_curriculum_backhand_contact_threshold: 0.46
+  commands.racket_target.ability_curriculum_start_racket_pos_scale: [0.90, 0.85, 0.96]
+  commands.racket_target.ability_curriculum_start_ball_scale: 0.88
+  commands.racket_target.ability_curriculum_start_planner_perturb_scale: 0.65
+  commands.racket_target.ability_curriculum_advance_rate: 0.006
+  commands.racket_target.ability_curriculum_regress_rate: 0.012
+
+  # Backhand-only reach/contact shaping.  These are small relative to the global
+  # hit objective and do not reduce the recovery rewards that kept A from falling.
+  rewards.backhand_racket_position.weight: 1.10
+  rewards.backhand_racket_position.params:
+    command_name: racket_target
+    std: 0.22
+    swing_side: -1.0
+  rewards.backhand_soft_ball_contact.weight: 3.20
+  rewards.backhand_soft_ball_contact.params:
+    command_name: racket_target
+    pos_std: 0.21
+    approach_speed: 0.06
+    approach_std: 0.82
+    normal_speed: -0.08
+    normal_std: 0.88
+    window_s: 0.25
+    swing_side: -1.0
+
+  # Keep continuous-safety behavior inherited from A.
+  terminations.cycle_v2_ready_timeout.params:
+    command_name: racket_target
+    enabled: false
+    start_step: 0

@@ -1,0 +1,66 @@
+# P1/R1: combine lower-body motion-prior release and action-rate release.
+defaults:
+  - HOPEPingPongM25493LBPriorReleaseP1R0
+  - _self_
+
+name: HOPEPingPongM25493LBFreeP1R1
+
+overrides:
+  rewards.action_rate.weight: 0.0
+  rewards.phase_action_rate.weight: 0.0
+  rewards.post_strike_lower_body_action_rate.weight: 0.0
+
+  rewards.phase_action_rate_waist.weight: -1.0
+  rewards.phase_action_rate_waist.params:
+    command_name: racket_target
+    joint_names: [waist_yaw_joint, waist_roll_joint, waist_pitch_joint]
+    pre_strike_scale: 0.01412
+    strike_scale: 0.00561
+    recovery_scale: 0.06150
+    hold_scale: 0.08450
+
+  rewards.phase_action_rate_upper.weight: -1.0
+  rewards.phase_action_rate_upper.params:
+    command_name: racket_target
+    joint_names:
+      - head_yaw_joint
+      - head_pitch_joint
+      - left_shoulder_pitch_joint
+      - left_shoulder_roll_joint
+      - left_shoulder_yaw_joint
+      - left_elbow_joint
+      - left_wrist_roll_joint
+      - left_wrist_pitch_joint
+      - left_wrist_yaw_joint
+      - right_shoulder_pitch_joint
+      - right_shoulder_roll_joint
+      - right_shoulder_yaw_joint
+      - right_elbow_joint
+      - right_wrist_roll_joint
+      - right_wrist_pitch_joint
+      - right_wrist_yaw_joint
+    pre_strike_scale: 0.01412
+    strike_scale: 0.00561
+    recovery_scale: 0.06150
+    hold_scale: 0.08450
+
+  rewards.phase_action_rate_legs.weight: -1.0
+  rewards.phase_action_rate_legs.params:
+    command_name: racket_target
+    joint_names:
+      - left_hip_pitch_joint
+      - left_hip_roll_joint
+      - left_hip_yaw_joint
+      - left_knee_joint
+      - left_ankle_pitch_joint
+      - left_ankle_roll_joint
+      - right_hip_pitch_joint
+      - right_hip_roll_joint
+      - right_hip_yaw_joint
+      - right_knee_joint
+      - right_ankle_pitch_joint
+      - right_ankle_roll_joint
+    pre_strike_scale: 0.002824
+    strike_scale: 0.001122
+    recovery_scale: 0.012300
+    hold_scale: 0.016900

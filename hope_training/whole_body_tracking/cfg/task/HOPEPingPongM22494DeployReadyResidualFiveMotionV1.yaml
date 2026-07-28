@@ -1,0 +1,16 @@
+# =============================================================================
+# Lower-body motion-prior ablation from model_22494.
+#
+# The five supplemental clips keep their waist/head/arm joint trajectories but
+# rebase root and leg posture halfway toward the A3 XML deploy-ready posture.
+# Stored support timing residuals are retained, then foot lock, COM support,
+# ground alignment, and Isaac articulation FK are regenerated.
+# =============================================================================
+
+defaults:
+  - HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionNormal114B17996ExplicitRecoveryV1
+  - _self_
+
+name: HOPEPingPongM22494DeployReadyResidualFiveMotionV1
+
+motion_manifest: hope_training/motions/supplemental_lower_body_deploy_ready_residual_0p50_isaacfk_20260728/manifest_train_ready_with_motion_centered_boxes.tsv

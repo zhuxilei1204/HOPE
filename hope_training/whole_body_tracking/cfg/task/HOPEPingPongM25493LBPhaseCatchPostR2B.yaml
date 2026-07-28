@@ -1,0 +1,34 @@
+# R2B: R2A plus a mild recovery/hold-only leg action-rate term.
+#
+# The original baseline used -0.036 on waist + legs. This branch uses -0.012 on
+# legs only, so it targets the catastrophic post-strike compensation tail
+# without directly reducing waist or right-arm swing authority.
+defaults:
+  - HOPEPingPongM25493LBPhaseCatchR2A
+  - _self_
+
+name: HOPEPingPongM25493LBPhaseCatchPostR2B
+
+overrides:
+  rewards.post_strike_lower_body_action_rate.weight: -0.012
+  rewards.post_strike_lower_body_action_rate.params:
+    command_name: racket_target
+    joint_names:
+      - left_hip_pitch_joint
+      - left_hip_roll_joint
+      - left_hip_yaw_joint
+      - left_knee_joint
+      - left_ankle_pitch_joint
+      - left_ankle_roll_joint
+      - right_hip_pitch_joint
+      - right_hip_roll_joint
+      - right_hip_yaw_joint
+      - right_knee_joint
+      - right_ankle_pitch_joint
+      - right_ankle_roll_joint
+    include_hold: true
+    early_prestrike_window_steps: 0
+    start_step: 0
+    warmup_steps: 0
+    start_scale: 1.0
+

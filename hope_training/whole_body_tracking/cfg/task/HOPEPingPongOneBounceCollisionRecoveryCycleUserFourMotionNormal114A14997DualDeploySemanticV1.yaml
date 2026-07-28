@@ -1,0 +1,231 @@
+# =============================================================================
+# A14997 dual deploy-semantics fine-tune.
+#
+# Starting point:
+#   A long-horizon recovery checkpoint had strong oracle/no-gap MuJoCo hitting,
+#   but failed under the real planner lifecycle with no-command gaps.
+#
+# Goal:
+#   Preserve the A branch hit skill while training two deploy semantics directly:
+#   1. no-command/deploy-ready observations must be stable;
+#   2. after a useful hit, the carried state must be ready for the next strike.
+# =============================================================================
+
+defaults:
+  - HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionNormal114LongHorizonRecoveryA
+  - _self_
+
+name: HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionNormal114A14997DualDeploySemanticV1
+
+overrides:
+  commands.motion.hold_steps_range: [70, 115]
+  commands.motion.stand_start_prob: 0.15
+  commands.motion.stand_start_min_hold: 70
+
+  commands.racket_target.deploy_ready_hold_prob: 0.65
+  commands.racket_target.deploy_ready_reach: [0.40, 0.20, -0.05]
+  commands.racket_target.deploy_ready_velocity_w: [0.0, 0.0, 0.0]
+  commands.racket_target.deploy_ready_normal_w: [1.0, 0.0, 0.0]
+  commands.racket_target.deploy_ready_time_to_strike: 1.0
+
+  rewards.no_command_ready_stability.weight: 0.75
+  rewards.no_command_ready_stability.params:
+    command_name: racket_target
+    height_std: 0.09
+    upright_std: 0.23
+    lin_vel_std: 0.19
+    ang_vel_std: 0.60
+    station_std: 0.20
+    racket_vel_std: 0.62
+    arm_pos_std: 0.36
+    arm_ori_std: 0.82
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    start_step: 0
+    warmup_steps: 1500
+    start_scale: 0.35
+
+  rewards.next_prestrike_reachable.weight: 0.75
+  rewards.next_prestrike_reachable.params:
+    command_name: racket_target
+    window_steps: 24
+    reach_std: 0.31
+    feasible_speed: 2.75
+    feasible_speed_std: 0.50
+    min_time_to_strike: 0.18
+    max_time_to_strike: 1.20
+    station_std: 0.25
+    upright_std: 0.30
+    start_step: 0
+    warmup_steps: 2000
+    start_scale: 0.30
+
+  rewards.post_contact_recovery_ready.weight: 1.65
+  rewards.post_contact_recovery_ready.params:
+    command_name: racket_target
+    outcome: contact
+    height_std: 0.10
+    upright_std: 0.28
+    lin_vel_std: 0.25
+    ang_vel_std: 0.78
+    station_std: 0.23
+    racket_vel_std: 0.78
+    arm_pos_std: 0.36
+    arm_ori_std: 0.82
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    start_step: 0
+    warmup_steps: 2000
+    start_scale: 0.30
+
+  rewards.post_net_recovery_ready.weight: 0.75
+  rewards.post_net_recovery_ready.params:
+    command_name: racket_target
+    outcome: net_cross
+    height_std: 0.10
+    upright_std: 0.28
+    lin_vel_std: 0.25
+    ang_vel_std: 0.78
+    station_std: 0.23
+    racket_vel_std: 0.78
+    arm_pos_std: 0.36
+    arm_ori_std: 0.82
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    start_step: 1000
+    warmup_steps: 2500
+    start_scale: 0.20
+
+  rewards.post_return_recovery_ready.weight: 1.05
+  rewards.post_return_recovery_ready.params:
+    command_name: racket_target
+    outcome: opponent_bounce
+    height_std: 0.10
+    upright_std: 0.28
+    lin_vel_std: 0.25
+    ang_vel_std: 0.78
+    station_std: 0.23
+    racket_vel_std: 0.78
+    arm_pos_std: 0.36
+    arm_ori_std: 0.82
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    start_step: 1500
+    warmup_steps: 3000
+    start_scale: 0.18
+
+  rewards.cycle_contact_ready.weight: 0.75
+  rewards.cycle_contact_ready.params:
+    command_name: racket_target
+    outcome: contact
+    window_steps: 18
+    height_std: 0.10
+    upright_std: 0.28
+    lin_vel_std: 0.25
+    ang_vel_std: 0.78
+    station_std: 0.23
+    racket_vel_std: 0.78
+    arm_pos_std: 0.36
+    arm_ori_std: 0.82
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    start_step: 500
+    warmup_steps: 2500
+    start_scale: 0.20
+
+  rewards.cycle_net_ready.weight: 1.65
+  rewards.cycle_net_ready.params:
+    command_name: racket_target
+    outcome: net_cross
+    window_steps: 18
+    height_std: 0.10
+    upright_std: 0.28
+    lin_vel_std: 0.25
+    ang_vel_std: 0.78
+    station_std: 0.23
+    racket_vel_std: 0.78
+    arm_pos_std: 0.36
+    arm_ori_std: 0.82
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    start_step: 1000
+    warmup_steps: 3000
+    start_scale: 0.20
+
+  rewards.cycle_return_ready.weight: 2.75
+  rewards.cycle_return_ready.params:
+    command_name: racket_target
+    outcome: opponent_bounce
+    window_steps: 18
+    height_std: 0.10
+    upright_std: 0.28
+    lin_vel_std: 0.25
+    ang_vel_std: 0.78
+    station_std: 0.23
+    racket_vel_std: 0.78
+    arm_pos_std: 0.36
+    arm_ori_std: 0.82
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    start_step: 1500
+    warmup_steps: 3500
+    start_scale: 0.18
+
+  rewards.strike_balance.weight: 0.24
+  rewards.strike_balance.params:
+    command_name: racket_target
+    pre_window_s: 0.30
+    post_window_s: 0.14
+    pitch_std: 0.24
+    upright_std: 0.34
+    ang_vel_std: 1.55
+    backward_std: 0.26
+    backward_vel_std: 0.70
+    start_step: 0
+    warmup_steps: 2500
+    start_scale: 0.20
+
+  rewards.lower_body_support.weight: 0.20
+  rewards.lower_body_support.params:
+    command_name: racket_target
+    pre_window_s: 0.34
+    post_window_s: 0.20
+    station_std: 0.34
+    backward_std: 0.26
+    backward_vel_std: 0.70
+    min_feet_contact: 0.45
+    start_step: 0
+    warmup_steps: 2500
+    start_scale: 0.20
+
+  rewards.post_strike_base_ang_vel.weight: 0.58
+  rewards.post_strike_base_ang_vel.params:
+    command_name: racket_target
+    std: 1.65
+    include_hold: true
+    early_prestrike_window_steps: 18
+    start_step: 0
+    warmup_steps: 3500
+    start_scale: 0.22
+
+  rewards.phase_action_rate.weight: -0.42
+  rewards.phase_action_rate.params:
+    command_name: racket_target
+    pre_strike_scale: 0.022
+    strike_scale: 0.0035
+    recovery_scale: 0.095
+    hold_scale: 0.125

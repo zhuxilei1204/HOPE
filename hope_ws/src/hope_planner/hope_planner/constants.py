@@ -133,7 +133,7 @@ class PlannerConfig:
     bounce_center_z_max: float = 0.11  # local-minimum height for a centre-tracked bounce (m)
 
     # Racket planning
-    x_hit: float = 0.0            # fixed virtual hitting-plane x coordinate (m)
+    x_hit: float = 0.2            # fixed virtual hitting-plane x coordinate (m)
     target_land: np.ndarray = field(
         default_factory=lambda: np.array([2.055, -0.7625, 0.02])
     )                             # fixed landing target (opponent-half centre); z = ball radius,

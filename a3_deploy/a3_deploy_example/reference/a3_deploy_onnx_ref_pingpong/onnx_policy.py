@@ -18,7 +18,7 @@ from pathlib import Path
 
 import numpy as np
 
-from .observation import OBS_DIM, OBS_DIM_NORMAL114
+from .observation import OBS_DIM, OBS_DIM_NORMAL114, OBS_DIM_STABILITY122
 from .joint_order import JOINT_NAMES, NUM_JOINTS
 
 
@@ -52,6 +52,12 @@ class OnnxPolicy:
         # joint column would be silently permuted. Models without the metadata key
         # (e.g. hand-authored test actors) are accepted unchecked.
         meta = self._sess.get_modelmeta().custom_metadata_map or {}
+        self.last_action_feedback_mode = meta.get("last_action_feedback_mode") or None
+        if self.last_action_feedback_mode not in (None, "raw", "effective"):
+            raise ValueError(
+                "ONNX metadata last_action_feedback_mode must be raw or effective, "
+                f"got {self.last_action_feedback_mode!r}"
+            )
         embedded = meta.get("joint_order", "")
         if embedded:
             embedded_names = tuple(embedded.split(","))
@@ -74,9 +80,11 @@ class OnnxPolicy:
     def _resolve_obs_dim(shape) -> int:
         if shape and isinstance(shape[-1], int):
             dim = int(shape[-1])
-            if dim not in (OBS_DIM, OBS_DIM_NORMAL114):
+            if dim not in (OBS_DIM, OBS_DIM_NORMAL114, OBS_DIM_STABILITY122):
                 raise ValueError(
-                    f"observation input trailing dim {dim} is unsupported; expected {OBS_DIM} or {OBS_DIM_NORMAL114}"
+                    "observation input trailing dim "
+                    f"{dim} is unsupported; expected {OBS_DIM}, {OBS_DIM_NORMAL114}, "
+                    f"or {OBS_DIM_STABILITY122}"
                 )
             return dim
         return OBS_DIM

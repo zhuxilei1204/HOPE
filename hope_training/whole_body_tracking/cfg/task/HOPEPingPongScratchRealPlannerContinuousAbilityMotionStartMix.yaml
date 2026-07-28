@@ -1,0 +1,32 @@
+# =============================================================================
+# Scratch real-planner continuous A/B branch:
+# ability-based motion-start reset warmup + default-ready reset mix.
+#
+# Difference from HOPEPingPongScratchRealPlannerContinuousAbility:
+#   - true episode resets do not use random mid-clip RSI;
+#   - early training mixes default-ready resets with motion-first-frame resets;
+#   - the motion-start probability fades out from measured contact/recovery ability.
+#
+# Goal:
+#   Improve contact discovery without permanently changing the final deploy-style
+#   reset/lifecycle distribution.
+# =============================================================================
+
+defaults:
+  - HOPEPingPongScratchRealPlannerContinuousAbility
+  - _self_
+
+name: HOPEPingPongScratchRealPlannerContinuousAbilityMotionStartMix
+
+overrides:
+  # Keep the default-ready path available from the start, but use motion-first-frame resets
+  # for contact discovery while measured contact is still low.  This is ability-gated, not
+  # iteration-gated.
+  commands.motion.motion_start_warmup_enabled: true
+  commands.motion.motion_start_warmup_command_name: racket_target
+  commands.motion.motion_start_warmup_start_prob: 0.55
+  commands.motion.motion_start_warmup_min_prob: 0.0
+  commands.motion.motion_start_warmup_contact_low: 0.03
+  commands.motion.motion_start_warmup_contact_high: 0.35
+  commands.motion.motion_start_warmup_recovery_low: 0.60
+  commands.motion.motion_start_warmup_recovery_high: 0.78

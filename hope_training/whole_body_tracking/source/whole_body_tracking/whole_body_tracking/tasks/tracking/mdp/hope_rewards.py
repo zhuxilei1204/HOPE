@@ -30,7 +30,7 @@ from functools import lru_cache
 import torch
 from typing import TYPE_CHECKING
 
-from isaaclab.utils.math import quat_error_magnitude
+from isaaclab.utils.math import quat_error_magnitude, quat_rotate_inverse, yaw_quat
 
 from whole_body_tracking.tasks.tracking.mdp import rewards as _imitation
 from whole_body_tracking.tasks.tracking.mdp.hope_commands import RacketTargetCommand
@@ -228,6 +228,8 @@ def sample_imitation(
     std_pos: float = 0.3,
     std_ori: float = 0.4,
     body_names: list[str] | None = None,
+    core_clip_scale: float = 1.0,
+    supplemental_clip_scale: float = 1.0,
 ) -> torch.Tensor:
     """Track the imitated clip's (upper-)body pose during the swing.
 
@@ -237,7 +239,74 @@ def sample_imitation(
     rp = _imitation.motion_relative_body_position_error_exp(env, command_name, std_pos, body_names)
     ro = _imitation.motion_relative_body_orientation_error_exp(env, command_name, std_ori, body_names)
     motion = env.command_manager.get_term(command_name)
-    return (0.5 * rp + 0.5 * ro) * (~motion.in_hold).float()
+    score = (0.5 * rp + 0.5 * ro) * (~motion.in_hold).float()
+    core_count = int(getattr(motion.cfg, "core_clip_count", 0))
+    if core_count > 0:
+        scale = torch.where(
+            motion.clip_id >= core_count,
+            torch.full_like(score, float(supplemental_clip_scale)),
+            torch.full_like(score, float(core_clip_scale)),
+        )
+    else:
+        scale = torch.full_like(score, float(core_clip_scale))
+    return score * scale
+
+
+def phase_lower_body_motion_prior(
+    env: ManagerBasedRLEnv,
+    motion_command_name: str,
+    racket_command_name: str,
+    std_pos: float = 0.28,
+    std_ori: float = 0.45,
+    body_names: list[str] | None = None,
+    pre_strike_scale: float = 0.35,
+    strike_scale: float = 0.15,
+    recovery_scale: float = 1.0,
+    hold_scale: float = 1.15,
+    core_clip_scale: float = 0.8,
+    supplemental_clip_scale: float = 1.15,
+) -> torch.Tensor:
+    """Track lower-body support timing strongly after impact, lightly during the strike.
+
+    This preserves hip/knee/ankle compensation freedom at impact while making the
+    accepted supplemental clips useful for braking and recovery instead of globally
+    constraining the hitting arm.
+    """
+    motion = env.command_manager.get_term(motion_command_name)
+    racket = _cmd(env, racket_command_name)
+    rp = _imitation.motion_relative_body_position_error_exp(
+        env, motion_command_name, std_pos, body_names
+    )
+    ro = _imitation.motion_relative_body_orientation_error_exp(
+        env, motion_command_name, std_ori, body_names
+    )
+    score = 0.55 * rp + 0.45 * ro
+    phase = torch.full_like(score, float(recovery_scale))
+    phase = torch.where(racket.pre_strike, torch.full_like(phase, float(pre_strike_scale)), phase)
+    phase = torch.where(racket.strike_window, torch.full_like(phase, float(strike_scale)), phase)
+    phase = torch.where(motion.in_hold, torch.full_like(phase, float(hold_scale)), phase)
+
+    core_count = int(getattr(motion.cfg, "core_clip_count", 0))
+    if core_count > 0:
+        clip_scale = torch.where(
+            motion.clip_id >= core_count,
+            torch.full_like(score, float(supplemental_clip_scale)),
+            torch.full_like(score, float(core_clip_scale)),
+        )
+    else:
+        clip_scale = torch.full_like(score, float(core_clip_scale))
+    return score * phase * clip_scale
+
+
+def motion_anchor_height_error_exp(
+    env: ManagerBasedRLEnv,
+    command_name: str,
+    std: float = 0.12,
+) -> torch.Tensor:
+    """Track only reference torso height, leaving clip root XY to the station objective."""
+    motion = env.command_manager.get_term(command_name)
+    error = torch.square(motion.anchor_pos_w[:, 2] - motion.robot_anchor_pos_w[:, 2])
+    return torch.exp(-error / max(float(std), 1.0e-6) ** 2)
 
 
 def wrist_motion_pos_release(
@@ -294,6 +363,23 @@ def racket_position(env: ManagerBasedRLEnv, command_name: str, std: float) -> to
     target_now = cmd.ball_strike_pos_w - cmd.racket_impact_target_vel_w * cmd.true_time_to_strike.unsqueeze(-1)
     error = torch.sum(torch.square(cmd.racket_pos_w - target_now), dim=-1)
     return torch.exp(-error / std**2) * cmd.strike_window.float()
+
+
+def _swing_side_gate(cmd: RacketTargetCommand, swing_side: float) -> torch.Tensor:
+    if abs(float(swing_side)) < 1.0e-6:
+        return torch.ones(cmd.num_envs, dtype=torch.bool, device=cmd.device)
+    return cmd.swing_sign >= 0.0 if float(swing_side) > 0.0 else cmd.swing_sign < 0.0
+
+
+def side_racket_position(
+    env: ManagerBasedRLEnv,
+    command_name: str,
+    std: float,
+    swing_side: float = -1.0,
+) -> torch.Tensor:
+    """Side-gated racket-position shaping; ``swing_side=-1`` targets backhand."""
+    cmd = _cmd(env, command_name)
+    return racket_position(env, command_name, std) * _swing_side_gate(cmd, swing_side).float()
 
 
 def racket_velocity(env: ManagerBasedRLEnv, command_name: str, std: float) -> torch.Tensor:
@@ -404,6 +490,26 @@ def soft_ball_contact(
     without actually bringing the racket into the strike neighborhood.
     """
     cmd = _cmd(env, command_name)
+    return _soft_ball_contact_score(
+        cmd,
+        pos_std=pos_std,
+        approach_speed=approach_speed,
+        approach_std=approach_std,
+        normal_speed=normal_speed,
+        normal_std=normal_std,
+        window_s=window_s,
+    )
+
+
+def _soft_ball_contact_score(
+    cmd: RacketTargetCommand,
+    pos_std: float = 0.18,
+    approach_speed: float = 0.15,
+    approach_std: float = 0.75,
+    normal_speed: float = 0.0,
+    normal_std: float = 0.75,
+    window_s: float = 0.20,
+) -> torch.Tensor:
     time_abs = cmd.true_time_to_strike.abs()
     gate = time_abs <= window_s
     timing = torch.exp(-torch.square(time_abs / max(window_s, 1e-6)))
@@ -427,6 +533,248 @@ def soft_ball_contact(
     normal_score = torch.sigmoid((closing - normal_speed) / normal_std)
 
     return proximity * approach_score * normal_score * timing * gate.float()
+
+
+def side_soft_ball_contact(
+    env: ManagerBasedRLEnv,
+    command_name: str,
+    pos_std: float = 0.18,
+    approach_speed: float = 0.15,
+    approach_std: float = 0.75,
+    normal_speed: float = 0.0,
+    normal_std: float = 0.75,
+    window_s: float = 0.20,
+    swing_side: float = -1.0,
+) -> torch.Tensor:
+    """Side-gated dense contact reward; ``swing_side=-1`` targets backhand."""
+    cmd = _cmd(env, command_name)
+    score = _soft_ball_contact_score(
+        cmd,
+        pos_std=pos_std,
+        approach_speed=approach_speed,
+        approach_std=approach_std,
+        normal_speed=normal_speed,
+        normal_std=normal_std,
+        window_s=window_s,
+    )
+    return score * _swing_side_gate(cmd, swing_side).float()
+
+
+def contact_net_margin(
+    env: ManagerBasedRLEnv,
+    command_name: str,
+    pos_std: float = 0.16,
+    approach_speed: float = 0.10,
+    approach_std: float = 0.75,
+    normal_speed: float = 0.0,
+    normal_std: float = 0.75,
+    window_s: float = 0.18,
+    min_forward_speed: float = 2.05,
+    forward_std: float = 0.35,
+    min_upward_speed: float = 0.95,
+    upward_std: float = 0.35,
+    min_clearance: float = 0.03,
+    clearance_std: float = 0.06,
+    swing_side: float = 0.0,
+    start_step: int = 0,
+    warmup_steps: int = 0,
+    start_scale: float = 1.0,
+) -> torch.Tensor:
+    """Dense contact-conditioned signal for clearing the net with margin.
+
+    This targets the MuJoCo failure mode where the racket reaches the ball but the
+    outgoing velocity is too low/slow.  It is gated by a soft contact score so it
+    does not reward a stable policy that never brings the racket to the ball.
+    """
+    cmd = _cmd(env, command_name)
+    contact_like = _soft_ball_contact_score(
+        cmd,
+        pos_std=pos_std,
+        approach_speed=approach_speed,
+        approach_std=approach_std,
+        normal_speed=normal_speed,
+        normal_std=normal_std,
+        window_s=window_s,
+    )
+
+    p0 = cmd.ball_strike_pos_w - cmd._env.scene.env_origins
+    v = cmd.impact_ball_out_vel_w
+    vx = v[:, 0]
+    vz = v[:, 2]
+    net_x = float(cmd.cfg.table_near_x) + float(cmd.cfg.net_x)
+    net_top = float(cmd.cfg.table_surface_z) + float(cmd.cfg.net_height) + float(cmd.cfg.net_margin)
+
+    t_net = (net_x - p0[:, 0]) / vx.clamp_min(1.0e-3)
+    z_net = p0[:, 2] + vz * t_net - 0.5 * 9.81 * t_net.square()
+    clearance = z_net - net_top
+
+    forward = torch.sigmoid((vx - float(min_forward_speed)) / max(float(forward_std), 1.0e-6))
+    upward = torch.sigmoid((vz - float(min_upward_speed)) / max(float(upward_std), 1.0e-6))
+    margin = torch.sigmoid((clearance - float(min_clearance)) / max(float(clearance_std), 1.0e-6))
+    valid = (t_net > 0.0).float()
+    side = _swing_side_gate(cmd, swing_side).float()
+    return contact_like * forward * upward * margin * valid * side * _phase_scale(
+        env, start_step, warmup_steps, start_scale, 1.0
+    )
+
+
+def _strike_balance_score(
+    cmd: RacketTargetCommand,
+    pre_window_s: float = 0.34,
+    post_window_s: float = 0.18,
+    pitch_std: float = 0.16,
+    upright_std: float = 0.26,
+    ang_vel_std: float = 1.05,
+    backward_std: float = 0.16,
+    backward_vel_std: float = 0.42,
+) -> torch.Tensor:
+    data = cmd.robot.data
+    tts = cmd.true_time_to_strike
+    gate = (tts <= float(pre_window_s)) & (tts >= -float(post_window_s)) & (~cmd.no_command_ready_active)
+
+    projected_gravity_xy = data.projected_gravity_b[:, :2]
+    pitch_like = torch.abs(projected_gravity_xy[:, 0])
+    pitch = torch.exp(-torch.square(pitch_like / max(float(pitch_std), 1.0e-6)))
+    upright = torch.exp(-torch.square(torch.norm(projected_gravity_xy, dim=-1) / max(float(upright_std), 1.0e-6)))
+    ang = torch.exp(-torch.square(torch.norm(data.root_ang_vel_b[:, :2], dim=-1) / max(float(ang_vel_std), 1.0e-6)))
+    backward_offset = (cmd.station_w[:, 0] - cmd.base_pos_w[:, 0]).clamp_min(0.0)
+    backward = torch.exp(-torch.square(backward_offset / max(float(backward_std), 1.0e-6)))
+    backward_vel = (-data.root_lin_vel_w[:, 0]).clamp_min(0.0)
+    back_vel = torch.exp(-torch.square(backward_vel / max(float(backward_vel_std), 1.0e-6)))
+
+    score = 0.26 * pitch + 0.24 * upright + 0.22 * ang + 0.16 * backward + 0.12 * back_vel
+    return score * gate.float()
+
+
+def balanced_soft_ball_contact(
+    env: ManagerBasedRLEnv,
+    command_name: str,
+    pos_std: float = 0.18,
+    approach_speed: float = 0.10,
+    approach_std: float = 0.75,
+    normal_speed: float = 0.0,
+    normal_std: float = 0.75,
+    window_s: float = 0.22,
+    pre_window_s: float = 0.34,
+    post_window_s: float = 0.18,
+    pitch_std: float = 0.18,
+    upright_std: float = 0.30,
+    ang_vel_std: float = 1.25,
+    backward_std: float = 0.20,
+    backward_vel_std: float = 0.55,
+    start_step: int = 0,
+    warmup_steps: int = 0,
+    start_scale: float = 1.0,
+) -> torch.Tensor:
+    """Soft contact reward gated by trunk/base balance near the strike."""
+    cmd = _cmd(env, command_name)
+    contact_like = _soft_ball_contact_score(
+        cmd,
+        pos_std=pos_std,
+        approach_speed=approach_speed,
+        approach_std=approach_std,
+        normal_speed=normal_speed,
+        normal_std=normal_std,
+        window_s=window_s,
+    )
+    balance = _strike_balance_score(
+        cmd,
+        pre_window_s=pre_window_s,
+        post_window_s=post_window_s,
+        pitch_std=pitch_std,
+        upright_std=upright_std,
+        ang_vel_std=ang_vel_std,
+        backward_std=backward_std,
+        backward_vel_std=backward_vel_std,
+    )
+    return contact_like * balance * _phase_scale(env, start_step, warmup_steps, start_scale, 1.0)
+
+
+def balanced_ball_contact(
+    env: ManagerBasedRLEnv,
+    command_name: str,
+    pre_window_s: float = 0.34,
+    post_window_s: float = 0.18,
+    pitch_std: float = 0.18,
+    upright_std: float = 0.30,
+    ang_vel_std: float = 1.25,
+    backward_std: float = 0.20,
+    backward_vel_std: float = 0.55,
+    start_step: int = 0,
+    warmup_steps: int = 0,
+    start_scale: float = 1.0,
+) -> torch.Tensor:
+    """Actual contact event gated by balanced trunk/base state."""
+    cmd = _cmd(env, command_name)
+    balance = _strike_balance_score(
+        cmd,
+        pre_window_s=pre_window_s,
+        post_window_s=post_window_s,
+        pitch_std=pitch_std,
+        upright_std=upright_std,
+        ang_vel_std=ang_vel_std,
+        backward_std=backward_std,
+        backward_vel_std=backward_vel_std,
+    )
+    return cmd.ball_contact.float() * balance * _phase_scale(env, start_step, warmup_steps, start_scale, 1.0)
+
+
+def balanced_net_cross(
+    env: ManagerBasedRLEnv,
+    command_name: str,
+    pre_window_s: float = 0.34,
+    post_window_s: float = 0.18,
+    pitch_std: float = 0.18,
+    upright_std: float = 0.30,
+    ang_vel_std: float = 1.25,
+    backward_std: float = 0.20,
+    backward_vel_std: float = 0.55,
+    start_step: int = 0,
+    warmup_steps: int = 0,
+    start_scale: float = 1.0,
+) -> torch.Tensor:
+    """Net-clear event gated by balanced trunk/base state."""
+    cmd = _cmd(env, command_name)
+    balance = _strike_balance_score(
+        cmd,
+        pre_window_s=pre_window_s,
+        post_window_s=post_window_s,
+        pitch_std=pitch_std,
+        upright_std=upright_std,
+        ang_vel_std=ang_vel_std,
+        backward_std=backward_std,
+        backward_vel_std=backward_vel_std,
+    )
+    return cmd.ball_net_cross.float() * balance * _phase_scale(env, start_step, warmup_steps, start_scale, 1.0)
+
+
+def balanced_opponent_bounce(
+    env: ManagerBasedRLEnv,
+    command_name: str,
+    pre_window_s: float = 0.34,
+    post_window_s: float = 0.18,
+    pitch_std: float = 0.18,
+    upright_std: float = 0.30,
+    ang_vel_std: float = 1.25,
+    backward_std: float = 0.20,
+    backward_vel_std: float = 0.55,
+    start_step: int = 0,
+    warmup_steps: int = 0,
+    start_scale: float = 1.0,
+) -> torch.Tensor:
+    """Opponent-bounce return event gated by balanced trunk/base state."""
+    cmd = _cmd(env, command_name)
+    balance = _strike_balance_score(
+        cmd,
+        pre_window_s=pre_window_s,
+        post_window_s=post_window_s,
+        pitch_std=pitch_std,
+        upright_std=upright_std,
+        ang_vel_std=ang_vel_std,
+        backward_std=backward_std,
+        backward_vel_std=backward_vel_std,
+    )
+    return cmd.ball_on_opponent.float() * balance * _phase_scale(env, start_step, warmup_steps, start_scale, 1.0)
 
 
 # --- (6,7,8) no-spin return outcome, one-shot at the strike --------------------------------- #
@@ -482,7 +830,11 @@ def pre_strike_station_tracking(
 
 # --- (9) in-place follow-through / recovery ------------------------------------------------- #
 def follow_through_recovery(
-    env: ManagerBasedRLEnv, command_name: str, std: float = 0.5, station_std: float = 0.3
+    env: ManagerBasedRLEnv,
+    command_name: str,
+    std: float = 0.5,
+    station_std: float = 0.3,
+    use_dynamic_station: bool = False,
 ) -> torch.Tensor:
     """Reward settling calmly AT the fixed station through the follow-through and the pre-swing hold.
 
@@ -493,7 +845,8 @@ def follow_through_recovery(
     cmd = _cmd(env, command_name)
     v_xy = torch.norm(cmd.robot.data.root_lin_vel_w[:, :2], dim=-1)
     calm = torch.exp(-torch.square(v_xy / std))
-    station_err = torch.norm(cmd.base_pos_w[:, :2] - cmd.fixed_station_w, dim=-1)
+    station_target = cmd.station_w if use_dynamic_station else cmd.fixed_station_w
+    station_err = torch.norm(cmd.base_pos_w[:, :2] - station_target, dim=-1)
     at_station = torch.exp(-torch.square(station_err / station_std))
     in_hold = cmd._motion().in_hold
     gate = ((~cmd.pre_strike) & (~cmd.strike_window)) | in_hold
@@ -508,6 +861,7 @@ def recovery_health(
     lin_vel_std: float = 0.35,
     ang_vel_std: float = 1.0,
     station_std: float = 0.25,
+    use_dynamic_station: bool = False,
 ) -> torch.Tensor:
     """Reward a deploy-ready stance after the strike and during the ready hold.
 
@@ -526,7 +880,8 @@ def recovery_health(
     upright = torch.exp(-torch.square(upright_err / upright_std))
     lin = torch.exp(-torch.square(torch.norm(data.root_lin_vel_w[:, :2], dim=-1) / lin_vel_std))
     ang = torch.exp(-torch.square(torch.norm(data.root_ang_vel_w, dim=-1) / ang_vel_std))
-    station_err = torch.norm(cmd.base_pos_w[:, :2] - cmd.fixed_station_w, dim=-1)
+    station_target = cmd.station_w if use_dynamic_station else cmd.fixed_station_w
+    station_err = torch.norm(cmd.base_pos_w[:, :2] - station_target, dim=-1)
     station = torch.exp(-torch.square(station_err / station_std))
     feet = torch.clamp(cmd.feet_contact_frac, 0.0, 1.0)
 
@@ -606,6 +961,91 @@ def next_swing_ready_bonus(
     )
     gate = cmd.pre_strike & (cmd.steps_since_target_resample <= int(window_steps))
     return score * gate.float()
+
+
+def no_command_ready_stability(
+    env: ManagerBasedRLEnv,
+    command_name: str,
+    height_std: float = 0.09,
+    upright_std: float = 0.22,
+    lin_vel_std: float = 0.18,
+    ang_vel_std: float = 0.55,
+    station_std: float = 0.18,
+    racket_vel_std: float = 0.55,
+    arm_pos_std: float = 0.34,
+    arm_ori_std: float = 0.78,
+    arm_body_names: list[str] | None = None,
+    start_step: int = 0,
+    warmup_steps: int = 0,
+    start_scale: float = 1.0,
+) -> torch.Tensor:
+    """Reward stable deploy-ready posture only while no planner command is exposed.
+
+    This makes the deploy/no-target hold a direct learning target without suppressing
+    pre-strike or strike motion.  The gate is the synthetic no-command READY state
+    used by ``RacketTargetCommand`` for deployment-lifecycle alignment.
+    """
+    cmd = _cmd(env, command_name)
+    score = _next_ready_score(
+        env,
+        cmd,
+        height_std,
+        upright_std,
+        lin_vel_std,
+        ang_vel_std,
+        station_std,
+        racket_vel_std,
+        arm_pos_std,
+        arm_ori_std,
+        arm_body_names,
+    )
+    return score * cmd.no_command_ready_active.float() * _phase_scale(
+        env, start_step, warmup_steps, start_scale, 1.0
+    )
+
+
+def next_prestrike_reachable(
+    env: ManagerBasedRLEnv,
+    command_name: str,
+    window_steps: int = 20,
+    reach_std: float = 0.30,
+    feasible_speed: float = 2.60,
+    feasible_speed_std: float = 0.45,
+    min_time_to_strike: float = 0.18,
+    max_time_to_strike: float = 1.20,
+    station_std: float = 0.24,
+    upright_std: float = 0.28,
+    start_step: int = 0,
+    warmup_steps: int = 0,
+    start_scale: float = 1.0,
+) -> torch.Tensor:
+    """Reward the next sampled ball being reachable from the carried recovery state.
+
+    The term fires only during the first few pre-strike ticks after a new target is
+    sampled.  It directly scores whether the racket is close enough, the required
+    catch-up speed is physically reasonable, the base is near the dynamic station,
+    and the trunk is upright.  It is not active during impact, so it should not
+    damp the actual hit.
+    """
+    cmd = _cmd(env, command_name)
+    tts = torch.clamp(cmd.true_time_to_strike, min=float(min_time_to_strike), max=float(max_time_to_strike))
+    target_now = cmd.ball_strike_pos_w - cmd.racket_impact_target_vel_w * cmd.true_time_to_strike.unsqueeze(-1)
+    racket_dist = torch.norm(cmd.racket_pos_w - target_now, dim=-1)
+    reach = torch.exp(-torch.square(racket_dist / max(float(reach_std), 1.0e-6)))
+
+    required_speed = racket_dist / tts
+    feasible = torch.sigmoid(
+        (float(feasible_speed) - required_speed) / max(float(feasible_speed_std), 1.0e-6)
+    )
+
+    station_err = torch.norm(cmd.base_pos_w[:, :2] - cmd.station_w, dim=-1)
+    station = torch.exp(-torch.square(station_err / max(float(station_std), 1.0e-6)))
+    upright_err = torch.norm(cmd.robot.data.projected_gravity_b[:, :2], dim=-1)
+    upright = torch.exp(-torch.square(upright_err / max(float(upright_std), 1.0e-6)))
+
+    score = 0.35 * reach + 0.25 * feasible + 0.20 * station + 0.20 * upright
+    gate = cmd.pre_strike & (cmd.steps_since_target_resample <= int(window_steps)) & (~cmd.no_command_ready_active)
+    return score * gate.float() * _phase_scale(env, start_step, warmup_steps, start_scale, 1.0)
 
 
 def _previous_swing_outcome(cmd: RacketTargetCommand, outcome: str) -> torch.Tensor:
@@ -758,6 +1198,109 @@ def cycle_return_readiness(
     return previous * score * gate.float() * _phase_scale(env, start_step, warmup_steps, start_scale, 1.0)
 
 
+def cycle_success_bonus(
+    env: ManagerBasedRLEnv,
+    command_name: str,
+    outcome: str = "opponent_bounce",
+    window_steps: int = 20,
+    ready_threshold: float = 0.72,
+    ready_temperature: float = 0.04,
+    height_std: float = 0.095,
+    upright_std: float = 0.26,
+    lin_vel_std: float = 0.24,
+    ang_vel_std: float = 0.70,
+    station_std: float = 0.21,
+    racket_vel_std: float = 0.68,
+    arm_pos_std: float = 0.34,
+    arm_ori_std: float = 0.78,
+    arm_body_names: list[str] | None = None,
+    start_step: int = 0,
+    warmup_steps: int = 0,
+    start_scale: float = 1.0,
+) -> torch.Tensor:
+    """Reward a complete rally cycle: useful previous return plus next-swing readiness.
+
+    ``cycle_return_readiness`` gives a dense readiness score after a previous outcome.  This term is
+    intentionally closer to an episode-success condition: it only fires in the first pre-strike ticks
+    of the next swing, requires a previous hit outcome, and gates the readiness score through a sharp
+    sigmoid around ``ready_threshold``.  It keeps gradients usable while making "hit and recover into a
+    reusable next ball" the event that receives the large sparse bonus.
+    """
+    cmd = _cmd(env, command_name)
+    score = _next_ready_score(
+        env,
+        cmd,
+        height_std,
+        upright_std,
+        lin_vel_std,
+        ang_vel_std,
+        station_std,
+        racket_vel_std,
+        arm_pos_std,
+        arm_ori_std,
+        arm_body_names,
+    )
+    previous = _previous_swing_outcome(cmd, outcome)
+    gate = (
+        cmd.pre_strike
+        & (cmd.steps_since_target_resample <= int(window_steps))
+        & (~cmd.no_command_ready_active)
+    )
+    temp = max(float(ready_temperature), 1.0e-6)
+    ready = torch.sigmoid((score - float(ready_threshold)) / temp)
+    return previous * ready * gate.float() * _phase_scale(env, start_step, warmup_steps, start_scale, 1.0)
+
+
+def cycle_v2_ready_success_bonus(
+    env: ManagerBasedRLEnv,
+    command_name: str,
+    tier_multipliers: tuple[float, float, float] = (1.0, 1.0, 1.0),
+    start_step: int = 0,
+    warmup_steps: int = 0,
+    start_scale: float = 1.0,
+) -> torch.Tensor:
+    """One-shot bonus when a previous useful return reaches next-swing ready before the deadline."""
+    cmd = _cmd(env, command_name)
+    multipliers = torch.tensor(tier_multipliers, dtype=torch.float32, device=cmd.device)
+    if multipliers.shape != (3,):
+        raise ValueError(f"tier_multipliers must contain contact/net/bounce values, got {tier_multipliers}")
+    tier = torch.clamp(cmd.cycle_v2_outcome_tier, min=0, max=2)
+    return cmd.cycle_v2_ready_success_event.float() * multipliers[tier] * _phase_scale(
+        env, start_step, warmup_steps, start_scale, 1.0
+    )
+
+
+def cycle_v2_streak_bonus(
+    env: ManagerBasedRLEnv,
+    command_name: str,
+    min_streak: int = 2,
+    min_ability_level: float = 0.70,
+    start_step: int = 0,
+    warmup_steps: int = 0,
+    start_scale: float = 1.0,
+) -> torch.Tensor:
+    """Extra one-shot bonus for consecutive closed cycles at high ability."""
+    cmd = _cmd(env, command_name)
+    event = cmd.cycle_v2_ready_success_event & (cmd.cycle_v2_streak >= int(min_streak))
+    ability_ok = (cmd._ability_curriculum_level >= float(min_ability_level)).float()
+    return event.float() * ability_ok * _phase_scale(
+        env, start_step, warmup_steps, start_scale, 1.0
+    )
+
+
+def cycle_v2_ready_fail(
+    env: ManagerBasedRLEnv,
+    command_name: str,
+    start_step: int = 0,
+    warmup_steps: int = 0,
+    start_scale: float = 1.0,
+) -> torch.Tensor:
+    """One-shot event for previous useful return that fails to reach next-swing ready in time."""
+    cmd = _cmd(env, command_name)
+    fail_event = cmd.cycle_v2_ready_fail_event | cmd.cycle_v2_unresolved_resample_fail_event
+    return fail_event.float() * _phase_scale(env, start_step, warmup_steps, start_scale, 1.0)
+
+
 def post_strike_base_angular_velocity(
     env: ManagerBasedRLEnv,
     command_name: str,
@@ -797,25 +1340,145 @@ def strike_balance(
     allowing the legs to make quick compensating motions.
     """
     cmd = _cmd(env, command_name)
+    return _strike_balance_score(
+        cmd,
+        pre_window_s=pre_window_s,
+        post_window_s=post_window_s,
+        pitch_std=pitch_std,
+        upright_std=upright_std,
+        ang_vel_std=ang_vel_std,
+        backward_std=backward_std,
+        backward_vel_std=backward_vel_std,
+    ) * _phase_scale(env, start_step, warmup_steps, start_scale, 1.0)
+
+
+def _torso_com_balance_score(
+    cmd: RacketTargetCommand,
+    torso_pitch_std: float,
+    torso_roll_std: float,
+    torso_ang_vel_std: float,
+    com_x_std: float,
+    com_y_std: float,
+) -> torch.Tensor:
+    """Measure torso and support balance without constraining arm motion."""
+    motion = cmd._motion()
     data = cmd.robot.data
-    tts = cmd.true_time_to_strike
-    gate = (tts <= float(pre_window_s)) & (tts >= -float(post_window_s)) & (~cmd.no_command_ready_active)
+    torso_idx = motion.cfg.body_names.index("torso_Link")
+    torso_quat_w = motion.robot_body_quat_w[:, torso_idx]
+    gravity_w = torch.zeros(cmd.num_envs, 3, device=cmd.device)
+    gravity_w[:, 2] = -1.0
+    torso_gravity = quat_rotate_inverse(torso_quat_w, gravity_w)
+    torso_pitch = torch.exp(
+        -torch.square(torso_gravity[:, 0] / max(float(torso_pitch_std), 1.0e-6))
+    )
+    torso_roll = torch.exp(
+        -torch.square(torso_gravity[:, 1] / max(float(torso_roll_std), 1.0e-6))
+    )
+    torso_ang_vel = torch.exp(
+        -torch.square(
+            torch.norm(motion.robot_body_ang_vel_w[:, torso_idx, :2], dim=-1)
+            / max(float(torso_ang_vel_std), 1.0e-6)
+        )
+    )
 
-    projected_gravity_xy = data.projected_gravity_b[:, :2]
-    pitch_like = torch.abs(projected_gravity_xy[:, 0])
-    pitch = torch.exp(-torch.square(pitch_like / max(float(pitch_std), 1.0e-6)))
-    upright = torch.exp(-torch.square(torch.norm(projected_gravity_xy, dim=-1) / max(float(upright_std), 1.0e-6)))
-    ang = torch.exp(-torch.square(torch.norm(data.root_ang_vel_b[:, :2], dim=-1) / max(float(ang_vel_std), 1.0e-6)))
+    masses = data.default_mass.to(device=data.body_com_pos_w.device)
+    com_w = (data.body_com_pos_w * masses.unsqueeze(-1)).sum(dim=1) / masses.sum(
+        dim=1, keepdim=True
+    ).clamp_min(1.0e-6)
+    foot_ids = [
+        motion.cfg.body_names.index("left_ankle_roll_Link"),
+        motion.cfg.body_names.index("right_ankle_roll_Link"),
+    ]
+    support_xy = motion.robot_body_pos_w[:, foot_ids, :2].mean(dim=1)
+    com_delta_w = torch.zeros_like(com_w)
+    com_delta_w[:, :2] = com_w[:, :2] - support_xy
+    com_delta_b = quat_rotate_inverse(yaw_quat(cmd.base_quat_w), com_delta_w)
+    com_x = torch.exp(-torch.square(com_delta_b[:, 0] / max(float(com_x_std), 1.0e-6)))
+    com_y = torch.exp(-torch.square(com_delta_b[:, 1] / max(float(com_y_std), 1.0e-6)))
+    feet = torch.clamp(cmd.feet_contact_frac, 0.0, 1.0)
+    return (
+        0.22 * torso_pitch
+        + 0.16 * torso_roll
+        + 0.18 * torso_ang_vel
+        + 0.20 * com_x
+        + 0.14 * com_y
+        + 0.10 * feet
+    )
 
-    # In the table frame used by the task, +x points forward toward the table/opponent.  Negative
-    # root x velocity and base x behind the current station are the backward-fall mode seen in MuJoCo.
-    backward_offset = (cmd.station_w[:, 0] - cmd.base_pos_w[:, 0]).clamp_min(0.0)
-    backward = torch.exp(-torch.square(backward_offset / max(float(backward_std), 1.0e-6)))
-    backward_vel = (-data.root_lin_vel_w[:, 0]).clamp_min(0.0)
-    back_vel = torch.exp(-torch.square(backward_vel / max(float(backward_vel_std), 1.0e-6)))
 
-    score = 0.26 * pitch + 0.24 * upright + 0.22 * ang + 0.16 * backward + 0.12 * back_vel
-    return score * gate.float() * _phase_scale(env, start_step, warmup_steps, start_scale, 1.0)
+def torso_com_balance(
+    env: ManagerBasedRLEnv,
+    command_name: str,
+    phase: str = "strike",
+    pre_window_s: float = 0.36,
+    post_window_s: float = 0.22,
+    torso_pitch_std: float = 0.20,
+    torso_roll_std: float = 0.20,
+    torso_ang_vel_std: float = 1.30,
+    com_x_std: float = 0.13,
+    com_y_std: float = 0.16,
+    start_step: int = 0,
+    warmup_steps: int = 0,
+    start_scale: float = 1.0,
+) -> torch.Tensor:
+    """Reward torso/COM balance during strike or recovery without damping the arm."""
+    cmd = _cmd(env, command_name)
+    if phase == "strike":
+        gate = (
+            (cmd.true_time_to_strike <= float(pre_window_s))
+            & (cmd.true_time_to_strike >= -float(post_window_s))
+            & (~cmd.no_command_ready_active)
+        )
+    elif phase == "recovery_hold":
+        gate = _recovery_or_hold_gate(cmd, include_hold=True)
+    elif phase == "all":
+        gate = torch.ones(cmd.num_envs, dtype=torch.bool, device=cmd.device)
+    else:
+        raise ValueError(f"unsupported torso_com_balance phase {phase!r}")
+    score = _torso_com_balance_score(
+        cmd,
+        torso_pitch_std,
+        torso_roll_std,
+        torso_ang_vel_std,
+        com_x_std,
+        com_y_std,
+    )
+    return score * gate.float() * _phase_scale(
+        env, start_step, warmup_steps, start_scale, 1.0
+    )
+
+
+def prestrike_station_progress(
+    env: ManagerBasedRLEnv,
+    command_name: str,
+    speed_scale: float = 0.35,
+    arrival_radius: float = 0.12,
+    stop_window_s: float = 0.10,
+    start_step: int = 0,
+    warmup_steps: int = 0,
+    start_scale: float = 1.0,
+) -> torch.Tensor:
+    """Reward base velocity toward the dynamic station before the strike.
+
+    Unlike a Gaussian station score, this remains informative when the sampled
+    target is far away. It turns off near the station and near impact so it does
+    not reward overshoot or interfere with the strike.
+    """
+    cmd = _cmd(env, command_name)
+    delta = cmd.station_w - cmd.base_pos_w[:, :2]
+    distance = torch.norm(delta, dim=-1)
+    direction = delta / distance.unsqueeze(-1).clamp_min(1.0e-6)
+    progress_speed = torch.sum(cmd.robot.data.root_lin_vel_w[:, :2] * direction, dim=-1)
+    progress = torch.tanh(progress_speed / max(float(speed_scale), 1.0e-6))
+    gate = (
+        cmd.pre_strike
+        & (cmd.true_time_to_strike > float(stop_window_s))
+        & (distance > float(arrival_radius))
+        & (~cmd.no_command_ready_active)
+    )
+    return progress * gate.float() * _phase_scale(
+        env, start_step, warmup_steps, start_scale, 1.0
+    )
 
 
 def lower_body_support(
@@ -896,6 +1559,7 @@ def post_strike_lower_body_action_rate_l2(
 def phase_action_rate_l2(
     env: ManagerBasedRLEnv,
     command_name: str,
+    joint_names: list[str] | None = None,
     pre_strike_scale: float = 0.04,
     strike_scale: float = 0.015,
     recovery_scale: float = 0.12,
@@ -909,7 +1573,15 @@ def phase_action_rate_l2(
     """
     cmd = _cmd(env, command_name)
     motion = cmd._motion()
-    rate = torch.sum(torch.square(env.action_manager.action - env.action_manager.prev_action), dim=1)
+    delta = env.action_manager.action - env.action_manager.prev_action
+    if joint_names:
+        indices = _canonical_joint_indices(tuple(joint_names))
+        if indices:
+            idx = torch.tensor(indices, dtype=torch.long, device=delta.device)
+            delta = delta[:, idx]
+        else:
+            return torch.zeros(delta.shape[0], dtype=delta.dtype, device=delta.device)
+    rate = torch.sum(torch.square(delta), dim=1)
     scale = torch.full_like(rate, float(pre_strike_scale))
     scale = torch.where(cmd.strike_window, torch.full_like(scale, float(strike_scale)), scale)
     recovery = (~cmd.pre_strike) & (~cmd.strike_window)

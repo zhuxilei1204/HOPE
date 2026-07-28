@@ -58,7 +58,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--actor-obs-contract",
         default="auto",
-        help="Actor observation contract for manifest/metadata: auto, hope_pingpong, or hope_pingpong_normal114.",
+        help=(
+            "Actor observation contract for manifest/metadata: auto, hope_pingpong, "
+            "hope_pingpong_normal114, or hope_pingpong_stability122."
+        ),
     )
     return parser.parse_args()
 
@@ -113,6 +116,7 @@ def main() -> int:
                 print(f"[export_onnx]     {line}", flush=True)
 
         env = gym.make(args.task, cfg=env_cfg, render_mode=None)
+        feedback_mode = env.unwrapped.action_manager.get_term("joint_pos").feedback_mode
         joint_names = list(env.unwrapped.scene["robot"].data.joint_names)
         # JOINT-ORDER GATE: the exported ONNX contract is canonical. The live Isaac
         # articulation may enumerate differently as long as the env has an explicit
@@ -151,6 +155,7 @@ def main() -> int:
             joint_names=expected_order,
             onnx_filename=args.onnx_name,
             contract_name=args.actor_obs_contract,
+            last_action_feedback_mode=feedback_mode,
         )
         print(f"[export_onnx] wrote {onnx_path}", flush=True)
         print(f"[export_onnx] wrote {manifest_path}", flush=True)

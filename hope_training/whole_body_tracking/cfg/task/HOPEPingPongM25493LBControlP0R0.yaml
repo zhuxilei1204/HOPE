@@ -1,0 +1,7 @@
+# M25493 lower-body causal control: preserve the exact training task.
+defaults:
+  - HOPEPingPongM22494CycleStateV2FixedNoResetBHContactNetMarginV1
+  - _self_
+
+name: HOPEPingPongM25493LBControlP0R0
+

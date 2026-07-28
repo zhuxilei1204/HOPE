@@ -67,9 +67,15 @@ class ClampedJointPositionAction(JointPositionAction):
 
     def __init__(self, cfg, env):
         super().__init__(cfg, env)
-        # The raw-domain action that was actually applied (passive columns zeroed) — fed back to the
-        # actor as ``last_action``.
+        if self.cfg.feedback_mode not in ("raw", "effective"):
+            raise ValueError(
+                f"feedback_mode must be 'raw' or 'effective', got {self.cfg.feedback_mode!r}"
+            )
+        # Keep both representations even when only one is exposed to the actor.
+        # Their difference is the part of the policy output erased by q_des clamping.
         self._applied_raw_actions = torch.zeros_like(self._raw_actions)
+        self._effective_raw_actions = torch.zeros_like(self._raw_actions)
+        self._feedback_actions = torch.zeros_like(self._raw_actions)
 
         # Explicit per-joint clamp from the shared action-adapter config (exact joint names).
         # When absent, process_actions falls back to the articulation soft joint limits.
@@ -122,18 +128,60 @@ class ClampedJointPositionAction(JointPositionAction):
             default_q = self._asset.data.default_joint_pos.index_select(-1, self._passive_joint_ids)
             self._processed_actions.index_copy_(-1, self._passive_action_cols, default_q)
             self._applied_raw_actions.index_fill_(-1, self._passive_action_cols, 0.0)
+        scale = torch.as_tensor(self._scale, device=self.device, dtype=self._processed_actions.dtype)
+        offset = torch.as_tensor(self._offset, device=self.device, dtype=self._processed_actions.dtype)
+        if torch.any(scale == 0.0):
+            raise RuntimeError("Action scale must be nonzero to compute effective raw actions")
+        self._effective_raw_actions.copy_((self._processed_actions - offset) / scale)
+        if self._passive_action_cols.numel() > 0:
+            self._effective_raw_actions.index_fill_(-1, self._passive_action_cols, 0.0)
+        if self.cfg.feedback_mode == "effective":
+            self._feedback_actions.copy_(self._effective_raw_actions)
+        else:
+            self._feedback_actions.copy_(self._applied_raw_actions)
 
     def reset(self, env_ids=None):
         super().reset(env_ids)
         if env_ids is None:
             self._applied_raw_actions.zero_()
+            self._effective_raw_actions.zero_()
+            self._feedback_actions.zero_()
         else:
             self._applied_raw_actions[env_ids] = 0.0
+            self._effective_raw_actions[env_ids] = 0.0
+            self._feedback_actions[env_ids] = 0.0
 
     @property
     def applied_raw_actions(self) -> torch.Tensor:
         """Raw-domain action actually applied, with the passive columns set to zero."""
         return self._applied_raw_actions
+
+    @property
+    def effective_raw_actions(self) -> torch.Tensor:
+        """Residual action represented by the clamped joint-position target."""
+        return self._effective_raw_actions
+
+    @property
+    def feedback_actions(self) -> torch.Tensor:
+        """Action representation selected for the next actor observation."""
+        return self._feedback_actions
+
+    @property
+    def overflow_actions(self) -> torch.Tensor:
+        """Raw residual erased by the joint-position clamp."""
+        return self._applied_raw_actions - self._effective_raw_actions
+
+    @property
+    def feedback_mode(self) -> str:
+        return self.cfg.feedback_mode
+
+    @property
+    def action_joint_names(self) -> tuple[str, ...]:
+        return tuple(self._joint_names)
+
+    @property
+    def action_joint_ids(self) -> tuple[int, ...]:
+        return tuple(_action_joint_ids_in_column_order(self))
 
     @property
     def passive_joint_names(self) -> tuple[str, ...]:
@@ -146,6 +194,9 @@ class ClampedJointPositionActionCfg(JointPositionActionCfg):
 
     passive_joint_names: tuple[str, ...] = ()
     """Exact joint names held at default q and zeroed in the applied-action feedback (e.g. the head)."""
+
+    feedback_mode: str = "raw"
+    """Next-tick actor feedback: ``raw`` or the residual represented by clamped q_des."""
 
     position_clamp: dict[str, tuple[float, float]] | None = None
     """Explicit per-joint (lower, upper) clamp in rad, keyed by exact joint name.

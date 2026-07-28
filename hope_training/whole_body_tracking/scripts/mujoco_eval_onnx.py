@@ -70,6 +70,10 @@ _ISAAC_A3_ARTICULATION_TO_CANONICAL = np.empty_like(_ISAAC_A3_CANONICAL_TO_ARTIC
 for _canonical_i, _articulation_i in enumerate(_ISAAC_A3_CANONICAL_TO_ARTICULATION):
     _ISAAC_A3_ARTICULATION_TO_CANONICAL[_articulation_i] = _canonical_i
 
+_WAIST_ACTION_INDICES = np.arange(0, 3, dtype=np.int64)
+_RIGHT_ARM_ACTION_INDICES = np.arange(12, 19, dtype=np.int64)
+_LEG_ACTION_INDICES = np.arange(19, 31, dtype=np.int64)
+
 
 def _obs_for_policy_joint_order(obs: np.ndarray, last_action_canonical: np.ndarray, mode: str) -> np.ndarray:
     """Return the observation layout expected by the ONNX policy for MuJoCo diagnostics.
@@ -201,6 +205,29 @@ def _load_serve_manifest(path: str | None) -> list[dict]:
     return rows
 
 
+def _select_station_manifest_row(
+    manifest: list[dict],
+    side: float,
+    strike_point: np.ndarray,
+) -> dict | None:
+    """Select same-side station metadata nearest to the sampled strike point."""
+    if not manifest:
+        return None
+    candidates = [row for row in manifest if (row["side"] >= 0.0) == (side >= 0.0)]
+    if not candidates:
+        candidates = manifest
+    point = np.asarray(strike_point, dtype=np.float64)
+
+    def distance_sq(row: dict) -> float:
+        center = np.asarray(
+            [0.5 * (float(lo) + float(hi)) for lo, hi in row["ranges"]],
+            dtype=np.float64,
+        )
+        return float(np.sum(np.square(point - center)))
+
+    return min(candidates, key=distance_sq)
+
+
 def _new_eval_counts() -> dict:
     return {
         "attempts": 0,
@@ -223,6 +250,9 @@ def _new_eval_counts() -> dict:
         "min_ball_racket_distance": float("inf"),
         "max_abs_raw_action": 0.0,
         "max_abs_applied_action": 0.0,
+        "max_abs_feedback_action": 0.0,
+        "max_abs_action_feedback_gap": 0.0,
+        "max_feedback_q_des_redecode_error": 0.0,
         "max_abs_q_des": 0.0,
     }
 
@@ -507,7 +537,11 @@ class _MujocoVideoRecorder:
         self._writer = imageio.get_writer(path, fps=fps)
         self._camera = mujoco.MjvCamera()
         self._camera.type = mujoco.mjtCamera.mjCAMERA_FREE
-        self._camera.lookat[:] = [scene.near_edge_x + 1.15, 0.0, scene.table_height + 0.35]
+        self._camera.lookat[:] = [
+            scene.near_edge_x + 1.15,
+            scene.table_center_y,
+            scene.table_surface_z + 0.35,
+        ]
         self._camera.distance = 3.3
         self._camera.azimuth = -140.0
         self._camera.elevation = -18.0
@@ -634,7 +668,7 @@ def _sample_one_bounce_serve(rng, strike_pt: np.ndarray, y: float, scene, physic
     state whose real simulated ball should land on the near half, rebound, then pass the policy's
     strike plane.
     """
-    surface_z = scene.table_height + physics.ball_radius
+    surface_z = scene.table_surface_z + physics.ball_radius
     target_table_x = float(strike_pt[0] - scene.near_edge_x)
     target_table_y = float(strike_pt[1] - scene.offset[1])
     margin = 0.08
@@ -666,7 +700,9 @@ def _sample_one_bounce_serve(rng, strike_pt: np.ndarray, y: float, scene, physic
     origin[0] = max(origin[0], scene.near_edge_x + scene.net_x_table + 0.25)
     origin[0] = min(origin[0], scene.near_edge_x + scene.length - 0.12)
     origin[1] = float(np.clip(origin[1], scene.offset[1] - scene.width + 0.08, scene.offset[1] - 0.08))
-    origin[2] = float(np.clip(origin[2], scene.table_height + 0.18, scene.table_height + 0.55))
+    origin[2] = float(
+        np.clip(origin[2], scene.table_surface_z + 0.18, scene.table_surface_z + 0.55)
+    )
 
     serve_vel = _solve_drag_serve_velocity(origin, bounce, pre_t, physics)
     return origin, serve_vel
@@ -686,7 +722,7 @@ def _sample_serve(rng, side, scene, physics, args, serve_manifest=None):
             candidates = serve_manifest
         row = candidates[int(rng.integers(0, len(candidates)))]
         strike_pt = np.array([rng.uniform(lo, hi) for lo, hi in row["ranges"]], dtype=np.float64)
-        if bool(getattr(args, "_force_serve_strike_plane_x", False)):
+        if bool(getattr(args, "_force_serve_strike_plane_x", False) or getattr(args, "force_serve_strike_plane_x", False)):
             strike_pt[0] = scene.near_edge_x + float(getattr(args, "_serve_strike_plane_x", args.strike_plane_x))
         y = float(strike_pt[1])
     else:
@@ -697,8 +733,18 @@ def _sample_serve(rng, side, scene, physics, args, serve_manifest=None):
             y = rng.uniform(-0.45, -0.12)
         else:          # BACKHAND -> robot's left = +y
             y = rng.uniform(0.05, 0.38)
-        z = scene.table_height + rng.uniform(0.10, 0.22)
+        z = scene.table_surface_z + rng.uniform(0.10, 0.22)
         strike_pt = np.array([strike_x, y, z], dtype=np.float64)
+
+    y_range = (
+        getattr(args, "serve_forehand_y_range", None)
+        if side >= 0
+        else getattr(args, "serve_backhand_y_range", None)
+    )
+    if y_range is not None:
+        y_lo, y_hi = sorted(float(value) for value in y_range)
+        y = float(rng.uniform(y_lo, y_hi))
+        strike_pt[1] = y
 
     if args.incoming_trajectory == "one-bounce":
         origin, serve_vel = _sample_one_bounce_serve(rng, strike_pt, y, scene, physics, args)
@@ -707,7 +753,7 @@ def _sample_serve(rng, side, scene, physics, args, serve_manifest=None):
             [
                 scene.near_edge_x + rng.uniform(1.9, 2.4),
                 y + rng.uniform(-0.15, 0.15),
-                scene.table_height + rng.uniform(0.15, 0.35),
+                scene.table_surface_z + rng.uniform(0.15, 0.35),
             ],
             dtype=np.float64,
         )
@@ -785,7 +831,7 @@ def _predict_command(
     y_cross, z_cross, tts = float(p[1]), float(p[2]), 0.0
     v_cross = v.copy()
     bounced = False
-    surface_z = scene.table_height + physics.ball_radius
+    surface_z = scene.table_surface_z + physics.ball_radius
     for _ in range(int(2.0 / dt)):
         a = physics.acceleration(v)
         p_new = p + v * dt + 0.5 * a * dt * dt
@@ -1127,7 +1173,13 @@ def run_eval(args) -> dict:
     from a3_deploy_onnx_ref_pingpong.config import RuntimeConfig
     from a3_deploy_onnx_ref_pingpong.joint_order import HEAD_INDICES, JOINT_NAMES
     from a3_deploy_onnx_ref_pingpong.lifecycle import SwingLifecycle
-    from a3_deploy_onnx_ref_pingpong.observation import OBS_DIM_NORMAL114, build_observation, build_observation_normal114
+    from a3_deploy_onnx_ref_pingpong.observation import (
+        OBS_DIM_NORMAL114,
+        OBS_DIM_STABILITY122,
+        build_observation,
+        build_observation_normal114,
+        build_observation_stability122,
+    )
     from a3_deploy_onnx_ref_pingpong.onnx_policy import OnnxPolicy
     from a3_deploy_onnx_ref_pingpong.racket_command import (
         BACKHAND,
@@ -1168,8 +1220,17 @@ def run_eval(args) -> dict:
     table = TableGeometry.from_config(ball_cfg)
     accumulator = SuccessRate()
     serve_manifest = _load_serve_manifest(args.serve_manifest)
+    station_manifest = (
+        _load_serve_manifest(args.station_manifest)
+        if args.station_manifest
+        else serve_manifest
+    )
 
     policy = OnnxPolicy(onnx_path)
+    if args.last_action_feedback_mode == "auto":
+        args.last_action_feedback_mode = (
+            policy.last_action_feedback_mode or runtime_cfg.last_action_feedback_mode
+        )
     scene = PingPongRealPhysicsScene(
         robot_xml,
         ball_cfg,
@@ -1223,6 +1284,30 @@ def run_eval(args) -> dict:
             "base_x",
             "base_y",
             "base_z",
+            "base_pitch_deg",
+            "base_ang_vel_norm",
+            "com_support_margin",
+            "fallen",
+            "base_roll_deg",
+            "base_pitch_deg",
+            "base_yaw_deg",
+            "torso_roll_deg",
+            "torso_pitch_deg",
+            "torso_yaw_deg",
+            "base_lin_vel_x",
+            "base_lin_vel_y",
+            "base_lin_vel_z",
+            "base_ang_vel_x",
+            "base_ang_vel_y",
+            "base_ang_vel_z",
+            "com_x",
+            "com_y",
+            "com_z",
+            "com_support_margin",
+            "left_foot_contact",
+            "right_foot_contact",
+            "left_foot_speed_xy",
+            "right_foot_speed_xy",
             "ball_x",
             "ball_y",
             "ball_z",
@@ -1233,6 +1318,13 @@ def run_eval(args) -> dict:
             "target_x",
             "target_y",
             "target_z",
+            "station_x",
+            "station_y",
+            "station_error_xy",
+            "target_rel_base_x",
+            "target_rel_base_y",
+            "target_rel_base_z",
+            "target_shoulder_distance",
             "time_to_strike",
             "incoming_bounce",
             "contacted",
@@ -1246,10 +1338,62 @@ def run_eval(args) -> dict:
             "floor_contact_min_dist",
             "max_abs_raw_action",
             "max_abs_applied_action",
+            "max_abs_feedback_action",
+            "max_abs_action_feedback_gap",
+            "feedback_q_des_redecode_error",
             "max_abs_q_des",
+            "waist_action_rms",
+            "right_arm_action_rms",
+            "leg_action_rms",
+            "waist_action_delta_rms",
+            "right_arm_action_delta_rms",
+            "leg_action_delta_rms",
+            "waist_joint_vel_rms",
+            "right_arm_joint_vel_rms",
+            "leg_joint_vel_rms",
         ]
         trace_writer = csv.DictWriter(trace_fh, fieldnames=trace_fields)
         trace_writer.writeheader()
+    joint_diag_fh = None
+    joint_diag_writer = None
+    joint_diag_sequence_step = 0
+    if args.joint_action_diag_csv:
+        joint_diag_path = pathlib.Path(args.joint_action_diag_csv)
+        joint_diag_path.parent.mkdir(parents=True, exist_ok=True)
+        joint_diag_fh = joint_diag_path.open("w", encoding="utf-8", newline="")
+        joint_diag_fields = [
+            "sequence_step",
+            "trial",
+            "segment",
+            "tick",
+            "side",
+            "phase",
+            "time_to_strike",
+            "base_x",
+            "base_y",
+            "base_z",
+            "base_pitch_deg",
+            "base_ang_vel_norm",
+            "com_support_margin",
+            "fallen",
+        ]
+        for prefix in (
+            "raw",
+            "effective",
+            "feedback",
+            "overflow",
+            "position_clamped",
+            "q",
+            "qd",
+            "q_des",
+            "tracking_error",
+            "torque_requested",
+            "torque_applied",
+            "torque_clipped",
+        ):
+            joint_diag_fields.extend(f"{prefix}__{name}" for name in JOINT_NAMES)
+        joint_diag_writer = csv.DictWriter(joint_diag_fh, fieldnames=joint_diag_fields)
+        joint_diag_writer.writeheader()
     contact_diag_fh = None
     contact_diag_writer = None
     if args.contact_diag_csv:
@@ -1370,13 +1514,18 @@ def run_eval(args) -> dict:
     def _policy_tick(lifecycle, source, last_action, fixed_station_xy, manifest_row=None):
         """One 50 Hz policy step (identical to the deploy runner's tick).
 
-        Returns (events, applied_action) — the caller keeps ``applied_action`` as
-        the next tick's ``last_action``.
+        The current tick always sends the same q_des for a given policy output.
+        ``last_action_feedback_mode`` only controls which representation of that
+        already-issued command is exposed to the actor on the next tick.
         """
         state = scene.read_robot_state()
         target = lifecycle.update(source.poll(), state)
         station_xy = _station_xy_for_observation(fixed_station_xy, target, lifecycle.phase, manifest_row, args)
-        if getattr(policy, "obs_dim", 111) == OBS_DIM_NORMAL114:
+        if getattr(policy, "obs_dim", 111) == OBS_DIM_STABILITY122:
+            obs = build_observation_stability122(
+                state, target, last_action, default_q, station_xy
+            )
+        elif getattr(policy, "obs_dim", 111) == OBS_DIM_NORMAL114:
             obs = build_observation_normal114(state, target, last_action, default_q, station_xy)
         else:
             obs = build_observation(state, target, last_action, default_q, station_xy)
@@ -1392,18 +1541,109 @@ def run_eval(args) -> dict:
         if runtime_cfg.passive_neck:
             q_des[head_idx] = default_q[head_idx]
         scene.write_targets(q_des, kp, kd)
+        effective_action = runtime_cfg.action_adapter.encode_effective(q_des)
+        if runtime_cfg.passive_neck:
+            effective_action[head_idx] = 0.0
+        if args.last_action_feedback_mode == "effective":
+            feedback_action = effective_action.copy()
+        else:
+            feedback_action = applied_action.copy()
+        feedback_q_des = runtime_cfg.action_adapter.decode(feedback_action)
+        if runtime_cfg.passive_neck:
+            feedback_q_des[head_idx] = default_q[head_idx]
+        action_delta = feedback_action - np.asarray(last_action, dtype=np.float64)
+        action_feedback_gap = applied_action - feedback_action
+        clamp_overflow_action = applied_action - effective_action
+        feedback_q_des_redecode_error = float(np.max(np.abs(feedback_q_des - q_des)))
+        control_diag = scene.joint_control_diagnostics()
+
+        def _group_rms(values, indices):
+            selected = np.asarray(values, dtype=np.float64)[indices]
+            return float(np.sqrt(np.mean(np.square(selected))))
+
         diag = {
-            "finite": bool(np.all(np.isfinite(raw_policy_action)) and np.all(np.isfinite(raw_action)) and np.all(np.isfinite(applied_action)) and np.all(np.isfinite(q_des))),
+            "finite": bool(
+                np.all(np.isfinite(raw_policy_action))
+                and np.all(np.isfinite(raw_action))
+                and np.all(np.isfinite(applied_action))
+                and np.all(np.isfinite(feedback_action))
+                and np.all(np.isfinite(q_des))
+            ),
             "max_abs_raw_action": float(np.nanmax(np.abs(raw_policy_action))),
             "max_abs_applied_action": float(np.nanmax(np.abs(applied_action))),
+            "max_abs_feedback_action": float(np.nanmax(np.abs(feedback_action))),
+            "max_abs_action_feedback_gap": float(np.nanmax(np.abs(action_feedback_gap))),
+            "feedback_q_des_redecode_error": feedback_q_des_redecode_error,
             "max_abs_q_des": float(np.nanmax(np.abs(q_des))),
+            "waist_action_rms": _group_rms(applied_action, _WAIST_ACTION_INDICES),
+            "right_arm_action_rms": _group_rms(applied_action, _RIGHT_ARM_ACTION_INDICES),
+            "leg_action_rms": _group_rms(applied_action, _LEG_ACTION_INDICES),
+            "waist_action_delta_rms": _group_rms(action_delta, _WAIST_ACTION_INDICES),
+            "right_arm_action_delta_rms": _group_rms(action_delta, _RIGHT_ARM_ACTION_INDICES),
+            "leg_action_delta_rms": _group_rms(action_delta, _LEG_ACTION_INDICES),
+            "waist_joint_vel_rms": _group_rms(state.qd, _WAIST_ACTION_INDICES),
+            "right_arm_joint_vel_rms": _group_rms(state.qd, _RIGHT_ARM_ACTION_INDICES),
+            "leg_joint_vel_rms": _group_rms(state.qd, _LEG_ACTION_INDICES),
+            "station_xy": np.asarray(station_xy, dtype=np.float64).copy(),
+            "raw_action": applied_action.copy(),
+            "effective_action": effective_action.copy(),
+            "feedback_action": feedback_action.copy(),
+            "overflow_action": clamp_overflow_action,
+            "position_clamped": np.abs(clamp_overflow_action) > 1.0e-9,
+            **control_diag,
         }
-        return scene.step(), applied_action, diag
+        return scene.step(), feedback_action, diag
+
+    def _write_joint_diag(trial, segment, tick, side_name, lifecycle, cmd, diag):
+        nonlocal joint_diag_sequence_step
+        if joint_diag_writer is None:
+            return
+        base = scene.base_pos_w()
+        balance = scene.robot_balance_diagnostics()
+        row = {
+            "sequence_step": joint_diag_sequence_step,
+            "trial": trial,
+            "segment": segment,
+            "tick": tick,
+            "side": side_name,
+            "phase": lifecycle.phase.value,
+            "time_to_strike": "" if cmd is None else float(cmd.time_to_strike),
+            "base_x": float(base[0]),
+            "base_y": float(base[1]),
+            "base_z": float(base[2]),
+            "base_pitch_deg": float(np.asarray(balance["pelvis_rpy_deg"])[1]),
+            "base_ang_vel_norm": float(np.linalg.norm(balance["pelvis_ang_vel_w"])),
+            "com_support_margin": float(balance["support_margin"]),
+            "fallen": int(scene.base_fallen()),
+        }
+        values_by_prefix = {
+            "raw": diag["raw_action"],
+            "effective": diag["effective_action"],
+            "feedback": diag["feedback_action"],
+            "overflow": diag["overflow_action"],
+            "position_clamped": diag["position_clamped"].astype(np.int8),
+            "q": diag["q"],
+            "qd": diag["qd"],
+            "q_des": diag["q_des"],
+            "tracking_error": diag["tracking_error"],
+            "torque_requested": diag["torque_requested"],
+            "torque_applied": diag["torque_applied"],
+            "torque_clipped": diag["torque_clipped"].astype(np.int8),
+        }
+        for prefix, values in values_by_prefix.items():
+            for name, value in zip(JOINT_NAMES, np.asarray(values).reshape(-1)):
+                row[f"{prefix}__{name}"] = value
+        joint_diag_writer.writerow(row)
+        joint_diag_sequence_step += 1
 
     def _park_ball():
         """Drop the ball out of play (past the far edge) between rally serves."""
         scene.set_ball(
-            [scene.near_edge_x + scene.length + 1.0, 0.0, scene.table_height + 0.5],
+            [
+                scene.near_edge_x + scene.length + 1.0,
+                scene.table_center_y,
+                scene.table_surface_z + 0.5,
+            ],
             [0.0, 0.0, 0.0],
         )
 
@@ -1416,9 +1656,17 @@ def run_eval(args) -> dict:
     last_action = np.zeros(31, dtype=np.float64)
     fixed_station_xy = scene.base_pos_w()[:2].copy()
     max_rest_ticks = max(1, int(round(args.max_rest_seconds / dt)))
+    min_rest_ticks = max(0, int(round(args.min_rest_seconds / dt)))
+    if min_rest_ticks > max_rest_ticks:
+        raise ValueError(
+            f"--min-rest-seconds ({args.min_rest_seconds}) must be <= --max-rest-seconds ({args.max_rest_seconds})"
+        )
     transitions_seen: set = set()
     prev_side = None
     task_counter = 0
+    fallback_predict_args = argparse.Namespace(**vars(args))
+    fallback_predict_args.planner_mode = "bounce-aware"
+    real_planner_fallback_count = 0
 
     for trial in range(args.num_serves):
         # Side pattern FH, FH, BH, BH, ... exercises all four adjacent side
@@ -1433,6 +1681,7 @@ def run_eval(args) -> dict:
             transitions_seen.add((prev_side, side))
         prev_side = side
         strike_pt, serve_pos, serve_vel, serve_row = _sample_serve(rng, side, scene, physics, args, serve_manifest)
+        station_row = _select_station_manifest_row(station_manifest, side, strike_pt)
         if real_planner is not None:
             real_planner.reset_for_new_ball()
 
@@ -1447,13 +1696,22 @@ def run_eval(args) -> dict:
             # Continuous rally: keep the policy running (no reset, no teleport)
             # through follow-through/recovery until it is ready for the next ball.
             _park_ball()
-            for _ in range(max_rest_ticks):
+            for rest_tick in range(max_rest_ticks):
                 _events, last_action, _diag = _policy_tick(
                     lifecycle, source, last_action, fixed_station_xy
                 )
+                _write_joint_diag(
+                    trial,
+                    "rest",
+                    rest_tick,
+                    "forehand" if side >= 0 else "backhand",
+                    lifecycle,
+                    source.poll(),
+                    _diag,
+                )
                 if recorder is not None and trial < args.record_serves:
                     recorder.capture(scene)
-                if lifecycle.phase.value == "ready":
+                if rest_tick + 1 >= min_rest_ticks and lifecycle.phase.value == "ready":
                     break
 
         scene.set_ball(serve_pos, serve_vel)
@@ -1474,19 +1732,56 @@ def run_eval(args) -> dict:
         trial_nonfinite_ticks = 0
         trial_max_raw = 0.0
         trial_max_applied = 0.0
+        trial_max_feedback = 0.0
+        trial_max_action_feedback_gap = 0.0
+        trial_max_feedback_redecode_error = 0.0
         trial_max_q_des = 0.0
         side_name = "forehand" if side >= 0 else "backhand"
         contact_diag_row = _new_contact_diag_row(trial, side_name, strike_pt, serve_pos, serve_vel)
+        real_cmd_seen_this_trial = False
+        fallback_revision = 0
 
         for _tick in range(max_ticks):
             ball_pos, ball_vel = scene.ball_state()
             if real_planner is not None:
                 cmd = real_planner.update(ball_pos, float(scene.data.time))
                 if cmd is not None:
+                    if args.real_planner_no_command_fallback != "none":
+                        # A fallback command may already have engaged this ball in the
+                        # lifecycle. Keep the real planner on the same task_id and make
+                        # its revision newer so it can refine the temporary command.
+                        cmd.task_id = task_id
+                        cmd.task_revision = max(int(cmd.task_revision), fallback_revision)
                     cmd = _perturb_command(cmd, args, rng, RacketCommand)
                     source.submit(cmd)
+                    real_cmd_seen_this_trial = True
                 else:
-                    cmd = source.poll()
+                    use_fallback = (
+                        args.real_planner_no_command_fallback == "predictive-always"
+                        or (
+                            args.real_planner_no_command_fallback == "predictive-until-real"
+                            and not real_cmd_seen_this_trial
+                        )
+                    )
+                    if use_fallback:
+                        cmd = _predict_command(
+                            ball_pos,
+                            ball_vel,
+                            side,
+                            scene,
+                            physics,
+                            fallback_predict_args,
+                            task_id,
+                            fallback_revision,
+                            RacketCommand,
+                            strike_x_w=float(strike_pt[0]) if serve_manifest else None,
+                        )
+                        cmd = _perturb_command(cmd, args, rng, RacketCommand)
+                        source.submit(cmd)
+                        fallback_revision += 1
+                        real_planner_fallback_count += 1
+                    else:
+                        cmd = source.poll()
             else:
                 cmd = _predict_command(
                     ball_pos,
@@ -1505,13 +1800,23 @@ def run_eval(args) -> dict:
                 source.submit(cmd)
 
             racket_pre_pos, racket_pre_vel, _racket_site_xmat_pre = scene.racket_site_pose()
-            events, last_action, diag = _policy_tick(lifecycle, source, last_action, fixed_station_xy, serve_row)
+            events, last_action, diag = _policy_tick(
+                lifecycle, source, last_action, fixed_station_xy, station_row
+            )
+            _write_joint_diag(trial, "serve", _tick, side_name, lifecycle, cmd, diag)
             if recorder is not None and trial < args.record_serves:
                 recorder.capture(scene)
             if not diag["finite"]:
                 trial_nonfinite_ticks += 1
             trial_max_raw = max(trial_max_raw, diag["max_abs_raw_action"])
             trial_max_applied = max(trial_max_applied, diag["max_abs_applied_action"])
+            trial_max_feedback = max(trial_max_feedback, diag["max_abs_feedback_action"])
+            trial_max_action_feedback_gap = max(
+                trial_max_action_feedback_gap, diag["max_abs_action_feedback_gap"]
+            )
+            trial_max_feedback_redecode_error = max(
+                trial_max_feedback_redecode_error, diag["feedback_q_des_redecode_error"]
+            )
             trial_max_q_des = max(trial_max_q_des, diag["max_abs_q_des"])
 
             r_pos, r_vel, _racket_site_xmat = scene.racket_site_pose()
@@ -1586,7 +1891,23 @@ def run_eval(args) -> dict:
             if trace_writer is not None and trial < args.trace_serves:
                 floor_count, floor_min = _floor_contact_summary()
                 base = scene.base_pos_w()
+                balance = scene.robot_balance_diagnostics()
                 trace_cmd = cmd if cmd is not None else source.poll()
+                if trace_cmd is None:
+                    target_rel_base = None
+                    target_shoulder_distance = None
+                else:
+                    target_w = np.asarray(trace_cmd.position, dtype=np.float64)
+                    pelvis_rot_w = np.asarray(balance["pelvis_xmat_w"], dtype=np.float64)
+                    target_rel_base = pelvis_rot_w.T @ (target_w - base)
+                    target_shoulder_distance = float(
+                        np.linalg.norm(target_w - np.asarray(balance["right_shoulder_pos_w"]))
+                    )
+                pelvis_rpy = np.asarray(balance["pelvis_rpy_deg"], dtype=np.float64)
+                torso_rpy = np.asarray(balance["torso_rpy_deg"], dtype=np.float64)
+                pelvis_lin_vel = np.asarray(balance["pelvis_lin_vel_w"], dtype=np.float64)
+                pelvis_ang_vel = np.asarray(balance["pelvis_ang_vel_w"], dtype=np.float64)
+                com_w = np.asarray(balance["com_w"], dtype=np.float64)
                 trace_writer.writerow(
                     {
                         "trial": trial,
@@ -1596,6 +1917,26 @@ def run_eval(args) -> dict:
                         "base_x": float(base[0]),
                         "base_y": float(base[1]),
                         "base_z": float(base[2]),
+                        "base_roll_deg": float(pelvis_rpy[0]),
+                        "base_pitch_deg": float(pelvis_rpy[1]),
+                        "base_yaw_deg": float(pelvis_rpy[2]),
+                        "torso_roll_deg": float(torso_rpy[0]),
+                        "torso_pitch_deg": float(torso_rpy[1]),
+                        "torso_yaw_deg": float(torso_rpy[2]),
+                        "base_lin_vel_x": float(pelvis_lin_vel[0]),
+                        "base_lin_vel_y": float(pelvis_lin_vel[1]),
+                        "base_lin_vel_z": float(pelvis_lin_vel[2]),
+                        "base_ang_vel_x": float(pelvis_ang_vel[0]),
+                        "base_ang_vel_y": float(pelvis_ang_vel[1]),
+                        "base_ang_vel_z": float(pelvis_ang_vel[2]),
+                        "com_x": float(com_w[0]),
+                        "com_y": float(com_w[1]),
+                        "com_z": float(com_w[2]),
+                        "com_support_margin": float(balance["support_margin"]),
+                        "left_foot_contact": int(balance["left_foot_contact"]),
+                        "right_foot_contact": int(balance["right_foot_contact"]),
+                        "left_foot_speed_xy": float(balance["left_foot_speed_xy"]),
+                        "right_foot_speed_xy": float(balance["right_foot_speed_xy"]),
                         "ball_x": float(b_pos[0]),
                         "ball_y": float(b_pos[1]),
                         "ball_z": float(b_pos[2]),
@@ -1606,6 +1947,17 @@ def run_eval(args) -> dict:
                         "target_x": "" if trace_cmd is None else float(trace_cmd.position[0]),
                         "target_y": "" if trace_cmd is None else float(trace_cmd.position[1]),
                         "target_z": "" if trace_cmd is None else float(trace_cmd.position[2]),
+                        "station_x": float(diag["station_xy"][0]),
+                        "station_y": float(diag["station_xy"][1]),
+                        "station_error_xy": float(
+                            np.linalg.norm(np.asarray(base[:2]) - diag["station_xy"])
+                        ),
+                        "target_rel_base_x": "" if target_rel_base is None else float(target_rel_base[0]),
+                        "target_rel_base_y": "" if target_rel_base is None else float(target_rel_base[1]),
+                        "target_rel_base_z": "" if target_rel_base is None else float(target_rel_base[2]),
+                        "target_shoulder_distance": (
+                            "" if target_shoulder_distance is None else target_shoulder_distance
+                        ),
                         "time_to_strike": "" if trace_cmd is None else float(trace_cmd.time_to_strike),
                         "incoming_bounce": int(incoming_bounced),
                         "contacted": int(contacted),
@@ -1619,7 +1971,19 @@ def run_eval(args) -> dict:
                         "floor_contact_min_dist": "" if floor_min is None else float(floor_min),
                         "max_abs_raw_action": float(diag["max_abs_raw_action"]),
                         "max_abs_applied_action": float(diag["max_abs_applied_action"]),
+                        "max_abs_feedback_action": float(diag["max_abs_feedback_action"]),
+                        "max_abs_action_feedback_gap": float(diag["max_abs_action_feedback_gap"]),
+                        "feedback_q_des_redecode_error": float(diag["feedback_q_des_redecode_error"]),
                         "max_abs_q_des": float(diag["max_abs_q_des"]),
+                        "waist_action_rms": float(diag["waist_action_rms"]),
+                        "right_arm_action_rms": float(diag["right_arm_action_rms"]),
+                        "leg_action_rms": float(diag["leg_action_rms"]),
+                        "waist_action_delta_rms": float(diag["waist_action_delta_rms"]),
+                        "right_arm_action_delta_rms": float(diag["right_arm_action_delta_rms"]),
+                        "leg_action_delta_rms": float(diag["leg_action_delta_rms"]),
+                        "waist_joint_vel_rms": float(diag["waist_joint_vel_rms"]),
+                        "right_arm_joint_vel_rms": float(diag["right_arm_joint_vel_rms"]),
+                        "leg_joint_vel_rms": float(diag["leg_joint_vel_rms"]),
                     }
                 )
             # Incoming ball that flew past the robot without ever being contacted is a
@@ -1697,12 +2061,21 @@ def run_eval(args) -> dict:
             bucket["min_ball_racket_distance"] = min(bucket["min_ball_racket_distance"], min_distance)
             _update_max(bucket, "max_abs_raw_action", trial_max_raw)
             _update_max(bucket, "max_abs_applied_action", trial_max_applied)
+            _update_max(bucket, "max_abs_feedback_action", trial_max_feedback)
+            _update_max(bucket, "max_abs_action_feedback_gap", trial_max_action_feedback_gap)
+            _update_max(
+                bucket,
+                "max_feedback_q_des_redecode_error",
+                trial_max_feedback_redecode_error,
+            )
             _update_max(bucket, "max_abs_q_des", trial_max_q_des)
 
     if recorder is not None:
         recorder.close()
     if trace_fh is not None:
         trace_fh.close()
+    if joint_diag_fh is not None:
+        joint_diag_fh.close()
     if contact_diag_fh is not None:
         contact_diag_fh.close()
     scene.close()
@@ -1734,6 +2107,7 @@ def run_eval(args) -> dict:
                 "side_mode": args.side_mode,
                 "incoming_trajectory": args.incoming_trajectory,
                 "planner_mode": args.planner_mode,
+                "table_frame_origin_world_xyz": [float(value) for value in scene.offset],
                 "real_planner": (
                     {
                         "yaml": str(real_planner.yaml_path),
@@ -1744,6 +2118,8 @@ def run_eval(args) -> dict:
                         "solve_calls": int(real_planner.solve_calls),
                         "command_count": int(real_planner.command_count),
                         "no_command_count": int(real_planner.no_command_count),
+                        "no_command_fallback_mode": str(args.real_planner_no_command_fallback),
+                        "fallback_command_count": int(real_planner_fallback_count),
                     }
                     if real_planner is not None
                     else None
@@ -1762,12 +2138,39 @@ def run_eval(args) -> dict:
                 },
                 "policy_joint_order": args.policy_joint_order,
                 "policy_obs_dim": int(getattr(policy, "obs_dim", 111)),
+                "last_action_feedback_mode": args.last_action_feedback_mode,
                 "kp_scale": float(args.kp_scale),
                 "kd_scale": float(args.kd_scale),
                 "lifecycle_recovery_blend_seconds": float(args.lifecycle_recovery_blend_seconds),
                 "lifecycle_recovery_blend_velocity": bool(args.lifecycle_recovery_blend_velocity),
                 "serve_manifest": str(args.serve_manifest) if args.serve_manifest else None,
+                "serve_strike_y_ranges": {
+                    "forehand": (
+                        [float(v) for v in args.serve_forehand_y_range]
+                        if args.serve_forehand_y_range is not None
+                        else None
+                    ),
+                    "backhand": (
+                        [float(v) for v in args.serve_backhand_y_range]
+                        if args.serve_backhand_y_range is not None
+                        else None
+                    ),
+                },
+                "station_manifest": (
+                    str(args.station_manifest)
+                    if args.station_manifest
+                    else (str(args.serve_manifest) if args.serve_manifest else None)
+                ),
+                "dynamic_station": {
+                    "mode": str(args.station_mode),
+                    "clip_x": [float(v) for v in args.dynamic_station_clip_x],
+                    "clip_y": [float(v) for v in args.dynamic_station_clip_y],
+                    "blend": float(args.dynamic_station_blend),
+                },
                 "contact_diag_csv": str(args.contact_diag_csv) if args.contact_diag_csv else None,
+                "joint_action_diag_csv": (
+                    str(args.joint_action_diag_csv) if args.joint_action_diag_csv else None
+                ),
             }
         )
     return result
@@ -1790,6 +2193,36 @@ def parse_args() -> argparse.Namespace:
         "--serve-manifest",
         default=None,
         help="Optional TSV motion manifest; sample strike points from its racket_pos target boxes.",
+    )
+    parser.add_argument(
+        "--serve-forehand-y-range",
+        nargs=2,
+        type=float,
+        default=None,
+        metavar=("LO", "HI"),
+        help=(
+            "Optional world/table-centred y range for forehand strike samples. "
+            "Overrides only manifest strike y; x/z and motion metadata remain unchanged."
+        ),
+    )
+    parser.add_argument(
+        "--serve-backhand-y-range",
+        nargs=2,
+        type=float,
+        default=None,
+        metavar=("LO", "HI"),
+        help=(
+            "Optional world/table-centred y range for backhand strike samples. "
+            "Overrides only manifest strike y; x/z and motion metadata remain unchanged."
+        ),
+    )
+    parser.add_argument(
+        "--station-manifest",
+        default=None,
+        help=(
+            "Optional TSV used only for dynamic-station motion metadata. "
+            "Defaults to --serve-manifest for backward compatibility."
+        ),
     )
     parser.add_argument(
         "--incoming-trajectory",
@@ -1851,6 +2284,15 @@ def parse_args() -> argparse.Namespace:
         type=float,
         default=None,
         help="Override planner table_c_v. None uses the YAML value; negative disables override.",
+    )
+    parser.add_argument(
+        "--real-planner-no-command-fallback",
+        choices=["none", "predictive-until-real", "predictive-always"],
+        default="none",
+        help="Eval-only semantic alignment experiment for --planner-mode real-hope-planner. "
+             "When the real planner returns no command, submit a temporary bounce-aware predictive "
+             "command either until the first real command for the current ball or on every no-command "
+             "tick. Default none preserves the deploy lifecycle exactly.",
     )
     parser.add_argument(
         "--planner-target-pos-offset",
@@ -1940,8 +2382,8 @@ def parse_args() -> argparse.Namespace:
         "--station-mode",
         choices=["auto", "fixed", "dynamic-from-manifest"],
         default="auto",
-        help="Observation station source. auto uses dynamic station only when --serve-manifest rows contain "
-             "motion_racket_offset_x/y; fixed preserves the legacy fixed-station eval.",
+        help="Observation station source. auto uses dynamic station only when the selected station-manifest "
+             "row contains motion_racket_offset_x/y; fixed preserves the legacy fixed-station eval.",
     )
     parser.add_argument(
         "--dynamic-station-clip-x",
@@ -1987,9 +2429,25 @@ def parse_args() -> argparse.Namespace:
              "independent: reset the robot per serve (isolated-swing evaluation only).",
     )
     parser.add_argument(
+        "--last-action-feedback-mode",
+        choices=["auto", "raw", "effective"],
+        default="auto",
+        help="Actor feedback contract. auto reads the runtime config; raw preserves legacy behavior; "
+             "effective feeds back the residual represented by the clamped q_des. "
+             "The current tick's physical q_des is unchanged.",
+    )
+    parser.add_argument(
         "--max-rest-seconds", type=float, default=2.0,
         help="continuous mode: max seconds the policy gets between serves to finish "
              "follow-through/recovery before the next ball is served.",
+    )
+    parser.add_argument(
+        "--min-rest-seconds",
+        type=float,
+        default=0.0,
+        help="continuous mode: minimum seconds to keep running recovery before the next serve, "
+             "even if the deploy lifecycle has already returned to ready. This tests whether "
+             "the MuJoCo continuous eval is dominated by too-short between-ball recovery.",
     )
     parser.add_argument(
         "--max-trial-seconds", type=float, default=3.0, help="Max simulated seconds per serve before scoring."
@@ -2012,12 +2470,18 @@ def parse_args() -> argparse.Namespace:
              "during recovery. By default only target position is blended and recovery velocity is zero.",
     )
     parser.add_argument(
-        "--near-edge-x", type=float, default=0.30,
-        help="MuJoCo x of the table's near edge (sets the robot-to-table placement).",
+        "--near-edge-x", type=float, default=None,
+        help="Optional eval-only table-near-edge X override. Default uses configs/table_frame.yaml.",
     )
     parser.add_argument(
         "--strike-plane-x", type=float, default=0.0,
         help="Strike plane, table-frame x (0 = the near table edge); the fixed intercept plane.",
+    )
+    parser.add_argument(
+        "--force-serve-strike-plane-x",
+        action="store_true",
+        help="When --serve-manifest is used, replace the manifest strike x with --strike-plane-x. "
+             "This is eval-only and lets planner/no-planner comparisons share the same strike plane.",
     )
     parser.add_argument("--seed", type=int, default=0, help="RNG seed for the example serve distribution.")
     parser.add_argument("--view", action="store_true", help="Launch the MuJoCo passive viewer (debug only).")
@@ -2025,6 +2489,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--record-serves", type=int, default=5, help="Number of initial serves to record.")
     parser.add_argument("--trace-csv", default=None, help="Write per-tick MuJoCo eval diagnostics to CSV.")
     parser.add_argument("--trace-serves", type=int, default=5, help="Number of initial serves to trace.")
+    parser.add_argument(
+        "--joint-action-diag-csv",
+        default=None,
+        help="Write canonical per-joint raw/effective/q_des/tracking/torque diagnostics to CSV.",
+    )
     parser.add_argument(
         "--contact-diag-csv",
         default=None,

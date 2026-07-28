@@ -1,0 +1,1239 @@
+--- git status ---
+On branch main
+Your branch is up to date with 'origin/main'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   legged_lab/envs/a3_tt/a3_tt_config.py
+	modified:   legged_lab/envs/base/tt_config.py
+	modified:   legged_lab/envs/base/tt_env.py
+	modified:   legged_lab/mdp/rewards.py
+	modified:   legged_lab/scripts/a3_stage1_action_probe.py
+	modified:   legged_lab/scripts/tt_webrtc_probe.py
+
+no changes added to commit (use "git add" and/or "git commit -a") 
+
+
+--- git diff ---
+diff --git a/legged_lab/envs/a3_tt/a3_tt_config.py b/legged_lab/envs/a3_tt/a3_tt_config.py
+index d2d6ca4..d0bf674 100644
+--- a/legged_lab/envs/a3_tt/a3_tt_config.py
++++ b/legged_lab/envs/a3_tt/a3_tt_config.py
+@@ -2,6 +2,8 @@ from isaaclab.managers import CurriculumTermCfg as CurrTerm
+ from isaaclab.managers import EventTermCfg as EventTerm
+ from isaaclab.managers import RewardTermCfg as RewTerm
+ from isaaclab.managers.scene_entity_cfg import SceneEntityCfg
++import isaaclab.sim as sim_utils
++from isaaclab.assets.rigid_object import RigidObjectCfg
+ from isaaclab.utils import configclass
+ from isaaclab_rl.rsl_rl import RslRlPpoActorCriticCfg, RslRlPpoAlgorithmCfg
+ 
+@@ -62,6 +64,28 @@ A3_ALLOWED_TASK_CONTACT_BODY_NAMES = [
+ A3_UNDESIRED_CONTACT_BODY_NAMES = (
+     f"^(?!({'|'.join(A3_ALLOWED_TASK_CONTACT_BODY_NAMES)})$).*"
+ )
++
++A3_STAGE1_TABLE_FRAME_CFG = RigidObjectCfg(
++    prim_path="/World/envs/env_.*/Table",
++    spawn=sim_utils.CuboidCfg(
++        size=(0.01, 0.01, 0.01),
++        rigid_props=sim_utils.RigidBodyPropertiesCfg(
++            kinematic_enabled=True,
++            disable_gravity=True,
++        ),
++        collision_props=sim_utils.CollisionPropertiesCfg(collision_enabled=False),
++        visual_material=sim_utils.PreviewSurfaceCfg(
++            diffuse_color=(0.1, 0.1, 0.1),
++            opacity=0.0,
++        ),
++    ),
++    init_state=RigidObjectCfg.InitialStateCfg(
++        pos=(0.0, 0.0, 0.0),
++        rot=(1.0, 0.0, 0.0, 0.0),
++        lin_vel=(0.0, 0.0, 0.0),
++        ang_vel=(0.0, 0.0, 0.0),
++    ),
++)
+ A3_INITIAL_ACTION_SCALE = 0.08
+ A3_ACTION_SCALE_BY_JOINT = [
+     0.04,  # waist_yaw_joint
+@@ -173,10 +197,10 @@ A3_STAGE1_UPPER_BODY_JOINT_POS = {
+     "right_wrist_pitch_joint": 0.0,
+     "right_wrist_yaw_joint": 0.0,
+ }
+-A3_STAGE1_STAND_ROOT_POS = (-1.6, 0.0, 1.035)
++A3_STAGE1_STAND_ROOT_POS = (-1.6, 0.0, 1.100)
+ A3_STAGE1_STAND_INIT_UPPER_BODY_JOINT_POS = {
+     **A3_STAGE1_UPPER_BODY_JOINT_POS,
+-    "waist_pitch_joint": 0.02,
++    "waist_pitch_joint": 0.0,
+ }
+ A3_STAGE1_LOWER_BODY_JOINT_POS = {
+     "left_hip_pitch_joint": -0.02,
+@@ -194,22 +218,22 @@ A3_STAGE1_LOWER_BODY_JOINT_POS = {
+ }
+ A3_STAGE1_STAND_INIT_LOWER_BODY_JOINT_POS = {
+     **A3_STAGE1_LOWER_BODY_JOINT_POS,
+-    "left_hip_pitch_joint": -0.06,
+-    "left_hip_roll_joint": 0.18,
++    "left_hip_pitch_joint": -0.12,
++    "left_hip_roll_joint": 0.04,
+     "left_hip_yaw_joint": 0.0,
+-    "left_knee_joint": 0.54,
+-    "left_ankle_pitch_joint": -0.23,
+-    "left_ankle_roll_joint": -0.045,
+-    "right_hip_pitch_joint": -0.06,
+-    "right_hip_roll_joint": -0.18,
++    "left_knee_joint": 0.04,
++    "left_ankle_pitch_joint": -0.14,
++    "left_ankle_roll_joint": -0.018,
++    "right_hip_pitch_joint": -0.12,
++    "right_hip_roll_joint": -0.04,
+     "right_hip_yaw_joint": 0.0,
+-    "right_knee_joint": 0.54,
+-    "right_ankle_pitch_joint": -0.23,
+-    "right_ankle_roll_joint": 0.045,
++    "right_knee_joint": 0.04,
++    "right_ankle_pitch_joint": -0.14,
++    "right_ankle_roll_joint": 0.018,
+ }
+ A3_STAGE1_STAND_RESET_LOWER_BODY_JOINT_POS = A3_STAGE1_STAND_INIT_LOWER_BODY_JOINT_POS.copy()
+ A3_STAGE1_STAND_LOWER_BODY_JOINT_POS = A3_STAGE1_STAND_INIT_LOWER_BODY_JOINT_POS.copy()
+-A3_STAGE1_STAND_TARGET_Z = 0.950
++A3_STAGE1_STAND_TARGET_Z = 1.000
+ A3_STAGE1_STAND_RESET_JOINT_POS = {
+     **A3_STAGE1_STAND_INIT_UPPER_BODY_JOINT_POS,
+     **A3_STAGE1_STAND_RESET_LOWER_BODY_JOINT_POS,
+@@ -341,18 +365,18 @@ A3_STAGE1_STAND_ACTION_SCALE_BY_JOINT = [
+     0.008,  # right_wrist_roll_joint
+     0.008,  # right_wrist_pitch_joint
+     0.008,  # right_wrist_yaw_joint
+-    0.240,  # left_hip_pitch_joint
+-    0.160,  # left_hip_roll_joint
+-    0.030,  # left_hip_yaw_joint
+-    0.320,  # left_knee_joint
+-    0.115,  # left_ankle_pitch_joint
+-    0.055,  # left_ankle_roll_joint
+-    0.240,  # right_hip_pitch_joint
+-    0.160,  # right_hip_roll_joint
+-    0.030,  # right_hip_yaw_joint
+-    0.320,  # right_knee_joint
+-    0.115,  # right_ankle_pitch_joint
+-    0.055,  # right_ankle_roll_joint
++    0.340,  # left_hip_pitch_joint
++    0.200,  # left_hip_roll_joint
++    0.040,  # left_hip_yaw_joint
++    0.480,  # left_knee_joint
++    0.170,  # left_ankle_pitch_joint
++    0.080,  # left_ankle_roll_joint
++    0.340,  # right_hip_pitch_joint
++    0.200,  # right_hip_roll_joint
++    0.040,  # right_hip_yaw_joint
++    0.480,  # right_knee_joint
++    0.170,  # right_ankle_pitch_joint
++    0.080,  # right_ankle_roll_joint
+ ]
+ A3_STAGE1_BASE_POSE_RANGE = {
+     "x": (0.16, 0.16),
+@@ -413,8 +437,10 @@ A3_STAGE1_FUTURE_PADDLE_Y_OFFSET = A3_STAGE5G_FUTURE_PADDLE_Y_OFFSET
+ A3_STAGE1_INVALID_ROBOT_XY = (-1.44, 0.35)
+ A3_STAGE1_TARGET_X_RANGE = (-1.45, -1.43)
+ A3_STAGE1_TARGET_Y_RANGE = (0.345, 0.355)
++A3_STAGE1_ROUTE_TARGET_X_RANGE = (-1.440, -1.440)
++A3_STAGE1_ROUTE_TARGET_Y_RANGE = (0.24, 0.52)
+ A3_STAGE1_LATERAL_TARGET_X_RANGE = (-1.440, -1.440)
+-A3_STAGE1_LATERAL_TARGET_Y_RANGE = (0.350, 0.350)
++A3_STAGE1_LATERAL_TARGET_Y_RANGE = (0.355, 0.405)
+ A3_STAGE1_TERMINATION_MIN_BASE_Z = 0.86
+ A3_STAGE1_TERMINATION_MAX_FLAT_ORIENTATION_L2 = 0.18
+ A3_STAGE1_TERMINATION_ROBOT_X_RANGE = (-4.00, 0.30)
+@@ -429,12 +455,12 @@ A3_STAGE1_DAMPING_SCALES = {
+ }
+ A3_STAGE1_STAND_DAMPING_SCALES = {
+     "waist": 1.00,
+-    "legs": 1.80,
+-    "feet": 1.25,
++    "legs": 2.00,
++    "feet": 2.00,
+ }
+ A3_STAGE1_STAND_STIFFNESS_SCALES = {
+-    "legs": 1.25,
+-    "feet": 0.90,
++    "legs": 2.00,
++    "feet": 2.00,
+ }
+ A3_STAGE1_ZERO_DELAY_ACTUATOR_GROUPS = {"waist", "legs", "feet"}
+ A3_STAGE5F_BALL_ABILITY_PHASES = [
+@@ -760,7 +786,8 @@ class A3TableTennisEnvCfg(TTEnvCfg):
+         self.robot.num_actions = len(A3_T2D5_JOINT_NAMES)
+         self.robot.num_joints = len(A3_T2D5_JOINT_NAMES)
+         self.robot.action_scale = A3_ACTION_SCALE_BY_JOINT.copy()
+-        self.robot.terminate_contacts_body_names = ["pelvis_link", "torso_Link"]
++        self.robot.terminate_contacts_body_names = A3_UNDESIRED_CONTACT_BODY_NAMES
++        self.robot.termination_contact_force_threshold = 1.0
+         self.robot.feet_body_names = A3_FEET_BODY_NAMES
+         self.robot.paddle_body_name = "right_hand_pingpang_Link"
+         self.robot.paddle_local_offset = (0.210211399202899, 0.0320784994676765, 0.0320358706296689)
+@@ -1699,6 +1726,7 @@ class A3Stage1BalanceMoveEnvCfg(A3Stage5ReadyEnvCfg):
+ 
+     def __post_init__(self):
+         super().__post_init__()
++        self.scene.table = A3_STAGE1_TABLE_FRAME_CFG
+         self.scene.env_spacing = 4.0
+         self.scene.max_episode_length_s = 5.0
+         self.commands.resampling_time_range = (5.0, 5.0)
+@@ -1827,16 +1855,30 @@ class A3Stage1StandRewardCfg(A3Stage1BalanceMoveRewardCfg):
+     reward_alive = RewTerm(
+         func=mdp.reward_alive_height_gated,
+         weight=4.0,
+-        params={"min_z": 0.930, "transition": 0.050, "floor": 0.02},
++        params={"min_z": 0.965, "transition": 0.035, "floor": 0.02},
+     )
+     termination_penalty = RewTerm(func=mdp.is_terminated, weight=-1200.0)
+-    lin_vel_x_l2 = RewTerm(func=mdp.lin_vel_x_l2, weight=-2.5)
++    lin_vel_x_l2 = RewTerm(func=mdp.lin_vel_x_l2, weight=-8.0)
+     lin_vel_y_l2 = RewTerm(func=mdp.lin_vel_y_l2, weight=-2.0)
+-    flat_orientation_l2 = RewTerm(func=mdp.flat_orientation_l2, weight=-80.0)
++    flat_orientation_l2 = RewTerm(func=mdp.flat_orientation_l2, weight=-180.0)
+     reward_base_height_target = RewTerm(
+-        func=mdp.reward_robot_base_height_target,
+-        weight=260.0,
+-        params={"target_z": A3_STAGE1_STAND_TARGET_Z, "std": 0.055},
++        func=mdp.reward_stage1_healthy_p0_hold,
++        weight=230.0,
++        params={
++            "target_z": A3_STAGE1_STAND_TARGET_Z,
++            "min_z": 0.960,
++            "z_deadband": 0.025,
++            "z_std": 0.055,
++            "z_transition": 0.020,
++            "max_flat_l2": 0.085,
++            "flat_std": 0.060,
++            "max_forward_gravity_x": 0.105,
++            "forward_std": 0.060,
++            "target_xy": A3_STAGE1_INVALID_ROBOT_XY,
++            "x_margin": 10.0,
++            "y_margin": 10.0,
++            "xy_std": 10.0,
++        },
+     )
+     penalty_base_height_target = RewTerm(
+         func=mdp.penalty_robot_base_height_target_l2,
+@@ -1860,15 +1902,15 @@ class A3Stage1StandRewardCfg(A3Stage1BalanceMoveRewardCfg):
+     )
+     reward_base_height_recovery_rate = RewTerm(
+         func=mdp.reward_base_height_recovery_rate,
+-        weight=0.0,
++        weight=10.0,
+         params={"target_z": A3_STAGE1_STAND_TARGET_Z, "deadband": 0.018, "std": 0.070, "max_rate": 1.0},
+     )
+     reward_stage1_low_height_lift_rate = RewTerm(
+         func=mdp.reward_stage1_low_height_lift_rate,
+-        weight=0.0,
++        weight=28.0,
+         params={
+-            "min_z": 0.880,
+-            "healthy_z": 0.950,
++            "min_z": 0.940,
++            "healthy_z": 0.990,
+             "min_up_rate": 0.015,
+             "max_up_rate": 0.35,
+             "max_reward": 1.0,
+@@ -1876,10 +1918,10 @@ class A3Stage1StandRewardCfg(A3Stage1BalanceMoveRewardCfg):
+     )
+     penalty_stage1_low_height_drop_rate = RewTerm(
+         func=mdp.penalty_stage1_low_height_drop_rate,
+-        weight=0.0,
++        weight=-28.0,
+         params={
+-            "min_z": 0.880,
+-            "healthy_z": 0.950,
++            "min_z": 0.940,
++            "healthy_z": 0.990,
+             "max_safe_down_rate": 0.010,
+             "max_down_rate": 0.35,
+             "max_penalty": 1.0,
+@@ -1887,15 +1929,30 @@ class A3Stage1StandRewardCfg(A3Stage1BalanceMoveRewardCfg):
+     )
+     reward_upright_recovery_rate = RewTerm(
+         func=mdp.reward_upright_recovery_rate,
+-        weight=0.0,
++        weight=8.0,
+         params={"deadband": 0.018, "std": 0.055, "max_rate": 1.0},
+     )
++    reward_stage1_upright_progress = RewTerm(
++        func=mdp.reward_stage1_upright_progress_height_gated,
++        weight=32.0,
++        params={
++            "min_z": 0.965,
++            "z_transition": 0.030,
++            "flat_deadband": 0.085,
++            "pitch_deadband": 0.095,
++            "flat_std": 0.055,
++            "pitch_std": 0.050,
++            "flat_weight": 0.45,
++            "pitch_weight": 0.55,
++            "max_rate": 1.0,
++        },
++    )
+     reward_stage1_soft_recovery = RewTerm(
+         func=mdp.reward_stage1_soft_recovery,
+-        weight=0.0,
++        weight=18.0,
+         params={
+             "target_z": A3_STAGE1_STAND_TARGET_Z,
+-            "recover_below_z": 0.965,
++            "recover_below_z": 0.990,
+             "max_flat_l2": 0.095,
+             "max_forward_gravity_x": 0.115,
+             "height_std": 0.060,
+@@ -1906,16 +1963,16 @@ class A3Stage1StandRewardCfg(A3Stage1BalanceMoveRewardCfg):
+     )
+     reward_stage1_recovery_posture_score = RewTerm(
+         func=mdp.reward_stage1_recovery_posture_score,
+-        weight=0.0,
++        weight=24.0,
+         params={
+             "target_z": A3_STAGE1_STAND_TARGET_Z,
+-            "recover_below_z": 0.980,
++            "recover_below_z": 0.995,
+             "max_flat_l2": 0.090,
+             "max_forward_gravity_x": 0.105,
+             "height_std": 0.060,
+             "flat_std": 0.060,
+             "forward_std": 0.060,
+-            "min_root_z": 0.940,
++            "min_root_z": 0.960,
+         },
+     )
+     reward_stage1_result_bound_recovery = RewTerm(
+@@ -1923,8 +1980,8 @@ class A3Stage1StandRewardCfg(A3Stage1BalanceMoveRewardCfg):
+         weight=45.0,
+         params={
+             "target_z": A3_STAGE1_STAND_TARGET_Z,
+-            "recover_below_z": 0.945,
+-            "healthy_min_z": 0.950,
++            "recover_below_z": 0.970,
++            "healthy_min_z": 0.980,
+             "max_flat_l2": 0.120,
+             "healthy_flat_l2": 0.085,
+             "max_abs_gravity_x": 0.140,
+@@ -1932,8 +1989,8 @@ class A3Stage1StandRewardCfg(A3Stage1BalanceMoveRewardCfg):
+             "height_std": 0.045,
+             "flat_std": 0.045,
+             "pitch_std": 0.050,
+-            "min_root_z": 0.875,
+-            "posture_progress_min_z": 0.885,
++            "min_root_z": 0.940,
++            "posture_progress_min_z": 0.950,
+             "min_height_progress": 0.0010,
+             "healthy_bonus": 0.50,
+             "max_reward": 2.0,
+@@ -1954,24 +2011,27 @@ class A3Stage1StandRewardCfg(A3Stage1BalanceMoveRewardCfg):
+     )
+     reward_xy_anchor = RewTerm(
+         func=mdp.reward_robot_xy_target_height_gated,
+-        weight=0.0,
++        weight=45.0,
+         params={
+             "target_xy": A3_STAGE1_INVALID_ROBOT_XY,
+-            "std": 0.120,
+-            "min_z": 0.940,
+-            "transition": 0.010,
++            "std": 0.085,
++            "min_z": 0.955,
++            "transition": 0.020,
+             "floor": 0.0,
+         },
+     )
+     penalty_stage1_xy_drift = RewTerm(
+-        func=mdp.penalty_robot_xy_drift,
+-        weight=0.0,
++        func=mdp.penalty_robot_xy_drift_height_gated,
++        weight=-30.0,
+         params={
+             "target_xy": A3_STAGE1_INVALID_ROBOT_XY,
+-            "x_margin": 0.035,
+-            "y_margin": 0.035,
+-            "std": 0.120,
+-            "max_penalty": 5.0,
++            "x_margin": 0.025,
++            "y_margin": 0.030,
++            "std": 0.100,
++            "max_penalty": 6.0,
++            "min_z": 0.940,
++            "transition": 0.030,
++            "floor": 0.15,
+         },
+     )
+     penalty_stage1_forward_x_velocity = RewTerm(
+@@ -1986,48 +2046,51 @@ class A3Stage1StandRewardCfg(A3Stage1BalanceMoveRewardCfg):
+     )
+     reward_stage1_xy_return_velocity = RewTerm(
+         func=mdp.reward_robot_axis_velocity_towards_target_height_gated,
+-        weight=0.0,
++        weight=14.0,
+         params={
+             "target_xy": A3_STAGE1_INVALID_ROBOT_XY,
+-            "x_margin": 0.035,
+-            "y_margin": 0.035,
+-            "max_x_speed": 0.080,
+-            "max_y_speed": 0.060,
+-            "x_weight": 0.70,
+-            "y_weight": 0.30,
+-            "min_z": 0.940,
+-            "transition": 0.010,
++            "x_margin": 0.025,
++            "y_margin": 0.030,
++            "max_x_speed": 0.100,
++            "max_y_speed": 0.050,
++            "x_weight": 0.80,
++            "y_weight": 0.20,
++            "min_z": 0.950,
++            "transition": 0.020,
+             "floor": 0.0,
+         },
+     )
+     penalty_stage1_xy_away_velocity = RewTerm(
+-        func=mdp.penalty_robot_axis_velocity_away_from_target,
+-        weight=0.0,
++        func=mdp.penalty_robot_axis_velocity_away_from_target_height_gated,
++        weight=-24.0,
+         params={
+             "target_xy": A3_STAGE1_INVALID_ROBOT_XY,
+-            "x_margin": 0.035,
+-            "y_margin": 0.035,
+-            "x_std": 0.130,
+-            "y_std": 0.130,
+-            "x_weight": 0.70,
+-            "y_weight": 0.30,
+-            "max_penalty": 5.0,
++            "x_margin": 0.025,
++            "y_margin": 0.030,
++            "x_std": 0.095,
++            "y_std": 0.120,
++            "x_weight": 0.80,
++            "y_weight": 0.20,
++            "max_penalty": 4.0,
++            "min_z": 0.940,
++            "transition": 0.030,
++            "floor": 0.10,
+         },
+     )
+     penalty_height_margin = RewTerm(
+         func=mdp.penalty_robot_low_base_height,
+-        weight=0.0,
+-        params={"min_z": 0.965, "std": 0.065, "max_penalty": 5.0},
++        weight=-55.0,
++        params={"min_z": 0.985, "std": 0.045, "max_penalty": 5.0},
+     )
+     penalty_low_base_height_barrier = RewTerm(
+         func=mdp.penalty_robot_low_base_height_barrier,
+-        weight=-80.0,
+-        params={"soft_min_z": 0.900, "hard_min_z": 0.875, "power": 2.0, "max_penalty": 5.0},
++        weight=-140.0,
++        params={"soft_min_z": 0.965, "hard_min_z": 0.940, "power": 2.0, "max_penalty": 5.0},
+     )
+     penalty_low_base_height = RewTerm(
+         func=mdp.penalty_robot_low_base_height,
+-        weight=-150.0,
+-        params={"min_z": 0.940, "std": 0.050, "max_penalty": 5.0},
++        weight=-220.0,
++        params={"min_z": 0.970, "std": 0.045, "max_penalty": 5.0},
+     )
+     penalty_flat_orientation_margin = RewTerm(
+         func=mdp.penalty_flat_orientation_margin,
+@@ -2036,12 +2099,12 @@ class A3Stage1StandRewardCfg(A3Stage1BalanceMoveRewardCfg):
+     )
+     penalty_stage1_forward_pitch_margin = RewTerm(
+         func=mdp.penalty_stage1_forward_pitch_margin,
+-        weight=0.0,
++        weight=-25.0,
+         params={"max_forward_gravity_x": 0.115, "std": 0.065, "max_penalty": 6.0},
+     )
+     penalty_stage1_bad_posture = RewTerm(
+         func=mdp.penalty_stage1_bad_posture,
+-        weight=0.0,
++        weight=-45.0,
+         params={
+             "min_base_z": 0.940,
+             "max_flat_l2": 0.120,
+@@ -2052,27 +2115,27 @@ class A3Stage1StandRewardCfg(A3Stage1BalanceMoveRewardCfg):
+     )
+     penalty_stage1_unproductive_recovery_action = RewTerm(
+         func=mdp.penalty_stage1_unproductive_recovery_action,
+-        weight=0.0,
++        weight=-12.0,
+         params={
+             "target_z": A3_STAGE1_STAND_TARGET_Z,
+-            "recover_below_z": 0.965,
++            "recover_below_z": 0.990,
+             "max_flat_l2": 0.095,
+             "max_abs_gravity_x": 0.115,
+             "min_height_progress": 0.0015,
+             "min_flat_progress": 0.0015,
+             "min_pitch_progress": 0.0015,
+-            "action_l2_ref": 4.0,
++            "action_l2_ref": 1.5,
+             "max_penalty": 3.0,
+         },
+     )
+     penalty_stage1_passive_low_posture = RewTerm(
+         func=mdp.penalty_stage1_passive_low_posture,
+-        weight=0.0,
++        weight=-18.0,
+         params={
+-            "recover_below_z": 0.950,
+-            "min_root_z": 0.880,
++            "recover_below_z": 0.975,
++            "min_root_z": 0.940,
+             "min_height_progress": 0.0015,
+-            "min_hip_knee_action_l1": 0.24,
++            "min_hip_knee_action_l1": 0.22,
+             "max_penalty": 3.0,
+         },
+     )
+@@ -2090,7 +2153,7 @@ class A3Stage1StandRewardCfg(A3Stage1BalanceMoveRewardCfg):
+     action_l2 = RewTerm(func=mdp.action_l2, weight=0.0)
+     action_l2_healthy = RewTerm(
+         func=mdp.penalty_action_l2_healthy_gated,
+-        weight=-6.0,
++        weight=-1.2,
+         params={
+             "target_z": A3_STAGE1_STAND_TARGET_Z,
+             "z_deadband": 0.030,
+@@ -2098,12 +2161,12 @@ class A3Stage1StandRewardCfg(A3Stage1BalanceMoveRewardCfg):
+             "max_flat_l2": 0.095,
+             "flat_std": 0.065,
+             "target_xy": A3_STAGE1_INVALID_ROBOT_XY,
+-            "x_margin": 0.040,
+-            "y_margin": 0.040,
+-            "xy_std": 0.120,
++            "x_margin": 10.0,
++            "y_margin": 10.0,
++            "xy_std": 10.0,
+             "min_gate": 0.0,
+-            "target_delta_ref": 0.040,
+-            "max_penalty": 8.0,
++            "target_delta_ref": 0.050,
++            "max_penalty": 10.0,
+         },
+     )
+     undesired_contacts = RewTerm(
+@@ -2130,7 +2193,7 @@ class A3Stage1StandRewardCfg(A3Stage1BalanceMoveRewardCfg):
+         weight=0.0,
+         params={
+             "target_z": A3_STAGE1_STAND_TARGET_Z,
+-            "min_z": 0.950,
++            "min_z": 0.970,
+             "z_deadband": 0.030,
+             "z_std": 0.050,
+             "z_transition": 0.010,
+@@ -2146,8 +2209,8 @@ class A3Stage1StandRewardCfg(A3Stage1BalanceMoveRewardCfg):
+     )
+     reward_standing_stability = RewTerm(
+         func=mdp.reward_standing_stability_height_gated,
+-        weight=0.0,
+-        params={"min_z": 0.950, "transition": 0.010, "floor": 0.0, **_a3_stage1_stand_stability_params()},
++        weight=120.0,
++        params={"min_z": 0.965, "transition": 0.020, "floor": 0.0, **_a3_stage1_stand_stability_params()},
+     )
+     joint_deviation_hip = RewTerm(
+         func=mdp.joint_deviation_l1,
+@@ -2370,58 +2433,91 @@ class A3Stage1RecoveryStandRewardCfg(A3Stage1StandRewardCfg):
+ @configclass
+ class A3Stage1LateralMoveRewardCfg(A3Stage1StandRewardCfg):
+     reward_xy_anchor = RewTerm(
+-        func=mdp.reward_robot_xy_target_stability_gated,
+-        weight=12.0,
++        func=mdp.reward_robot_xy_target_height_gated,
++        weight=22.0,
+         params={
+             "target_xy": A3_STAGE1_INVALID_ROBOT_XY,
+             "std": 0.070,
+-            "gate_floor": 0.0,
+-            "score_kwargs": _a3_stage1_stand_score_kwargs(),
++            "min_z": 0.940,
++            "transition": 0.015,
++            "floor": 0.0,
+         },
+     )
+     penalty_stage1_xy_drift = RewTerm(
+-        func=mdp.penalty_robot_xy_drift,
+-        weight=-3.0,
++        func=mdp.penalty_robot_xy_drift_height_gated,
++        weight=-4.0,
+         params={
+             "target_xy": A3_STAGE1_INVALID_ROBOT_XY,
+             "x_margin": 0.025,
+             "y_margin": 0.030,
+             "std": 0.100,
+             "max_penalty": 3.0,
++            "min_z": 0.940,
++            "transition": 0.015,
++            "floor": 0.0,
+         },
+     )
+     reward_stage1_xy_return_velocity = RewTerm(
+-        func=mdp.reward_robot_axis_velocity_towards_target_stability_gated,
+-        weight=0.0,
++        func=mdp.reward_robot_axis_velocity_towards_target_height_gated,
++        weight=12.0,
+         params={
+             "target_xy": A3_STAGE1_INVALID_ROBOT_XY,
+-            "x_margin": 0.025,
+-            "y_margin": 0.018,
++            "x_margin": 0.020,
++            "y_margin": 0.006,
+             "max_x_speed": 0.040,
+-            "max_y_speed": 0.060,
++            "max_y_speed": 0.040,
+             "x_weight": 0.20,
+             "y_weight": 0.80,
+-            "gate_floor": 0.0,
+-            "score_kwargs": _a3_stage1_stand_score_kwargs(),
++            "min_z": 0.940,
++            "transition": 0.015,
++            "floor": 0.0,
++        },
++    )
++    reward_stage1_xy_progress_velocity = RewTerm(
++        func=mdp.reward_robot_xy_velocity_towards_target_height_gated,
++        weight=0.0,
++        params={
++            "target_xy": A3_STAGE1_INVALID_ROBOT_XY,
++            "activation_margin": 0.012,
++            "max_speed": 0.055,
++            "min_z": 0.940,
++            "transition": 0.015,
++            "floor": 0.0,
+         },
+     )
+     penalty_stage1_xy_away_velocity = RewTerm(
+-        func=mdp.penalty_robot_axis_velocity_away_from_target,
+-        weight=-0.5,
++        func=mdp.penalty_robot_axis_velocity_away_from_target_height_gated,
++        weight=-1.25,
+         params={
+             "target_xy": A3_STAGE1_INVALID_ROBOT_XY,
+-            "x_margin": 0.025,
+-            "y_margin": 0.018,
++            "x_margin": 0.020,
++            "y_margin": 0.006,
+             "x_std": 0.140,
+-            "y_std": 0.140,
++            "y_std": 0.100,
+             "x_weight": 0.20,
+             "y_weight": 0.80,
+             "max_penalty": 5.0,
++            "min_z": 0.940,
++            "transition": 0.015,
++            "floor": 0.0,
++        },
++    )
++    penalty_stage1_xy_progress_away_velocity = RewTerm(
++        func=mdp.penalty_robot_xy_velocity_away_from_target_height_gated,
++        weight=0.0,
++        params={
++            "target_xy": A3_STAGE1_INVALID_ROBOT_XY,
++            "activation_margin": 0.012,
++            "std": 0.100,
++            "max_penalty": 5.0,
++            "min_z": 0.940,
++            "transition": 0.015,
++            "floor": 0.0,
+         },
+     )
+     action_l2_healthy = RewTerm(
+         func=mdp.penalty_action_l2_healthy_gated,
+-        weight=-2.5,
++        weight=-1.5,
+         params={
+             "target_z": A3_STAGE1_STAND_TARGET_Z,
+             "z_deadband": 0.030,
+@@ -2433,7 +2529,7 @@ class A3Stage1LateralMoveRewardCfg(A3Stage1StandRewardCfg):
+             "y_margin": 0.035,
+             "xy_std": 0.120,
+             "min_gate": 0.0,
+-            "target_delta_ref": 0.045,
++            "target_delta_ref": 0.070,
+             "max_penalty": 10.0,
+         },
+     )
+@@ -2473,18 +2569,22 @@ class A3Stage1StandEnvCfg(A3Stage1BalanceMoveEnvCfg):
+             **A3_STAGE1_STAND_INIT_UPPER_BODY_JOINT_POS,
+             **A3_STAGE1_STAND_LOWER_BODY_JOINT_POS,
+         }
+-        self.robot.termination_min_base_z = 0.875
++        self.robot.fixed_target_xy_x_range = A3_STAGE1_ROUTE_TARGET_X_RANGE
++        self.robot.fixed_target_xy_y_range = A3_STAGE1_TARGET_Y_RANGE
++        self.robot.termination_min_base_z = 0.940
+         self.robot.termination_max_flat_orientation_l2 = 0.360
+-        self.robot.stage1_bad_posture_min_base_z = 0.900
++        self.robot.termination_robot_x_range = (-1.620, -1.260)
++        self.robot.termination_robot_y_range = (0.220, 0.480)
++        self.robot.stage1_bad_posture_min_base_z = 0.940
+         self.robot.stage1_bad_posture_max_flat_orientation_l2 = 0.205
+         self.robot.stage1_bad_posture_max_steps = 0
+         self.robot.stage1_recovery_target_z = A3_STAGE1_STAND_TARGET_Z
+         self.robot.action_health_gate_enable = True
+-        self.robot.action_health_gate_target_z = 0.945
+-        self.robot.action_health_gate_height_band = 0.050
+-        self.robot.action_health_gate_flat_l2_deadband = 0.060
++        self.robot.action_health_gate_target_z = A3_STAGE1_STAND_TARGET_Z
++        self.robot.action_health_gate_height_band = 0.070
++        self.robot.action_health_gate_flat_l2_deadband = 0.040
+         self.robot.action_health_gate_flat_l2_band = 0.100
+-        self.robot.action_health_gate_min_scale = 0.0
++        self.robot.action_health_gate_min_scale = 1.0
+ 
+ 
+ @configclass
+@@ -2507,18 +2607,22 @@ class A3Stage1StandEvalEnvCfg(A3Stage1BalanceMoveEvalEnvCfg):
+             **A3_STAGE1_STAND_INIT_UPPER_BODY_JOINT_POS,
+             **A3_STAGE1_STAND_LOWER_BODY_JOINT_POS,
+         }
+-        self.robot.termination_min_base_z = 0.875
++        self.robot.fixed_target_xy_x_range = A3_STAGE1_ROUTE_TARGET_X_RANGE
++        self.robot.fixed_target_xy_y_range = A3_STAGE1_TARGET_Y_RANGE
++        self.robot.termination_min_base_z = 0.940
+         self.robot.termination_max_flat_orientation_l2 = 0.360
+-        self.robot.stage1_bad_posture_min_base_z = 0.900
++        self.robot.termination_robot_x_range = (-1.620, -1.260)
++        self.robot.termination_robot_y_range = (0.220, 0.480)
++        self.robot.stage1_bad_posture_min_base_z = 0.940
+         self.robot.stage1_bad_posture_max_flat_orientation_l2 = 0.205
+         self.robot.stage1_bad_posture_max_steps = 0
+         self.robot.stage1_recovery_target_z = A3_STAGE1_STAND_TARGET_Z
+         self.robot.action_health_gate_enable = True
+-        self.robot.action_health_gate_target_z = 0.945
+-        self.robot.action_health_gate_height_band = 0.050
+-        self.robot.action_health_gate_flat_l2_deadband = 0.060
++        self.robot.action_health_gate_target_z = A3_STAGE1_STAND_TARGET_Z
++        self.robot.action_health_gate_height_band = 0.070
++        self.robot.action_health_gate_flat_l2_deadband = 0.040
+         self.robot.action_health_gate_flat_l2_band = 0.100
+-        self.robot.action_health_gate_min_scale = 0.0
++        self.robot.action_health_gate_min_scale = 1.0
+ 
+ 
+ @configclass
+@@ -2574,11 +2678,13 @@ class A3Stage1LateralMoveEnvCfg(A3Stage1StandEnvCfg):
+ 
+     def __post_init__(self):
+         super().__post_init__()
++        self.scene.max_episode_length_s = 120.0
+         self.robot.fixed_target_xy_x_range = A3_STAGE1_LATERAL_TARGET_X_RANGE
+         self.robot.fixed_target_xy_y_range = A3_STAGE1_LATERAL_TARGET_Y_RANGE
++        self.robot.termination_min_base_z = 0.900
+         self.robot.action_health_gate_target_z = 0.950
+         self.robot.action_health_gate_height_band = 0.050
+-        self.robot.action_health_gate_min_scale = 0.0
++        self.robot.action_health_gate_min_scale = 0.30
+ 
+ 
+ @configclass
+@@ -2587,11 +2693,13 @@ class A3Stage1LateralMoveEvalEnvCfg(A3Stage1StandEvalEnvCfg):
+ 
+     def __post_init__(self):
+         super().__post_init__()
++        self.scene.max_episode_length_s = 120.0
+         self.robot.fixed_target_xy_x_range = A3_STAGE1_LATERAL_TARGET_X_RANGE
+         self.robot.fixed_target_xy_y_range = A3_STAGE1_LATERAL_TARGET_Y_RANGE
++        self.robot.termination_min_base_z = 0.900
+         self.robot.action_health_gate_target_z = 0.950
+         self.robot.action_health_gate_height_band = 0.050
+-        self.robot.action_health_gate_min_scale = 0.0
++        self.robot.action_health_gate_min_scale = 0.30
+ 
+ 
+ @configclass
+@@ -4066,7 +4174,7 @@ class A3Stage1StandAgentCfg(A3Stage1BalanceMoveAgentCfg):
+     experiment_name: str = "a3_table_tennis_stage1_stand"
+     policy = RslRlPpoActorCriticCfg(
+         class_name="ActorCritic",
+-        init_noise_std=0.008,
++        init_noise_std=0.040,
+         noise_std_type="log",
+         actor_hidden_dims=[512, 512, 128],
+         critic_hidden_dims=[512, 512, 128],
+@@ -4076,21 +4184,21 @@ class A3Stage1StandAgentCfg(A3Stage1BalanceMoveAgentCfg):
+         class_name="PPO",
+         value_loss_coef=0.20,
+         use_clipped_value_loss=True,
+-        clip_param=0.070,
++        clip_param=0.060,
+         entropy_coef=0.0,
+         num_learning_epochs=3,
+         num_mini_batches=4,
+-        learning_rate=3.0e-5,
++        learning_rate=4.0e-5,
+         schedule="fixed",
+         gamma=0.95,
+         lam=0.95,
+-        desired_kl=0.002,
++        desired_kl=0.006,
+         max_grad_norm=1.0,
+         normalize_advantage_per_mini_batch=True,
+         symmetry_cfg=None,
+         rnd_cfg=None,
+     )
+-    algorithm.mean_action_l2_coef = 0.05
++    algorithm.mean_action_l2_coef = 0.12
+     algorithm.deterministic_actions = False
+     algorithm.freeze_actor = False
+ 
+@@ -4101,7 +4209,7 @@ class A3Stage1RecoveryStandAgentCfg(A3Stage1StandAgentCfg):
+     max_iterations = 1200
+     policy = RslRlPpoActorCriticCfg(
+         class_name="ActorCritic",
+-        init_noise_std=0.002,
++        init_noise_std=0.008,
+         noise_std_type="log",
+         actor_hidden_dims=[512, 512, 128],
+         critic_hidden_dims=[512, 512, 128],
+@@ -4115,7 +4223,7 @@ class A3Stage1RecoveryStandAgentCfg(A3Stage1StandAgentCfg):
+         entropy_coef=0.0,
+         num_learning_epochs=3,
+         num_mini_batches=4,
+-        learning_rate=5.0e-6,
++        learning_rate=1.0e-5,
+         schedule="fixed",
+         gamma=0.95,
+         lam=0.95,
+@@ -4136,7 +4244,7 @@ class A3Stage1LateralMoveAgentCfg(A3Stage1StandAgentCfg):
+     max_iterations = 2000
+     policy = RslRlPpoActorCriticCfg(
+         class_name="ActorCritic",
+-        init_noise_std=0.001,
++        init_noise_std=0.015,
+         noise_std_type="log",
+         actor_hidden_dims=[512, 512, 128],
+         critic_hidden_dims=[512, 512, 128],
+@@ -4150,7 +4258,7 @@ class A3Stage1LateralMoveAgentCfg(A3Stage1StandAgentCfg):
+         entropy_coef=0.0,
+         num_learning_epochs=3,
+         num_mini_batches=4,
+-        learning_rate=5.0e-6,
++        learning_rate=1.0e-5,
+         schedule="fixed",
+         gamma=0.95,
+         lam=0.95,
+diff --git a/legged_lab/envs/base/tt_config.py b/legged_lab/envs/base/tt_config.py
+index 1bfbe5d..bc43949 100755
+--- a/legged_lab/envs/base/tt_config.py
++++ b/legged_lab/envs/base/tt_config.py
+@@ -80,6 +80,7 @@ class RobotCfg:
+     termination_max_flat_orientation_l2: float | None = None
+     termination_robot_x_range: tuple = (-3.60, -1.35)
+     termination_robot_y_range: tuple = (-1.10, 1.10)
++    termination_contact_force_threshold: float = 0.0
+     actor_root_lin_vel_obs: bool = False
+     stage1_recovery_obs: bool = False
+     stage1_recovery_target_z: float = 0.965
+diff --git a/legged_lab/envs/base/tt_env.py b/legged_lab/envs/base/tt_env.py
+index 25d932d..4704f91 100755
+--- a/legged_lab/envs/base/tt_env.py
++++ b/legged_lab/envs/base/tt_env.py
+@@ -869,6 +869,7 @@ class TTEnv(VecEnv):
+             "Episode_Reset/y_high": "reset_y_high_buf",
+             "Episode_Reset/flat_orientation": "reset_flat_orientation_buf",
+             "Episode_Reset/bad_posture_duration": "reset_bad_posture_duration_buf",
++            "Episode_Reset/contact": "reset_contact_buf",
+             "Episode_Reset/episode_timeout": "reset_episode_timeout_buf",
+             "Episode_Reset/ball_serve_timeout": "reset_ball_serve_timeout_buf",
+         }
+@@ -925,6 +926,12 @@ class TTEnv(VecEnv):
+             if hasattr(self, "last_clipped_actions"):
+                 action_l2 = torch.sum(torch.square(self.last_clipped_actions.float()), dim=1)
+                 self.extras["log"]["Episode_State/action_l2_mean"] = action_l2.mean()
++                if hasattr(self, "last_gated_actions"):
++                    gated_action_l2 = torch.sum(torch.square(self.last_gated_actions.float()), dim=1)
++                    self.extras["log"]["Episode_State/gated_action_l2_mean"] = gated_action_l2.mean()
++                if hasattr(self, "last_target_delta"):
++                    target_delta_l2 = torch.sum(torch.square(self.last_target_delta.float()), dim=1)
++                    self.extras["log"]["Episode_State/target_delta_l2_mean"] = target_delta_l2.mean()
+                 if bool(bad_mask.any()):
+                     self.extras["log"]["Episode_State/bad_posture_action_l2_mean"] = action_l2[bad_mask].mean()
+                 else:
+@@ -934,9 +941,13 @@ class TTEnv(VecEnv):
+             target_xy = self._get_fixed_target_xy(self.robot_pos)
+         else:
+             target_xy = self.robot_pos.new_tensor(self.cfg.robot.future_invalid_robot_xy).expand(self.num_envs, 2)
+-        xy_error = torch.linalg.norm(self.robot_pos[:, :2] - target_xy, dim=1)
++        xy_delta = target_xy - self.robot_pos[:, :2]
++        xy_error = torch.linalg.norm(xy_delta, dim=1)
+         self.extras["log"]["Episode_State/xy_error_mean"] = xy_error.float().mean()
+         self.extras["log"]["Episode_State/xy_error_max"] = xy_error.float().max()
++        self.extras["log"]["Episode_State/xy_error_y_abs_mean"] = xy_delta[:, 1].abs().float().mean()
++        self.extras["log"]["Episode_State/xy_error_y_abs_max"] = xy_delta[:, 1].abs().float().max()
++        self.extras["log"]["Episode_State/target_y_minus_robot_y_mean"] = xy_delta[:, 1].float().mean()
+         self._log_stage1_actuator_state()
+ 
+     def _log_stage1_actuator_state(self) -> None:
+@@ -1225,29 +1236,34 @@ class TTEnv(VecEnv):
+         reward_buf = self.reward_manager.compute(self.step_dt)
+ 
+         env_ids = self.reset_buf.nonzero(as_tuple=False).flatten()
+-        self.reset(env_ids)
++        if len(env_ids) > 0:
++            self.reset(env_ids)
++        else:
++            self.extras["log"] = dict()
++            self.extras["time_outs"] = self.time_out_buf
+ 
+         actor_obs, critic_obs = self.compute_observations()
+         self.extras["observations"] = {"critic": critic_obs}
+         self._sync_stage1_recovery_buffers()
++        self._log_stage1_global_state()
+ 
+         return actor_obs, reward_buf, self.reset_buf, self.extras
+ 
+     def check_reset(self):
+-        # net_contact_forces = self.contact_sensor.data.net_forces_w_history
++        contact_threshold = float(getattr(self.cfg.robot, "termination_contact_force_threshold", 0.0))
++        if contact_threshold > 0.0 and len(self.termination_contact_cfg.body_ids) > 0:
++            net_contact_forces = self.contact_sensor.data.net_forces_w_history
++            contact_force = torch.max(
++                torch.norm(
++                    net_contact_forces[:, :, self.termination_contact_cfg.body_ids],
++                    dim=-1,
++                ),
++                dim=1,
++            )[0]
++            self.reset_contact_buf = torch.any(contact_force > contact_threshold, dim=1)
++        else:
++            self.reset_contact_buf = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
+ 
+-        # reset_buf = torch.any(
+-        #     torch.max(
+-        #         torch.norm(
+-        #             net_contact_forces[:, :, self.termination_contact_cfg.body_ids],
+-        #             dim=-1,
+-        #         ),
+-        #         dim=1,
+-        #     )[0]
+-        #     > 1.0,
+-        #     dim=1,
+-        # )
+-        
+         # reset_buf = (
+         #     (self.robot_pos[..., 2] < 0.50) |
+         #     (self.robot_pos[..., 0] < -3.6) |
+@@ -1297,7 +1313,8 @@ class TTEnv(VecEnv):
+             self.reset_y_low_buf |
+             self.reset_y_high_buf |
+             self.reset_flat_orientation_buf |
+-            self.reset_bad_posture_duration_buf
++            self.reset_bad_posture_duration_buf |
++            self.reset_contact_buf
+         )
+         self.reset_episode_timeout_buf = self.episode_length_buf >= self.max_episode_length
+         self.reset_ball_serve_timeout_buf = self.ball_reset_counter > self.max_ball_serve_per_episode
+diff --git a/legged_lab/mdp/rewards.py b/legged_lab/mdp/rewards.py
+index 5027484..89c052c 100755
+--- a/legged_lab/mdp/rewards.py
++++ b/legged_lab/mdp/rewards.py
+@@ -409,6 +409,46 @@ def reward_upright_recovery_rate(
+     return torch.nan_to_num(rate, nan=0.0, posinf=max_rate, neginf=-max_rate)
+ 
+ 
++def reward_stage1_upright_progress_height_gated(
++    env: BaseEnv,
++    min_z: float = 0.965,
++    z_transition: float = 0.030,
++    flat_deadband: float = 0.085,
++    pitch_deadband: float = 0.095,
++    flat_std: float = 0.050,
++    pitch_std: float = 0.045,
++    flat_weight: float = 0.55,
++    pitch_weight: float = 0.45,
++    max_rate: float = 1.0,
++    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
++) -> torch.Tensor:
++    asset: Articulation = env.scene[asset_cfg.name]
++    if hasattr(env, "robot_pos"):
++        root_z = env.robot_pos[:, 2]
++    else:
++        root_z = asset.data.root_pos_w[:, 2] - env.scene.env_origins[:, 2]
++
++    gravity_xy = asset.data.projected_gravity_b[:, :2]
++    flat_l2 = torch.sum(torch.square(gravity_xy), dim=1)
++    abs_gravity_x = torch.abs(gravity_xy[:, 0])
++    prev_flat_l2 = getattr(env, "stage1_prev_flat_l2", flat_l2).to(device=flat_l2.device, dtype=flat_l2.dtype)
++    prev_gravity_x = torch.abs(getattr(env, "stage1_prev_gravity_x", gravity_xy[:, 0]))
++    prev_gravity_x = prev_gravity_x.to(device=abs_gravity_x.device, dtype=abs_gravity_x.dtype)
++
++    prev_flat_error = torch.clamp(prev_flat_l2 - flat_deadband, min=0.0)
++    current_flat_error = torch.clamp(flat_l2 - flat_deadband, min=0.0)
++    flat_progress = (prev_flat_error - current_flat_error) / (flat_std + 1e-12)
++
++    prev_pitch_error = torch.clamp(prev_gravity_x - pitch_deadband, min=0.0)
++    current_pitch_error = torch.clamp(abs_gravity_x - pitch_deadband, min=0.0)
++    pitch_progress = (prev_pitch_error - current_pitch_error) / (pitch_std + 1e-12)
++
++    progress = flat_weight * flat_progress + pitch_weight * pitch_progress
++    progress = torch.clamp(progress, min=-max_rate, max=max_rate)
++    height_gate = torch.clamp((root_z - min_z) / (z_transition + 1e-12), min=0.0, max=1.0)
++    return torch.nan_to_num(progress * height_gate, nan=0.0, posinf=max_rate, neginf=-max_rate)
++
++
+ def reward_stage1_soft_recovery(
+     env: BaseEnv,
+     target_z: float = 1.000,
+@@ -936,10 +976,8 @@ def reward_robot_xy_target_stability_gated(
+     return torch.nan_to_num(reward * gate, nan=0.0, posinf=0.0, neginf=0.0)
+ 
+ 
+-def reward_robot_xy_target_height_gated(
++def _stage1_root_height_gate(
+     env: BaseEnv,
+-    target_xy: Tuple[float, float] = (-2.30, 0.35),
+-    std: float = 0.24,
+     min_z: float = 0.940,
+     transition: float = 0.010,
+     floor: float = 0.0,
+@@ -950,9 +988,21 @@ def reward_robot_xy_target_height_gated(
+         root_z = env.robot_pos[:, 2]
+     else:
+         root_z = asset.data.root_pos_w[:, 2] - env.scene.env_origins[:, 2]
+-    reward = reward_robot_xy_target(env, target_xy=target_xy, std=std, asset_cfg=asset_cfg)
+     gate = torch.clamp((root_z - min_z) / (transition + 1e-12), min=0.0, max=1.0)
+-    gate = floor + (1.0 - floor) * gate
++    return floor + (1.0 - floor) * gate
++
++
++def reward_robot_xy_target_height_gated(
++    env: BaseEnv,
++    target_xy: Tuple[float, float] = (-2.30, 0.35),
++    std: float = 0.24,
++    min_z: float = 0.940,
++    transition: float = 0.010,
++    floor: float = 0.0,
++    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
++) -> torch.Tensor:
++    reward = reward_robot_xy_target(env, target_xy=target_xy, std=std, asset_cfg=asset_cfg)
++    gate = _stage1_root_height_gate(env, min_z=min_z, transition=transition, floor=floor, asset_cfg=asset_cfg)
+     return torch.nan_to_num(reward * gate, nan=0.0, posinf=0.0, neginf=0.0)
+ 
+ 
+@@ -973,6 +1023,31 @@ def penalty_robot_xy_drift(
+     return torch.nan_to_num(penalty, nan=0.0, posinf=max_penalty, neginf=0.0)
+ 
+ 
++def penalty_robot_xy_drift_height_gated(
++    env: BaseEnv,
++    target_xy: Tuple[float, float] = (-2.25, 0.35),
++    x_margin: float = 0.18,
++    y_margin: float = 0.30,
++    std: float = 0.12,
++    max_penalty: float = 10.0,
++    min_z: float = 0.940,
++    transition: float = 0.010,
++    floor: float = 0.0,
++    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
++) -> torch.Tensor:
++    penalty = penalty_robot_xy_drift(
++        env,
++        target_xy=target_xy,
++        x_margin=x_margin,
++        y_margin=y_margin,
++        std=std,
++        max_penalty=max_penalty,
++        asset_cfg=asset_cfg,
++    )
++    gate = _stage1_root_height_gate(env, min_z=min_z, transition=transition, floor=floor, asset_cfg=asset_cfg)
++    return torch.nan_to_num(penalty * gate, nan=0.0, posinf=max_penalty, neginf=0.0)
++
++
+ def penalty_robot_x_upper_bound(
+     env: BaseEnv,
+     max_x: float = -1.55,
+@@ -1066,6 +1141,27 @@ def reward_robot_xy_velocity_towards_target_stability_gated(
+     return torch.nan_to_num(reward * gate, nan=0.0, posinf=0.0, neginf=0.0)
+ 
+ 
++def reward_robot_xy_velocity_towards_target_height_gated(
++    env: BaseEnv,
++    target_xy: Tuple[float, float] = (-2.25, 0.35),
++    activation_margin: float = 0.08,
++    max_speed: float = 0.35,
++    min_z: float = 0.940,
++    transition: float = 0.010,
++    floor: float = 0.0,
++    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
++) -> torch.Tensor:
++    reward = reward_robot_xy_velocity_towards_target(
++        env,
++        target_xy=target_xy,
++        activation_margin=activation_margin,
++        max_speed=max_speed,
++        asset_cfg=asset_cfg,
++    )
++    gate = _stage1_root_height_gate(env, min_z=min_z, transition=transition, floor=floor, asset_cfg=asset_cfg)
++    return torch.nan_to_num(reward * gate, nan=0.0, posinf=0.0, neginf=0.0)
++
++
+ def penalty_robot_xy_velocity_away_from_target(
+     env: BaseEnv,
+     target_xy: Tuple[float, float] = (-2.25, 0.35),
+@@ -1087,6 +1183,29 @@ def penalty_robot_xy_velocity_away_from_target(
+     return torch.nan_to_num(penalty, nan=0.0, posinf=max_penalty, neginf=0.0)
+ 
+ 
++def penalty_robot_xy_velocity_away_from_target_height_gated(
++    env: BaseEnv,
++    target_xy: Tuple[float, float] = (-2.25, 0.35),
++    activation_margin: float = 0.08,
++    std: float = 0.25,
++    max_penalty: float = 6.0,
++    min_z: float = 0.940,
++    transition: float = 0.010,
++    floor: float = 0.0,
++    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
++) -> torch.Tensor:
++    penalty = penalty_robot_xy_velocity_away_from_target(
++        env,
++        target_xy=target_xy,
++        activation_margin=activation_margin,
++        std=std,
++        max_penalty=max_penalty,
++        asset_cfg=asset_cfg,
++    )
++    gate = _stage1_root_height_gate(env, min_z=min_z, transition=transition, floor=floor, asset_cfg=asset_cfg)
++    return torch.nan_to_num(penalty * gate, nan=0.0, posinf=max_penalty, neginf=0.0)
++
++
+ def reward_robot_axis_velocity_towards_target(
+     env: BaseEnv,
+     target_xy: Tuple[float, float] = (-2.25, 0.35),
+@@ -1157,11 +1276,6 @@ def reward_robot_axis_velocity_towards_target_height_gated(
+     floor: float = 0.0,
+     asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+ ) -> torch.Tensor:
+-    asset: Articulation = env.scene[asset_cfg.name]
+-    if hasattr(env, "robot_pos"):
+-        root_z = env.robot_pos[:, 2]
+-    else:
+-        root_z = asset.data.root_pos_w[:, 2] - env.scene.env_origins[:, 2]
+     reward = reward_robot_axis_velocity_towards_target(
+         env,
+         target_xy=target_xy,
+@@ -1173,8 +1287,7 @@ def reward_robot_axis_velocity_towards_target_height_gated(
+         y_weight=y_weight,
+         asset_cfg=asset_cfg,
+     )
+-    gate = torch.clamp((root_z - min_z) / (transition + 1e-12), min=0.0, max=1.0)
+-    gate = floor + (1.0 - floor) * gate
++    gate = _stage1_root_height_gate(env, min_z=min_z, transition=transition, floor=floor, asset_cfg=asset_cfg)
+     return torch.nan_to_num(reward * gate, nan=0.0, posinf=0.0, neginf=0.0)
+ 
+ 
+@@ -1207,6 +1320,37 @@ def penalty_robot_axis_velocity_away_from_target(
+     return torch.nan_to_num(penalty, nan=0.0, posinf=max_penalty, neginf=0.0)
+ 
+ 
++def penalty_robot_axis_velocity_away_from_target_height_gated(
++    env: BaseEnv,
++    target_xy: Tuple[float, float] = (-2.25, 0.35),
++    x_margin: float = 0.025,
++    y_margin: float = 0.025,
++    x_std: float = 0.16,
++    y_std: float = 0.14,
++    x_weight: float = 0.72,
++    y_weight: float = 0.28,
++    max_penalty: float = 8.0,
++    min_z: float = 0.940,
++    transition: float = 0.010,
++    floor: float = 0.0,
++    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
++) -> torch.Tensor:
++    penalty = penalty_robot_axis_velocity_away_from_target(
++        env,
++        target_xy=target_xy,
++        x_margin=x_margin,
++        y_margin=y_margin,
++        x_std=x_std,
++        y_std=y_std,
++        x_weight=x_weight,
++        y_weight=y_weight,
++        max_penalty=max_penalty,
++        asset_cfg=asset_cfg,
++    )
++    gate = _stage1_root_height_gate(env, min_z=min_z, transition=transition, floor=floor, asset_cfg=asset_cfg)
++    return torch.nan_to_num(penalty * gate, nan=0.0, posinf=max_penalty, neginf=0.0)
++
++
+ def is_terminated(env: BaseEnv) -> torch.Tensor:
+     """Penalize terminated episodes that don't correspond to episodic timeouts."""
+     return env.reset_buf * ~env.time_out_buf
+diff --git a/legged_lab/scripts/a3_stage1_action_probe.py b/legged_lab/scripts/a3_stage1_action_probe.py
+index 064e82c..9944b01 100644
+--- a/legged_lab/scripts/a3_stage1_action_probe.py
++++ b/legged_lab/scripts/a3_stage1_action_probe.py
+@@ -290,6 +290,8 @@ def _configure_env(env_cfg, args: argparse.Namespace, num_envs: int) -> None:
+     env_cfg.domain_rand.events.reset_base.params["pose_range"] = {
+         "x": (args.base_x, args.base_x),
+         "y": (args.base_y, args.base_y),
++        "roll": (0.0, 0.0),
++        "pitch": (0.0, 0.0),
+         "yaw": (args.base_yaw, args.base_yaw),
+     }
+     env_cfg.domain_rand.events.reset_base.params["velocity_range"] = {
+@@ -578,6 +580,7 @@ def main() -> None:
+         low_z_reset_seen = torch.zeros_like(reset_seen)
+         flat_reset_seen = torch.zeros_like(reset_seen)
+         bad_posture_reset_seen = torch.zeros_like(reset_seen)
++        contact_reset_seen = torch.zeros_like(reset_seen)
+         timeout_seen = torch.zeros_like(reset_seen)
+         first_reset = torch.full((env.num_envs,), -1, dtype=torch.long, device=env.device)
+         alive_steps = torch.zeros(env.num_envs, dtype=torch.long, device=env.device)
+@@ -649,6 +652,7 @@ def main() -> None:
+                 low_z_reset_seen |= _reset_cause(env, "reset_low_z_buf")
+                 flat_reset_seen |= _reset_cause(env, "reset_flat_orientation_buf")
+                 bad_posture_reset_seen |= _reset_cause(env, "reset_bad_posture_duration_buf")
++                contact_reset_seen |= _reset_cause(env, "reset_contact_buf")
+                 timeout_seen |= _reset_cause(env, "reset_episode_timeout_buf")
+                 first_reset = torch.where(
+                     reset_buf & (first_reset < 0),
+@@ -702,6 +706,7 @@ def main() -> None:
+                 "low_z_reset_seen": bool(low_z_reset_seen[i].detach().cpu()),
+                 "flat_reset_seen": bool(flat_reset_seen[i].detach().cpu()),
+                 "bad_posture_reset_seen": bool(bad_posture_reset_seen[i].detach().cpu()),
++                "contact_reset_seen": bool(contact_reset_seen[i].detach().cpu()),
+                 "timeout_seen": bool(timeout_seen[i].detach().cpu()),
+             }
+             for group_name in actuator_group_ids:
+@@ -745,6 +750,7 @@ def main() -> None:
+             f"low_z={int(low_z_reset_seen.sum().detach().cpu())}, "
+             f"flat={int(flat_reset_seen.sum().detach().cpu())}, "
+             f"bad_posture={int(bad_posture_reset_seen.sum().detach().cpu())}, "
++            f"contact={int(contact_reset_seen.sum().detach().cpu())}, "
+             f"timeout={int(timeout_seen.sum().detach().cpu())}"
+         )
+     finally:
+diff --git a/legged_lab/scripts/tt_webrtc_probe.py b/legged_lab/scripts/tt_webrtc_probe.py
+index 136551c..3bf1469 100644
+--- a/legged_lab/scripts/tt_webrtc_probe.py
++++ b/legged_lab/scripts/tt_webrtc_probe.py
+@@ -103,11 +103,17 @@ def _load_policy(env, agent_cfg, args: argparse.Namespace):
+     log_dir = os.path.dirname(resume_path)
+ 
+     if args.predictor:
+-        from rsl_rl.rsl_rl.runners import OnPolicyPredictorRegressionRunner
++        try:
++            from rsl_rl.runners import OnPolicyPredictorRegressionRunner
++        except ModuleNotFoundError:
++            from rsl_rl.rsl_rl.runners import OnPolicyPredictorRegressionRunner
+ 
+         runner = OnPolicyPredictorRegressionRunner(env, agent_cfg.to_dict(), log_dir=log_dir, device=agent_cfg.device)
+     else:
+-        from rsl_rl.rsl_rl.runners import OnPolicyRunner
++        try:
++            from rsl_rl.runners import OnPolicyRunner
++        except ModuleNotFoundError:
++            from rsl_rl.rsl_rl.runners import OnPolicyRunner
+ 
+         runner = OnPolicyRunner(env, agent_cfg.to_dict(), log_dir=log_dir, device=agent_cfg.device)
+ 

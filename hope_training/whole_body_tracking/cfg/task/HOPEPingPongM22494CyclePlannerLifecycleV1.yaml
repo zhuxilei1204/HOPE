@@ -1,0 +1,80 @@
+# =============================================================================
+# M22494 Cycle + Planner Lifecycle V1.
+#
+# Inherits the cycle objective experiment and adds planner/deploy lifecycle
+# randomization.  This intentionally does not bind training to a fixed HOPEPlanner
+# x_hit plane; it broadens the actor-visible command distribution so the policy
+# learns robust command following.
+# =============================================================================
+
+defaults:
+  - HOPEPingPongM22494CycleObjectiveV1
+  - _self_
+
+name: HOPEPingPongM22494CyclePlannerLifecycleV1
+
+overrides:
+  commands.motion.hold_steps_range: [85, 150]
+  commands.motion.stand_start_prob: 0.25
+  commands.motion.stand_start_min_hold: 85
+
+  commands.racket_target.deploy_ready_hold_prob: 0.70
+  commands.racket_target.deploy_ready_time_to_strike: 1.0
+
+  # Broaden command perturbations gradually through the ability curriculum.
+  commands.racket_target.ability_curriculum_start_planner_perturb_scale: 0.35
+  commands.racket_target.ability_curriculum_recovery_threshold: 0.73
+  commands.racket_target.ability_curriculum_cycle_success_threshold: 0.18
+
+  commands.racket_target.planner_target_pos_offset_range:
+    - [-0.03, 0.03]
+    - [-0.07, 0.07]
+    - [-0.04, 0.04]
+  commands.racket_target.planner_time_to_strike_offset_range: [-0.06, 0.06]
+  commands.racket_target.planner_target_vel_scale_range: [0.85, 1.15]
+  commands.racket_target.planner_target_vel_offset_range:
+    - [-0.10, 0.10]
+    - [-0.12, 0.12]
+    - [-0.10, 0.10]
+  commands.racket_target.planner_target_vel_yaw_deg_range: [-12.0, 12.0]
+
+  # Slightly wider ball timing/lateral distribution, still within the same
+  # synthetic one-bounce task family as model_22494.
+  commands.racket_target.one_bounce_post_time_range: [0.30, 0.45]
+  commands.racket_target.one_bounce_lateral_jitter_range: [-0.15, 0.15]
+  commands.racket_target.one_bounce_min_post_bounce_dx: 0.16
+  commands.racket_target.one_bounce_max_post_bounce_dx: 0.78
+
+  rewards.no_command_ready_stability.weight: 1.00
+  rewards.no_command_ready_stability.params:
+    command_name: racket_target
+    height_std: 0.09
+    upright_std: 0.22
+    lin_vel_std: 0.18
+    ang_vel_std: 0.55
+    station_std: 0.18
+    racket_vel_std: 0.55
+    arm_pos_std: 0.34
+    arm_ori_std: 0.78
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    start_step: 0
+    warmup_steps: 1500
+    start_scale: 0.45
+
+  rewards.next_prestrike_reachable.weight: 0.85
+  rewards.next_prestrike_reachable.params:
+    command_name: racket_target
+    window_steps: 24
+    reach_std: 0.32
+    feasible_speed: 2.75
+    feasible_speed_std: 0.55
+    min_time_to_strike: 0.16
+    max_time_to_strike: 1.25
+    station_std: 0.25
+    upright_std: 0.30
+    start_step: 0
+    warmup_steps: 2500
+    start_scale: 0.30

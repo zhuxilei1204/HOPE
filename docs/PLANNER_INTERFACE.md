@@ -97,3 +97,8 @@ strike-plane position, `swing_side_split_y` (and hysteresis), the fixed opponent
 target, the prediction horizon, and the solve rate. Ball physics is read from the shared
 `configs/ball_physics.yaml`; planner-only drag/table-bounce overrides can be set in the same
 YAML without changing the training physics config.
+
+## Evaluation
+
+Use the causal mocap replay in [PLANNER_EVALUATION.md](PLANNER_EVALUATION.md) to measure
+intercept/timing/velocity error by time-to-strike and obtain a per-ball root-cause diagnosis.

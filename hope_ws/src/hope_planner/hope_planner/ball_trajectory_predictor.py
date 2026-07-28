@@ -9,6 +9,7 @@ ball CENTROID contacts the surface at z = ball radius (0.02 m for a 40 mm ball),
 and the bounce event is interpolated to that plane within the crossing step.
 """
 
+import math
 from dataclasses import dataclass
 
 import numpy as np
@@ -37,17 +38,15 @@ class BallTrajectoryPredictor:
 
     def _is_on_table(self, p: np.ndarray) -> bool:
         """True if the ball could contact the table surface (bounds + ball radius)."""
+        return self._is_on_table_xy(float(p[0]), float(p[1]))
+
+    def _is_on_table_xy(self, x: float, y: float) -> bool:
         r = self.physics.radius
         y_hi = self.table.y_max
         return (
-            -r <= p[0] <= self.table.length + r
-            and y_hi - self.table.width - r <= p[1] <= y_hi + r
+            -r <= x <= self.table.length + r
+            and y_hi - self.table.width - r <= y <= y_hi + r
         )
-
-    def _flight_acceleration(self, v: np.ndarray) -> np.ndarray:
-        """Flight acceleration: a = -k |v| v + g."""
-        speed = np.linalg.norm(v)
-        return -self.physics.k * speed * v + self.physics.g
 
     def _apply_bounce(self, v: np.ndarray) -> np.ndarray:
         """Diagonal table bounce: v+ = diag(C_h, C_h, -C_v) @ v-."""
@@ -61,6 +60,13 @@ class BallTrajectoryPredictor:
         crosses ``config.x_hit`` while moving toward the robot within the
         prediction horizon, or if the only crossing is a dead ball skimming the
         table on the way down.
+
+        Uses plain floats for the per-step state rather than numpy arrays: this
+        loop runs on every incoming mocap frame (up to ``max_predict_time /
+        dt_integrate`` steps, e.g. 2000 at the defaults) and numpy's per-call
+        dispatch overhead dominates the actual 3-element arithmetic at that
+        granularity -- the same fix applied to
+        :meth:`RacketTargetPlanner._integrate_free_flight`.
         """
         dt = self.config.dt_integrate
         max_steps = int(self.config.max_predict_time / dt)
@@ -69,81 +75,113 @@ class BallTrajectoryPredictor:
         # centre reaches z = ball radius (configs/ball_physics.yaml convention),
         # not when the centre reaches the table surface z = 0.
         contact_z = self.physics.radius
+        k = self.physics.k
+        gx, gy, gz = float(self.physics.g[0]), float(self.physics.g[1]), float(self.physics.g[2])
+        C_h, C_v = self.physics.C_h, self.physics.C_v
 
-        p = p0.copy()
-        v = v0.copy()
+        x, y, z = float(p0[0]), float(p0[1]), float(p0[2])
+        vx, vy, vz = float(v0[0]), float(v0[1]), float(v0[2])
         t = t0
         bounces = 0
 
         # Track the most recent bounce so a plane crossing that happens in the
         # same step as a bounce interpolates along the post-bounce arc.
-        p_bounce = p.copy()
-        v_post = v.copy()
+        pbx, pby, pbz = x, y, z
+        vpx, vpy, vpz = vx, vy, vz
         remaining_dt = dt
 
         for _step in range(max_steps):
-            p_prev_x = p[0]
+            p_prev_x = x
 
-            a = self._flight_acceleration(v)
-            v_new = v + a * dt
-            p_new = p + v * dt + 0.5 * a * dt ** 2
+            speed = math.sqrt(vx * vx + vy * vy + vz * vz)
+            ax = -k * speed * vx + gx
+            ay = -k * speed * vy + gy
+            az = -k * speed * vz + gz
+            vx_new = vx + ax * dt
+            vy_new = vy + ay * dt
+            vz_new = vz + az * dt
+            x_new = x + vx * dt + 0.5 * ax * dt * dt
+            y_new = y + vy * dt + 0.5 * ay * dt * dt
+            z_new = z + vz * dt + 0.5 * az * dt * dt
             t += dt
             bounce_this_step = False
 
             # --- Bounce detection (centroid contact at z = ball radius, interpolated) ---
-            if p_new[2] < contact_z and v_new[2] < 0.0:
-                if self._is_on_table(p_new):
-                    dz = p[2] - p_new[2]
-                    frac = (p[2] - contact_z) / dz if dz > 1e-9 else 0.5
-                    frac = np.clip(frac, 0.0, 1.0)
+            if z_new < contact_z and vz_new < 0.0:
+                if self._is_on_table_xy(x_new, y_new):
+                    dz = z - z_new
+                    frac = (z - contact_z) / dz if dz > 1e-9 else 0.5
+                    frac = min(1.0, max(0.0, frac))
 
-                    p_bounce = p + frac * (p_new - p)
-                    p_bounce[2] = contact_z
-                    v_at_bounce = v + a * (frac * dt)
-                    v_post = self._apply_bounce(v_at_bounce)
+                    pbx = x + frac * (x_new - x)
+                    pby = y + frac * (y_new - y)
+                    pbz = contact_z
+                    vabx = vx + ax * (frac * dt)
+                    vaby = vy + ay * (frac * dt)
+                    vabz = vz + az * (frac * dt)
+                    vpx = C_h * vabx
+                    vpy = C_h * vaby
+                    vpz = -C_v * vabz
 
                     remaining_dt = (1.0 - frac) * dt
-                    a_post = self._flight_acceleration(v_post)
-                    p_new = p_bounce + v_post * remaining_dt + 0.5 * a_post * remaining_dt ** 2
-                    v_new = v_post + a_post * remaining_dt
+                    speed_post = math.sqrt(vpx * vpx + vpy * vpy + vpz * vpz)
+                    axp = -k * speed_post * vpx + gx
+                    ayp = -k * speed_post * vpy + gy
+                    azp = -k * speed_post * vpz + gz
+                    x_new = pbx + vpx * remaining_dt + 0.5 * axp * remaining_dt * remaining_dt
+                    y_new = pby + vpy * remaining_dt + 0.5 * ayp * remaining_dt * remaining_dt
+                    z_new = pbz + vpz * remaining_dt + 0.5 * azp * remaining_dt * remaining_dt
+                    vx_new = vpx + axp * remaining_dt
+                    vy_new = vpy + ayp * remaining_dt
+                    vz_new = vpz + azp * remaining_dt
                     bounces += 1
                     bounce_this_step = True
                 else:
-                    p_new[2] = max(p_new[2], contact_z)
+                    z_new = max(z_new, contact_z)
 
             # --- Hitting-plane crossing detection ---
-            if p_prev_x > x_hit and p_new[0] <= x_hit and v_new[0] < 0:
+            if p_prev_x > x_hit and x_new <= x_hit and vx_new < 0:
                 if bounce_this_step:
-                    dx_arc = p_bounce[0] - p_new[0]
-                    frac_cross = (p_bounce[0] - x_hit) / dx_arc if abs(dx_arc) > 1e-9 else 0.5
-                    frac_cross = np.clip(frac_cross, 0.0, 1.0)
-                    p_cross = p_bounce + frac_cross * (p_new - p_bounce)
-                    v_cross = v_post + frac_cross * (v_new - v_post)
+                    dx_arc = pbx - x_new
+                    frac_cross = (pbx - x_hit) / dx_arc if abs(dx_arc) > 1e-9 else 0.5
+                    frac_cross = min(1.0, max(0.0, frac_cross))
+                    px_cross = pbx + frac_cross * (x_new - pbx)
+                    py_cross = pby + frac_cross * (y_new - pby)
+                    pz_cross = pbz + frac_cross * (z_new - pbz)
+                    vx_cross = vpx + frac_cross * (vx_new - vpx)
+                    vy_cross = vpy + frac_cross * (vy_new - vpy)
+                    vz_cross = vpz + frac_cross * (vz_new - vpz)
                     t_cross = (t - remaining_dt) + frac_cross * remaining_dt
                 else:
-                    dx_step = p[0] - p_new[0]
-                    frac_cross = (p[0] - x_hit) / dx_step if abs(dx_step) > 1e-9 else 0.5
-                    frac_cross = np.clip(frac_cross, 0.0, 1.0)
-                    p_cross = p + frac_cross * (p_new - p)
-                    v_cross = v + frac_cross * (v_new - v)
+                    dx_step = x - x_new
+                    frac_cross = (x - x_hit) / dx_step if abs(dx_step) > 1e-9 else 0.5
+                    frac_cross = min(1.0, max(0.0, frac_cross))
+                    px_cross = x + frac_cross * (x_new - x)
+                    py_cross = y + frac_cross * (y_new - y)
+                    pz_cross = z + frac_cross * (z_new - z)
+                    vx_cross = vx + frac_cross * (vx_new - vx)
+                    vy_cross = vy + frac_cross * (vy_new - vy)
+                    vz_cross = vz + frac_cross * (vz_new - vz)
                     t_cross = t - dt + frac_cross * dt
 
-                p_cross[0] = x_hit
+                px_cross = x_hit
 
                 # A crossing at table-skim height with the ball still falling
                 # means no bounce was modelled (off-table, centroid clamped at the
                 # contact height z = ball radius): the ball is effectively dead, so
                 # it is not a usable strike. The margin keeps the threshold strictly
                 # above the clamp height.
-                dead_ball = p_cross[2] < contact_z + 0.03 and v_cross[2] < 0.0
+                dead_ball = pz_cross < contact_z + 0.03 and vz_cross < 0.0
                 return StrikeTarget(
-                    p_ball=p_cross, v_ball=v_cross,
+                    p_ball=np.array([px_cross, py_cross, pz_cross]),
+                    v_ball=np.array([vx_cross, vy_cross, vz_cross]),
                     t_strike=t_cross, num_bounces=bounces, valid=not dead_ball,
                 )
 
-            p = p_new
-            v = v_new
+            x, y, z = x_new, y_new, z_new
+            vx, vy, vz = vx_new, vy_new, vz_new
 
         return StrikeTarget(
-            p_ball=p, v_ball=v, t_strike=t, num_bounces=bounces, valid=False,
+            p_ball=np.array([x, y, z]), v_ball=np.array([vx, vy, vz]),
+            t_strike=t, num_bounces=bounces, valid=False,
         )

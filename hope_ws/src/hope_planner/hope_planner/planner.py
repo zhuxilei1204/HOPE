@@ -29,7 +29,7 @@ class HOPEPlanner:
         self.config = config or PlannerConfig()
         self.table = table or TableParams()
 
-        self.estimator = BallStateEstimator(self.config)
+        self.estimator = BallStateEstimator(self.config, self.physics)
         self.predictor = BallTrajectoryPredictor(self.physics, self.config, self.table)
         self.target_planner = RacketTargetPlanner(self.physics, self.config, self.table)
 
@@ -37,6 +37,14 @@ class HOPEPlanner:
         self._latest_strike: Optional[StrikeTarget] = None
         self._latest_t: Optional[float] = None
         self._incoming: Optional[bool] = None
+
+    def reset_stream(self) -> None:
+        """Reset estimator and cached output at a physical tracking boundary."""
+        self.estimator.reset_stream()
+        self._latest_command = None
+        self._latest_strike = None
+        self._latest_t = None
+        self._incoming = None
 
     def update(self, t: float, p_ball: np.ndarray) -> Optional[RacketCommand]:
         """Process a new ball position measurement.

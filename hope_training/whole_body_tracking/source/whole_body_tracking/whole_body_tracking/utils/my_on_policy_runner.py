@@ -62,7 +62,12 @@ class _LocalNullWriter:
 class HOPEOnPolicyRunner(OnPolicyRunner):
     """rsl_rl OnPolicyRunner with local-only, offline logging (no W&B / TensorBoard)."""
 
-    def configure_actor_anchor(self, checkpoint_path: str, coefficient: float) -> None:
+    def configure_actor_anchor(
+        self,
+        checkpoint_path: str,
+        coefficient: float,
+        first_layer_input_exempt_start: int | None = None,
+    ) -> None:
         """Anchor the actor to the actor stored in ``checkpoint_path``."""
         path = os.path.abspath(checkpoint_path)
         checkpoint = torch.load(path, map_location=self.device, weights_only=False)
@@ -77,7 +82,12 @@ class HOPEOnPolicyRunner(OnPolicyRunner):
         actor = getattr(self.alg.policy, "actor", None)
         if actor is None:
             raise ValueError("actor anchoring requires the policy to expose an actor module")
-        self.actor_anchor = ActorParameterAnchor(actor, reference_actor_state, coefficient)
+        self.actor_anchor = ActorParameterAnchor(
+            actor,
+            reference_actor_state,
+            coefficient,
+            first_layer_input_exempt_start=first_layer_input_exempt_start,
+        )
 
         original_update = self.alg.update
 
@@ -89,6 +99,7 @@ class HOPEOnPolicyRunner(OnPolicyRunner):
         self.alg.update = anchored_update
         print(
             f"[train.py] actor anchor enabled: coefficient={float(coefficient):.6g}, "
+            f"first_layer_input_exempt_start={first_layer_input_exempt_start}, "
             f"reference={path}",
             flush=True,
         )

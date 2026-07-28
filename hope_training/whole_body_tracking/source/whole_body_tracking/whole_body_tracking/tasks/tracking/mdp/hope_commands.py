@@ -30,7 +30,15 @@ from typing import TYPE_CHECKING
 from isaaclab.assets import Articulation
 from isaaclab.managers import CommandTerm, CommandTermCfg
 from isaaclab.utils import configclass
-from isaaclab.utils.math import matrix_from_quat, quat_apply, quat_error_magnitude, quat_mul, sample_uniform
+from isaaclab.utils.math import (
+    matrix_from_quat,
+    quat_apply,
+    quat_error_magnitude,
+    quat_mul,
+    quat_rotate_inverse,
+    sample_uniform,
+    yaw_quat,
+)
 
 from whole_body_tracking.tasks.tracking.mdp.ballistics import (
     GRAVITY as _GRAVITY,
@@ -133,6 +141,18 @@ class RacketTargetCommand(CommandTerm):
         self.current_swing_contact = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
         self.current_swing_net_cross = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
         self.current_swing_on_opponent = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
+        self.impact_health_score = torch.zeros(self.num_envs, device=self.device)
+        self.impact_health_ok = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
+        self.current_swing_impact_health_score = torch.zeros(self.num_envs, device=self.device)
+        self.current_swing_healthy_contact = torch.zeros(
+            self.num_envs, dtype=torch.bool, device=self.device
+        )
+        self.current_swing_healthy_net_cross = torch.zeros(
+            self.num_envs, dtype=torch.bool, device=self.device
+        )
+        self.current_swing_healthy_on_opponent = torch.zeros(
+            self.num_envs, dtype=torch.bool, device=self.device
+        )
         self.current_swing_attempt = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
         self.current_swing_unsafe = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
         self.current_swing_station_saturated = torch.zeros(
@@ -235,6 +255,16 @@ class RacketTargetCommand(CommandTerm):
         if self._contact_sensor is not None:
             sensor_bodies = list(self._contact_sensor.body_names)
             self._foot_idx_contact = [sensor_bodies.index(n) for n in cfg.feet_body_names if n in sensor_bodies]
+        torso_ids = self.robot.find_bodies(cfg.impact_health_torso_body_name, preserve_order=True)[0]
+        if not torso_ids:
+            raise ValueError(
+                f"impact health torso body not found: {cfg.impact_health_torso_body_name}"
+            )
+        self._impact_health_torso_index = torso_ids[0]
+        self._impact_health_foot_indices = [
+            self.robot.find_bodies(name, preserve_order=True)[0][0]
+            for name in cfg.feet_body_names
+        ]
 
         for key in (
             "racket_pos_error",
@@ -326,6 +356,15 @@ class RacketTargetCommand(CommandTerm):
             "current_swing_attempt",
             "current_swing_unsafe",
             "current_swing_station_saturated",
+            "impact_health_score",
+            "impact_health_ok",
+            "impact_healthy_contact",
+            "impact_healthy_net_cross",
+            "impact_healthy_on_opponent",
+            "current_swing_impact_health_score",
+            "current_swing_healthy_contact",
+            "current_swing_healthy_net_cross",
+            "current_swing_healthy_on_opponent",
             "cycle_v2_outcome_tier",
             "cycle_v2_streak",
         ):
@@ -1103,6 +1142,10 @@ class RacketTargetCommand(CommandTerm):
         self.current_swing_contact[env_ids] = False
         self.current_swing_net_cross[env_ids] = False
         self.current_swing_on_opponent[env_ids] = False
+        self.current_swing_impact_health_score[env_ids] = 0.0
+        self.current_swing_healthy_contact[env_ids] = False
+        self.current_swing_healthy_net_cross[env_ids] = False
+        self.current_swing_healthy_on_opponent[env_ids] = False
         self.current_swing_attempt[env_ids] = False
         self.current_swing_unsafe[env_ids] = False
         self.current_swing_station_saturated[env_ids] = False
@@ -1141,6 +1184,14 @@ class RacketTargetCommand(CommandTerm):
     def _cycle_v2_outcome(self, env_ids: torch.Tensor) -> torch.Tensor:
         tier = self._cycle_v2_outcome_tier()
         self.cycle_v2_outcome_tier[env_ids] = tier
+        if bool(self.cfg.cycle_v2_require_healthy_impact):
+            if tier == 0:
+                return self.current_swing_healthy_contact[env_ids]
+            if tier == 1:
+                return self.current_swing_healthy_net_cross[env_ids]
+            if tier == 2:
+                return self.current_swing_healthy_on_opponent[env_ids]
+            raise RuntimeError(f"Unsupported cycle-v2 outcome tier {tier}")
         if tier == 0:
             return self.current_swing_contact[env_ids]
         if tier == 1:
@@ -1206,9 +1257,17 @@ class RacketTargetCommand(CommandTerm):
         if rate <= 0.0:
             return
 
-        contact = self.current_swing_contact[env_ids].float().mean()
-        net = self.current_swing_net_cross[env_ids].float().mean()
-        success = self.current_swing_on_opponent[env_ids].float().mean()
+        if bool(self.cfg.ability_curriculum_require_healthy_impact):
+            contact_source = self.current_swing_healthy_contact
+            net_source = self.current_swing_healthy_net_cross
+            success_source = self.current_swing_healthy_on_opponent
+        else:
+            contact_source = self.current_swing_contact
+            net_source = self.current_swing_net_cross
+            success_source = self.current_swing_on_opponent
+        contact = contact_source[env_ids].float().mean()
+        net = net_source[env_ids].float().mean()
+        success = success_source[env_ids].float().mean()
         attempt = self.current_swing_attempt[env_ids].float().mean()
         safety = (~self.current_swing_unsafe[env_ids]).float().mean()
         station_saturation = self.current_swing_station_saturated[env_ids].float().mean()
@@ -1221,9 +1280,9 @@ class RacketTargetCommand(CommandTerm):
                 return values[mask].float().mean()
             return fallback.detach()
 
-        contact_values = self.current_swing_contact[env_ids].float()
-        net_values = self.current_swing_net_cross[env_ids].float()
-        success_values = self.current_swing_on_opponent[env_ids].float()
+        contact_values = contact_source[env_ids].float()
+        net_values = net_source[env_ids].float()
+        success_values = success_source[env_ids].float()
         forehand_contact = _masked_mean(contact_values, forehand, contact)
         forehand_net = _masked_mean(net_values, forehand, net)
         forehand_success = _masked_mean(success_values, forehand, success)
@@ -1482,6 +1541,58 @@ class RacketTargetCommand(CommandTerm):
         self.feet_contact_state.zero_()
         count = min(in_contact.shape[1], self.feet_contact_state.shape[1])
         self.feet_contact_state[:, :count] = in_contact[:, :count]
+
+    def _compute_impact_health(self) -> None:
+        """Compute a smooth and hard trunk/support health gate at the current step."""
+        data = self.robot.data
+        torso_idx = self._impact_health_torso_index
+        gravity_w = torch.zeros(self.num_envs, 3, device=self.device)
+        gravity_w[:, 2] = -1.0
+        torso_gravity = quat_rotate_inverse(data.body_quat_w[:, torso_idx], gravity_w)
+        backlean_violation = (
+            -torso_gravity[:, 0] - float(self.cfg.impact_health_backlean_tolerance)
+        ).clamp_min(0.0)
+        torso_roll = torch.abs(torso_gravity[:, 1])
+        torso_ang_vel = torch.norm(data.body_ang_vel_w[:, torso_idx, :2], dim=-1)
+
+        masses = data.default_mass.to(device=data.body_com_pos_w.device)
+        com_w = (data.body_com_pos_w * masses.unsqueeze(-1)).sum(dim=1) / masses.sum(
+            dim=1, keepdim=True
+        ).clamp_min(1.0e-6)
+        support_xy = data.body_pos_w[:, self._impact_health_foot_indices, :2].mean(dim=1)
+        com_delta_w = torch.zeros_like(com_w)
+        com_delta_w[:, :2] = com_w[:, :2] - support_xy
+        com_delta_b = quat_rotate_inverse(yaw_quat(self.base_quat_w), com_delta_w)
+        com_x = torch.abs(com_delta_b[:, 0])
+        com_y = torch.abs(com_delta_b[:, 1])
+        backward_velocity = (-data.root_lin_vel_w[:, 0]).clamp_min(0.0)
+        feet = torch.clamp(self.feet_contact_frac, 0.0, 1.0)
+
+        def _gaussian(value: torch.Tensor, std: float) -> torch.Tensor:
+            return torch.exp(-torch.square(value / max(float(std), 1.0e-6)))
+
+        components = (
+            (0.28, _gaussian(backlean_violation, self.cfg.impact_health_backlean_std)),
+            (0.10, _gaussian(torso_roll, self.cfg.impact_health_roll_std)),
+            (0.14, _gaussian(torso_ang_vel, self.cfg.impact_health_ang_vel_std)),
+            (0.18, _gaussian(com_x, self.cfg.impact_health_com_x_std)),
+            (0.12, _gaussian(com_y, self.cfg.impact_health_com_y_std)),
+            (0.10, _gaussian(backward_velocity, self.cfg.impact_health_backward_vel_std)),
+            (0.08, 0.5 + 0.5 * feet),
+        )
+        log_score = torch.zeros(self.num_envs, device=self.device)
+        for weight, component in components:
+            log_score += weight * torch.log(component.clamp_min(1.0e-6))
+        self.impact_health_score = torch.exp(log_score)
+        self.impact_health_ok = (
+            (torso_gravity[:, 0] >= -float(self.cfg.impact_health_max_backlean))
+            & (torso_roll <= float(self.cfg.impact_health_max_roll))
+            & (torso_ang_vel <= float(self.cfg.impact_health_max_ang_vel))
+            & (com_x <= float(self.cfg.impact_health_max_com_x))
+            & (com_y <= float(self.cfg.impact_health_max_com_y))
+            & (backward_velocity <= float(self.cfg.impact_health_max_backward_vel))
+            & (feet >= float(self.cfg.impact_health_min_feet_contact))
+        )
 
     def _recovery_arm_pose_score(self, motion: MotionCommand) -> torch.Tensor:
         body_names = tuple(self.cfg.recovery_diag_arm_body_names)
@@ -1817,12 +1928,24 @@ class RacketTargetCommand(CommandTerm):
         self.current_swing_contact[:] = self.current_swing_contact | contact
         self.current_swing_net_cross[:] = self.current_swing_net_cross | net_cross
         self.current_swing_on_opponent[:] = self.current_swing_on_opponent | on_opponent
+        self.current_swing_impact_health_score[:] = torch.where(
+            contact,
+            self.impact_health_score,
+            self.current_swing_impact_health_score,
+        )
+        healthy_contact = contact & self.impact_health_ok
+        healthy_net_cross = net_cross & self.impact_health_ok
+        healthy_on_opponent = on_opponent & self.impact_health_ok
+        self.current_swing_healthy_contact |= healthy_contact
+        self.current_swing_healthy_net_cross |= healthy_net_cross
+        self.current_swing_healthy_on_opponent |= healthy_on_opponent
 
     def _update_metrics(self):
         # Timing + FK must be fresh before the reward reads them (motion updated first this step).
         self._compute_strike_timing()
         self._compute_racket_state()
         self._update_feet_contact()
+        self._compute_impact_health()
         self._evaluate_return()
         self._update_recovery_diagnostics(self._motion())
         unsafe = (
@@ -1911,6 +2034,29 @@ class RacketTargetCommand(CommandTerm):
         self.metrics["current_swing_unsafe"] = self.current_swing_unsafe.float()
         self.metrics["current_swing_station_saturated"] = (
             self.current_swing_station_saturated.float()
+        )
+        self.metrics["impact_health_score"] = self.impact_health_score
+        self.metrics["impact_health_ok"] = self.impact_health_ok.float()
+        self.metrics["impact_healthy_contact"] = (
+            self.ball_contact & self.impact_health_ok
+        ).float()
+        self.metrics["impact_healthy_net_cross"] = (
+            self.ball_net_cross & self.impact_health_ok
+        ).float()
+        self.metrics["impact_healthy_on_opponent"] = (
+            self.ball_on_opponent & self.impact_health_ok
+        ).float()
+        self.metrics["current_swing_impact_health_score"] = (
+            self.current_swing_impact_health_score
+        )
+        self.metrics["current_swing_healthy_contact"] = (
+            self.current_swing_healthy_contact.float()
+        )
+        self.metrics["current_swing_healthy_net_cross"] = (
+            self.current_swing_healthy_net_cross.float()
+        )
+        self.metrics["current_swing_healthy_on_opponent"] = (
+            self.current_swing_healthy_on_opponent.float()
         )
         self.metrics["cycle_v2_pending"] = self.cycle_v2_pending.float()
         self.metrics["cycle_v2_attempt_latch"] = self.cycle_v2_attempt_latch.float()
@@ -2098,6 +2244,9 @@ class RacketTargetCommandCfg(CommandTermCfg):
     ability_curriculum_station_saturation_regress_threshold: float = 0.15
     ability_curriculum_safe_min_base_height: float = 0.70
     ability_curriculum_safe_max_tilt: float = 0.65
+    # When enabled, curriculum outcome EMAs count only impacts made while the
+    # trunk and COM remain inside the deployable support envelope.
+    ability_curriculum_require_healthy_impact: bool = False
 
     # Cycle-v2 deploy-faithful continuous constraint.  When enabled, a useful previous swing opens
     # a per-env pending check.  The next command-visible pre-strike state must become ready before
@@ -2122,6 +2271,25 @@ class RacketTargetCommandCfg(CommandTermCfg):
     cycle_v2_min_feet_contact: float = 0.45
     cycle_v2_max_racket_speed: float = 0.80
     cycle_v2_min_arm_score: float = 0.55
+    cycle_v2_require_healthy_impact: bool = False
+
+    # Impact-health gate. Backward pitch is one-sided so a useful forward weight
+    # transfer is not punished; arm joints are intentionally absent.
+    impact_health_torso_body_name: str = "torso_Link"
+    impact_health_backlean_tolerance: float = 0.05
+    impact_health_backlean_std: float = 0.12
+    impact_health_roll_std: float = 0.22
+    impact_health_ang_vel_std: float = 1.40
+    impact_health_com_x_std: float = 0.14
+    impact_health_com_y_std: float = 0.18
+    impact_health_backward_vel_std: float = 0.30
+    impact_health_max_backlean: float = 0.20
+    impact_health_max_roll: float = 0.28
+    impact_health_max_ang_vel: float = 2.50
+    impact_health_max_com_x: float = 0.20
+    impact_health_max_com_y: float = 0.22
+    impact_health_max_backward_vel: float = 0.35
+    impact_health_min_feet_contact: float = 0.50
 
     # --- no-spin return evaluation (example table placement in the env frame; tune to your scene) ---
     contact_radius: float = 0.095   # racket radius + ball radius

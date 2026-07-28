@@ -777,6 +777,69 @@ def balanced_opponent_bounce(
     return cmd.ball_on_opponent.float() * balance * _phase_scale(env, start_step, warmup_steps, start_scale, 1.0)
 
 
+def health_gated_soft_ball_contact(
+    env: ManagerBasedRLEnv,
+    command_name: str,
+    minimum_health_multiplier: float = 0.0,
+    pos_std: float = 0.18,
+    approach_speed: float = 0.15,
+    approach_std: float = 0.75,
+    normal_speed: float = 0.0,
+    normal_std: float = 0.75,
+    window_s: float = 0.20,
+) -> torch.Tensor:
+    """Dense contact shaping multiplied by direct torso/COM impact health."""
+    cmd = _cmd(env, command_name)
+    contact_like = _soft_ball_contact_score(
+        cmd,
+        pos_std=pos_std,
+        approach_speed=approach_speed,
+        approach_std=approach_std,
+        normal_speed=normal_speed,
+        normal_std=normal_std,
+        window_s=window_s,
+    )
+    floor = min(max(float(minimum_health_multiplier), 0.0), 1.0)
+    health = floor + (1.0 - floor) * cmd.impact_health_score
+    return contact_like * health
+
+
+def health_gated_ball_contact(
+    env: ManagerBasedRLEnv,
+    command_name: str,
+    minimum_health_multiplier: float = 0.0,
+) -> torch.Tensor:
+    """Actual contact event multiplied by impact health from the same frame."""
+    cmd = _cmd(env, command_name)
+    floor = min(max(float(minimum_health_multiplier), 0.0), 1.0)
+    health = floor + (1.0 - floor) * cmd.impact_health_score
+    return cmd.ball_contact.float() * health
+
+
+def health_gated_net_cross(
+    env: ManagerBasedRLEnv,
+    command_name: str,
+    minimum_health_multiplier: float = 0.0,
+) -> torch.Tensor:
+    """Net-clear event multiplied by impact health from the same frame."""
+    cmd = _cmd(env, command_name)
+    floor = min(max(float(minimum_health_multiplier), 0.0), 1.0)
+    health = floor + (1.0 - floor) * cmd.impact_health_score
+    return cmd.ball_net_cross.float() * health
+
+
+def health_gated_opponent_bounce(
+    env: ManagerBasedRLEnv,
+    command_name: str,
+    minimum_health_multiplier: float = 0.0,
+) -> torch.Tensor:
+    """Opponent-bounce event multiplied by impact health from the same frame."""
+    cmd = _cmd(env, command_name)
+    floor = min(max(float(minimum_health_multiplier), 0.0), 1.0)
+    health = floor + (1.0 - floor) * cmd.impact_health_score
+    return cmd.ball_on_opponent.float() * health
+
+
 # --- (6,7,8) no-spin return outcome, one-shot at the strike --------------------------------- #
 def ball_contact(env: ManagerBasedRLEnv, command_name: str) -> torch.Tensor:
     """+1 on the strike frame when the racket actually contacts the target ball (near + approaching)."""

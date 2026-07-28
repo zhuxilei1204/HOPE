@@ -545,6 +545,35 @@ class RewardsCfg:
             "start_scale": 1.0,
         },
     )
+    health_gated_soft_ball_contact = RewTerm(
+        func=mdp.health_gated_soft_ball_contact,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "minimum_health_multiplier": 0.0,
+            "pos_std": 0.18,
+            "approach_speed": 0.10,
+            "approach_std": 0.75,
+            "normal_speed": 0.0,
+            "normal_std": 0.75,
+            "window_s": 0.22,
+        },
+    )
+    health_gated_ball_contact = RewTerm(
+        func=mdp.health_gated_ball_contact,
+        weight=0.0,
+        params={"command_name": "racket_target", "minimum_health_multiplier": 0.0},
+    )
+    health_gated_net_cross = RewTerm(
+        func=mdp.health_gated_net_cross,
+        weight=0.0,
+        params={"command_name": "racket_target", "minimum_health_multiplier": 0.0},
+    )
+    health_gated_opponent_bounce = RewTerm(
+        func=mdp.health_gated_opponent_bounce,
+        weight=0.0,
+        params={"command_name": "racket_target", "minimum_health_multiplier": 0.0},
+    )
     ball_contact = RewTerm(func=mdp.ball_contact, weight=4.0, params={"command_name": "racket_target"})
     net_cross = RewTerm(func=mdp.ball_net_cross, weight=1.0, params={"command_name": "racket_target"})
     opponent_bounce = RewTerm(func=mdp.ball_opponent_bounce, weight=2.0, params={"command_name": "racket_target"})

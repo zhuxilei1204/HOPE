@@ -594,6 +594,9 @@ def _run(cfg):
         runner.configure_actor_anchor(
             os.path.abspath(str(actor_anchor_checkpoint)),
             actor_anchor_coefficient,
+            first_layer_input_exempt_start=getattr(
+                cfg, "actor_anchor_first_layer_input_exempt_start", None
+            ),
         )
 
     # 7) dump the resolved configuration + train.

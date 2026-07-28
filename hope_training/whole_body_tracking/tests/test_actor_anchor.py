@@ -51,3 +51,32 @@ def test_actor_anchor_rejects_missing_reference_parameter() -> None:
         assert "missing parameters" in str(exc)
     else:
         raise AssertionError("missing bias reference should fail")
+
+
+def test_actor_anchor_can_exempt_appended_input_columns() -> None:
+    actor = nn.Sequential(nn.Linear(4, 2, bias=False), nn.Tanh(), nn.Linear(2, 1))
+    reference = {
+        name: torch.zeros_like(parameter)
+        for name, parameter in actor.named_parameters()
+    }
+    with torch.no_grad():
+        actor[0].weight.fill_(1.0)
+        actor[2].weight.fill_(1.0)
+        actor[2].bias.fill_(1.0)
+
+    anchor = ActorParameterAnchor(
+        actor,
+        reference,
+        coefficient=0.5,
+        first_layer_input_exempt_start=2,
+    )
+    sum(parameter.sum() for parameter in actor.parameters()).backward()
+
+    assert torch.allclose(actor[0].weight.grad[:, :2], torch.full((2, 2), 1.5))
+    assert torch.allclose(actor[0].weight.grad[:, 2:], torch.ones((2, 2)))
+    assert torch.allclose(actor[2].weight.grad, torch.full((1, 2), 1.5))
+    assert torch.allclose(actor[2].bias.grad, torch.full((1,), 1.5))
+    metrics = anchor.metrics()
+    assert metrics["actor_anchor_rms"] > 0.0
+    assert metrics["actor_anchor_exempt_rms"] > 0.0
+    anchor.close()

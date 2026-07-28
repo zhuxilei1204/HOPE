@@ -44,6 +44,9 @@ checkpoint_path: null
 # normally the selected MuJoCo-valid baseline, not the latest continuation.
 actor_anchor_coefficient: 0.0
 actor_anchor_checkpoint_path: null
+# Keep the deployment-preserving anchor on the legacy policy while allowing
+# appended observation columns to learn. null anchors the complete actor.
+actor_anchor_first_layer_input_exempt_start: null
 
 # Video capture (off by default).
 video: false

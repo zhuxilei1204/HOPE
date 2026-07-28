@@ -1,0 +1,47 @@
+defaults:
+  - HOPEPingPongM22750StabilityFeedback122F1
+  - _self_
+
+name: HOPEPingPongM22750StabilityFeedback122HealthImpactH1
+actor_obs_contract: hope_pingpong_stability122
+
+overrides:
+  # A cycle and its ability EMA count only when the return was produced without
+  # violating the deployable trunk/COM support envelope at impact.
+  commands.racket_target.ability_curriculum_require_healthy_impact: true
+  commands.racket_target.cycle_v2_require_healthy_impact: true
+  commands.racket_target.impact_health_backlean_tolerance: 0.05
+  commands.racket_target.impact_health_backlean_std: 0.12
+  commands.racket_target.impact_health_roll_std: 0.22
+  commands.racket_target.impact_health_ang_vel_std: 1.40
+  commands.racket_target.impact_health_com_x_std: 0.14
+  commands.racket_target.impact_health_com_y_std: 0.18
+  commands.racket_target.impact_health_backward_vel_std: 0.30
+  commands.racket_target.impact_health_max_backlean: 0.20
+  commands.racket_target.impact_health_max_roll: 0.28
+  commands.racket_target.impact_health_max_ang_vel: 2.50
+  commands.racket_target.impact_health_max_com_x: 0.20
+  commands.racket_target.impact_health_max_com_y: 0.22
+  commands.racket_target.impact_health_max_backward_vel: 0.35
+  commands.racket_target.impact_health_min_feet_contact: 0.50
+
+  # Preserve 40% of the original outcome shaping for exploration. The other
+  # 60% is paid in proportion to direct impact health, keeping the maximum
+  # reward unchanged and leaving right-arm motion unconstrained.
+  rewards.soft_ball_contact.weight: 2.0
+  rewards.health_gated_soft_ball_contact.weight: 3.0
+  rewards.health_gated_soft_ball_contact.params:
+    command_name: racket_target
+    minimum_health_multiplier: 0.0
+    pos_std: 0.18
+    approach_speed: 0.10
+    approach_std: 0.75
+    normal_speed: 0.0
+    normal_std: 0.75
+    window_s: 0.22
+  rewards.ball_contact.weight: 0.60
+  rewards.health_gated_ball_contact.weight: 0.90
+  rewards.net_cross.weight: 0.72
+  rewards.health_gated_net_cross.weight: 1.08
+  rewards.opponent_bounce.weight: 0.88
+  rewards.health_gated_opponent_bounce.weight: 1.32

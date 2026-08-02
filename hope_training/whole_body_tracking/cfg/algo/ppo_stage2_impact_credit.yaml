@@ -1,0 +1,31 @@
+name: ppo_stage2_impact_credit
+
+runner:
+  # 64 policy steps = 1.28 s at 50 Hz, long enough to keep the final approach,
+  # rigid contact, and net-cross result in one rollout in typical routes.
+  num_steps_per_env: 64
+  max_iterations: 100
+  save_interval: 50
+  empirical_normalization: false
+
+policy:
+  actor_hidden_dims: [512, 256, 128]
+  critic_hidden_dims: [512, 256, 128]
+  activation: elu
+  init_noise_std: 0.08
+  noise_std_type: log
+
+algorithm:
+  learning_rate: 0.00001
+  schedule: fixed
+  desired_kl: 0.0015
+  entropy_coef: 0.0002
+  num_learning_epochs: 2
+  num_mini_batches: 4
+  gamma: 0.99
+  lam: 0.95
+  clip_param: 0.12
+  value_loss_coef: 1.0
+  use_clipped_value_loss: true
+  max_grad_norm: 0.5
+

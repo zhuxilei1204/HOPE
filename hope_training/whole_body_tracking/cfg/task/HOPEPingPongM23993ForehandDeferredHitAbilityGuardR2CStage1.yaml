@@ -1,0 +1,14 @@
+# Continue the validated R2C policy from its terminal curriculum level.
+#
+# RSL-RL checkpoints contain policy, optimizer, and iteration state, but not
+# command-term curriculum state. Starting this continuation at level 1 avoids
+# silently replaying the already-solved level-0 READY envelope.
+
+defaults:
+  - HOPEPingPongM22494ForehandDeferredHitAbilityGuardR2C
+  - _self_
+
+name: HOPEPingPongM23993ForehandDeferredHitAbilityGuardR2CStage1
+
+overrides:
+  commands.racket_target.post_contact_ready_curriculum_start_level: 1

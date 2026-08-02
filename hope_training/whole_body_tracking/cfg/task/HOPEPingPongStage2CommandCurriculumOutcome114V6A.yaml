@@ -1,0 +1,119 @@
+name: HOPEPingPongStage2CommandCurriculumOutcome114V6A
+gym_task: HOPE-PingPong-Stage2-Physical-AgibotA3-v0
+experiment_name: hope_pingpong_stage2_command_curriculum114_v6
+actor_obs_contract: hope_pingpong_normal114
+
+defaults:
+  - /base/env_base@_here_
+  - /base/sim_base@_here_
+  - /base/randomization_base@_here_
+  - _self_
+
+motion_manifest: hope_training/motions/stage1_core_two_motion_20260801/manifest.tsv
+
+env:
+  num_envs: 256
+  env_spacing: 6.0
+  episode_length_s: 12.0
+
+motion:
+  wrap_teleport: false
+
+actor_obs:
+  racket_target_normal_w: true
+  stability_feedback: false
+
+runtime:
+  prune_zero_weight_rewards: true
+
+domain_rand:
+  link_mass_range: [0.95, 1.05]
+  pd_gain_range: [0.95, 1.05]
+
+overrides:
+  # Level zero is the validated V5 Core distribution. Measured ability expands
+  # the same rigid-ball task continuously toward the V5 Diverse distribution.
+  commands.physical_shadow.route_geometry_mode: independent
+  commands.physical_shadow.pre_bounce_time_range: [0.44, 0.68]
+  commands.physical_shadow.post_bounce_time_range: [0.28, 0.48]
+  commands.physical_shadow.bounce_dx_range: [0.24, 0.78]
+  commands.physical_shadow.bounce_y_jitter_range: [-0.18, 0.18]
+  commands.physical_shadow.route_sample_attempts: 8
+  commands.physical_shadow.route_ability_curriculum_enabled: true
+  commands.physical_shadow.route_ability_curriculum_start_level: 0.10
+  commands.physical_shadow.route_ability_curriculum_full_level: 1.0
+  commands.physical_shadow.route_easy_pre_bounce_time_range: [0.50, 0.62]
+  commands.physical_shadow.route_easy_post_bounce_time_range: [0.34, 0.46]
+  commands.physical_shadow.route_easy_bounce_dx_range: [0.30, 0.68]
+  commands.physical_shadow.route_easy_bounce_y_jitter_range: [-0.10, 0.10]
+
+  commands.physical_shadow.post_bounce_command_refresh_enabled: true
+  commands.physical_shadow.command_refresh_continuous_post_bounce: true
+  commands.physical_shadow.command_refresh_freeze_tts_s: 0.20
+  commands.physical_shadow.command_refresh_solution_blend: 1.0
+  commands.physical_shadow.command_refresh_update_dynamic_station: true
+
+  # Motion is an action prior only. Workspace, outgoing return and route width
+  # all follow the shared physical-ability level.
+  commands.racket_target.table_workspace_fixed_level: -1.0
+  commands.racket_target.table_workspace_curriculum_start_level: 0.0
+  commands.racket_target.table_workspace_curriculum_full_level: 1.0
+  commands.racket_target.table_workspace_motion_seed_blend_start: 0.0
+  commands.racket_target.table_workspace_motion_seed_end_level: 0.0
+  commands.racket_target.ability_curriculum_start_ball_scale: 0.50
+  commands.racket_target.ballistic_flight_time_range: [0.42, 0.78]
+  commands.racket_target.ballistic_land_x_range: [1.95, 3.05]
+  commands.racket_target.ballistic_land_y_range: [-0.55, 0.55]
+  commands.racket_target.impact_inverse_command_curriculum_enabled: false
+  commands.racket_target.impact_inverse_command_start_blend: 1.0
+  commands.racket_target.planner_perturb_curriculum_source: fixed
+  commands.racket_target.planner_perturb_fixed_scale: 0.0
+
+  # Rates are per resolved serve. The historical 28% center-contact and 25%
+  # net thresholds were unreachable: corrected V5 rates are about 5% and
+  # 0.07%. Requirements now rise with demonstrated ability.
+  rewards.physical_capability_curriculum.params.fixed_level: -1.0
+  rewards.physical_capability_curriculum.params.minimum_events: 512
+  rewards.physical_capability_curriculum.params.ema_rate: 0.25
+  rewards.physical_capability_curriculum.params.bootstrap_contact_threshold: 0.035
+  rewards.physical_capability_curriculum.params.contact_threshold: 0.080
+  rewards.physical_capability_curriculum.params.full_contact_threshold_level: 0.85
+  rewards.physical_capability_curriculum.params.aligned_contact_threshold: 0.0
+  rewards.physical_capability_curriculum.params.bootstrap_aligned_contact_threshold: 0.0
+  rewards.physical_capability_curriculum.params.full_aligned_contact_threshold_level: 0.85
+  rewards.physical_capability_curriculum.params.net_threshold: 0.020
+  rewards.physical_capability_curriculum.params.contact_only_until_level: 0.30
+  rewards.physical_capability_curriculum.params.net_full_threshold_level: 0.75
+  rewards.physical_capability_curriculum.params.bounce_threshold: 0.010
+  rewards.physical_capability_curriculum.params.net_only_until_level: 0.60
+  rewards.physical_capability_curriculum.params.bounce_full_threshold_level: 1.0
+  rewards.physical_capability_curriculum.params.bootstrap_recovery_threshold: 0.50
+  rewards.physical_capability_curriculum.params.recovery_threshold: 0.70
+  rewards.physical_capability_curriculum.params.full_recovery_threshold_level: 0.85
+  rewards.physical_capability_curriculum.params.safety_threshold: 0.78
+  rewards.physical_capability_curriculum.params.recovery_floor: 0.45
+  rewards.physical_capability_curriculum.params.safety_floor: 0.65
+  rewards.physical_capability_curriculum.params.contact_regress_ratio: 0.65
+  rewards.physical_capability_curriculum.params.aligned_contact_regress_ratio: 0.0
+  rewards.physical_capability_curriculum.params.net_regress_ratio: 0.25
+  rewards.physical_capability_curriculum.params.bounce_regress_ratio: 0.25
+  rewards.physical_capability_curriculum.params.level_step: 0.05
+  rewards.physical_capability_curriculum.params.regress_step: 0.05
+  rewards.physical_capability_curriculum.params.required_advance_checks: 3
+  rewards.physical_capability_curriculum.params.required_regress_checks: 2
+  rewards.physical_capability_curriculum.params.center_contact_radius: 0.061
+  rewards.physical_capability_curriculum.params.aligned_position_error_max: 0.14
+  rewards.physical_capability_curriculum.params.aligned_velocity_error_max: 1.25
+  rewards.physical_capability_curriculum.params.aligned_velocity_direction_error_max_deg: 40.0
+  rewards.physical_capability_curriculum.params.aligned_normal_error_max_deg: 32.0
+  rewards.physical_capability_curriculum.params.aligned_timing_error_max_s: 0.07
+
+  # Command execution is paid only at an actual PhysX contact; return credit
+  # remains owned by physical net/bounce outcomes.
+  rewards.physical_contact_planner_alignment.weight: 1.5
+  rewards.physical_contact_planner_alignment.params.position_std: 0.10
+  rewards.physical_contact_planner_alignment.params.velocity_std: 0.85
+  rewards.physical_contact_planner_alignment.params.direction_std_deg: 22.0
+  rewards.physical_contact_planner_alignment.params.normal_std_deg: 18.0
+  rewards.physical_contact_planner_alignment.params.timing_std_s: 0.08
+  rewards.physical_outcome_events.params.impact_inverse_quality_floor: 1.0

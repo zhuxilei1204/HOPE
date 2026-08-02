@@ -1,0 +1,33 @@
+name: HOPEPingPongClosedLoopV3ScratchMultiSkill114
+gym_task: HOPE-PingPong-ClosedLoopV3-ScratchMultiSkill-AgibotA3-v0
+experiment_name: hope_pingpong_closed_loop_v3_scratch_multiskill114
+actor_obs_contract: hope_pingpong_normal114
+
+defaults:
+  - /base/env_base@_here_
+  - /base/sim_base@_here_
+  - /base/randomization_base@_here_
+  - _self_
+
+# Five contact-aware clips that passed foot-lock, COM, ground, joint-margin,
+# and Isaac/MuJoCo FK audits. Ball routes are sampled independently in Python.
+motion_manifest: hope_training/motions/supplemental_lower_body_contact_aware_isaacfk_20260728/manifest_train_ready_with_task_boxes.tsv
+
+env:
+  num_envs: 4096
+  env_spacing: 2.5
+  episode_length_s: 45.0
+
+motion:
+  wrap_teleport: false
+
+actor_obs:
+  racket_target_normal_w: true
+  stability_feedback: false
+
+domain_rand:
+  link_mass_range: [0.95, 1.05]
+  pd_gain_range: [0.95, 1.05]
+
+# The Python environment owns the reviewed reward and lifecycle whitelist.
+overrides: {}

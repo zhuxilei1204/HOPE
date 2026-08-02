@@ -51,6 +51,127 @@ def interpolate_bounds(
     )
 
 
+def motion_seed_blend(level: float, start_blend: float, end_level: float) -> float:
+    """Fade a motion-aligned strike target out as measured task ability grows."""
+    start = min(max(float(start_blend), 0.0), 1.0)
+    if start == 0.0:
+        return 0.0
+    end = float(end_level)
+    if end <= 0.0:
+        raise ValueError("motion seed end_level must be positive when seeding is enabled")
+    progress = min(max(float(level) / end, 0.0), 1.0)
+    return start * (1.0 - progress)
+
+
+def windowed_curriculum_level(
+    level: float, start_level: float, full_level: float
+) -> float:
+    """Map a shared ability level onto one independently scheduled difficulty."""
+    start = float(start_level)
+    full = float(full_level)
+    if not 0.0 <= start < full <= 1.0:
+        raise ValueError(
+            "curriculum window must satisfy 0 <= start_level < full_level <= 1"
+        )
+    return min(max((float(level) - start) / (full - start), 0.0), 1.0)
+
+
+def ramped_curriculum_threshold(
+    level: float,
+    start_level: float,
+    full_level: float,
+    full_threshold: float,
+) -> float:
+    """Ramp an outcome requirement without a discontinuity at its first gate."""
+    return float(full_threshold) * windowed_curriculum_level(
+        level, start_level, full_level
+    )
+
+
+def hysteretic_curriculum_transition(
+    *,
+    level: int,
+    max_level: int,
+    good: bool,
+    bad: bool,
+    resolved_events: int,
+    min_resolved_events: int,
+    advance_streak: int,
+    regress_streak: int,
+    required_advance_checks: int,
+    required_regress_checks: int,
+) -> tuple[int, int, int, bool]:
+    """Update one event-gated curriculum level with advance/regress hysteresis.
+
+    Returns the next level, advance streak, regress streak, and whether the
+    level changed. A regression takes priority if both guards are true.
+    """
+    if max_level < 0:
+        raise ValueError("max_level must be non-negative")
+    if not 0 <= level <= max_level:
+        raise ValueError(f"level {level} must be in [0, {max_level}]")
+    if min_resolved_events < 1:
+        raise ValueError("min_resolved_events must be positive")
+    if required_advance_checks < 1 or required_regress_checks < 1:
+        raise ValueError("required curriculum checks must be positive")
+
+    enough = int(resolved_events) >= int(min_resolved_events)
+    next_advance = int(advance_streak) + 1 if bool(good) and enough else 0
+    next_regress = int(regress_streak) + 1 if bool(bad) and level > 0 else 0
+
+    if next_regress >= int(required_regress_checks):
+        return level - 1, 0, 0, True
+    if (
+        next_advance >= int(required_advance_checks)
+        and level < max_level
+    ):
+        return level + 1, 0, 0, True
+    return level, next_advance, next_regress, False
+
+
+def event_gated_scalar_curriculum_transition(
+    *,
+    level: float,
+    good: bool,
+    bad: bool,
+    resolved_events: int,
+    min_resolved_events: int,
+    advance_streak: int,
+    regress_streak: int,
+    required_advance_checks: int,
+    required_regress_checks: int,
+    advance_rate: float,
+    regress_rate: float,
+) -> tuple[float, int, int, bool, bool]:
+    """Update a continuous curriculum after a complete, disjoint event batch.
+
+    The final boolean reports that a decision check was consumed. Callers reset
+    their event counter after each consumed check, so a streak cannot reuse the
+    same evidence window. Regression takes priority when both guards are true.
+    """
+    current = min(max(float(level), 0.0), 1.0)
+    if min_resolved_events < 1:
+        raise ValueError("min_resolved_events must be positive")
+    if required_advance_checks < 1 or required_regress_checks < 1:
+        raise ValueError("required curriculum checks must be positive")
+    if advance_rate <= 0.0 or regress_rate <= 0.0:
+        raise ValueError("curriculum advance/regress rates must be positive")
+
+    if int(resolved_events) < int(min_resolved_events):
+        return current, int(advance_streak), int(regress_streak), False, False
+
+    next_advance = int(advance_streak) + 1 if bool(good) else 0
+    next_regress = int(regress_streak) + 1 if bool(bad) and current > 0.0 else 0
+
+    if next_regress >= int(required_regress_checks):
+        next_level = max(0.0, current - float(regress_rate))
+        return next_level, 0, 0, next_level != current, True
+    if next_advance >= int(required_advance_checks) and current < 1.0:
+        next_level = min(1.0, current + float(advance_rate))
+        return next_level, 0, 0, next_level != current, True
+    return current, next_advance, next_regress, False, True
+
+
 def validate_table_workspace(
     table_width: float,
     edge_margin: float,

@@ -19,6 +19,7 @@ import yaml
 from .action_adapter import ActionAdapter
 from .joint_order import JOINT_NAMES, NUM_JOINTS
 from .lifecycle import LifecycleConfig
+from .station import StationConfig
 
 # Index ranges of the four joint groups (used to expand example PD gains).
 _GROUP_RANGES = {
@@ -38,6 +39,7 @@ class RuntimeConfig:
     sim_kp: np.ndarray
     sim_kd: np.ndarray
     lifecycle: LifecycleConfig
+    station: StationConfig
     passive_neck: bool = True
     last_action_feedback_mode: str = "raw"
     config_dir: Path = field(default_factory=Path)
@@ -87,6 +89,18 @@ class RuntimeConfig:
             recovery_blend_s=float(life_doc.get("recovery_blend_s", 0.0)),
             recovery_blend_velocity=bool(life_doc.get("recovery_blend_velocity", False)),
         )
+        station_doc = doc.get("station", {})
+        station = StationConfig(
+            mode=str(station_doc.get("mode", "fixed")),
+            racket_offset_xy=_pair(
+                station_doc.get("racket_offset_xy", (0.0, 0.0)),
+                "station.racket_offset_xy",
+            ),
+            clip_x=_pair(station_doc.get("clip_x", (0.0, 0.0)), "station.clip_x"),
+            clip_y=_pair(station_doc.get("clip_y", (0.0, 0.0)), "station.clip_y"),
+            blend=float(station_doc.get("blend", 1.0)),
+            post_strike_window_s=float(station_doc.get("post_strike_window_s", 0.12)),
+        )
 
         return cls(
             control_hz=control_hz,
@@ -96,6 +110,7 @@ class RuntimeConfig:
             sim_kp=sim_kp,
             sim_kd=sim_kd,
             lifecycle=lifecycle,
+            station=station,
             passive_neck=bool(doc.get("passive_neck", True)),
             last_action_feedback_mode=feedback_mode,
             config_dir=cfg_dir,
@@ -105,6 +120,13 @@ class RuntimeConfig:
 def _resolve(base: Path, rel: str) -> Path:
     p = Path(rel)
     return p if p.is_absolute() else (base / p).resolve()
+
+
+def _pair(value, name: str) -> tuple[float, float]:
+    values = tuple(float(item) for item in value)
+    if len(values) != 2:
+        raise ValueError(f"{name} must contain exactly two values")
+    return values
 
 
 def _expand_pd_gains(spec: dict) -> tuple[np.ndarray, np.ndarray]:

@@ -1,0 +1,39 @@
+# Round-2 lateral relocation curriculum from A model_28990.
+#
+# Adjacent stages change either relocation distance or settlement strictness,
+# never both. Arrival/settlement collapse can roll the curriculum back after a
+# persistent EMA failure, while contact and safety remain capability guards.
+
+defaults:
+  - HOPEPingPongM25991FootworkRelocate114A
+  - _self_
+
+name: HOPEPingPongM28990FootworkDecoupled114A2
+
+overrides:
+  commands.racket_target.station_relocation_abs_y_ranges:
+    - [0.05, 0.06]
+    - [0.06, 0.08]
+    - [0.06, 0.08]
+    - [0.08, 0.12]
+    - [0.08, 0.12]
+    - [0.12, 0.16]
+    - [0.12, 0.16]
+  commands.racket_target.station_relocation_settle_max_lin_vel_by_level:
+    [0.18, 0.18, 0.17, 0.17, 0.16, 0.16, 0.14]
+  commands.racket_target.station_relocation_settle_max_ang_vel_by_level:
+    [0.90, 0.90, 0.80, 0.80, 0.70, 0.70, 0.60]
+  commands.racket_target.station_relocation_settle_min_steps_by_level:
+    [4, 4, 6, 6, 8, 8, 10]
+
+  commands.racket_target.station_relocation_arrival_threshold: 0.82
+  commands.racket_target.station_relocation_arrival_floor: 0.62
+  commands.racket_target.station_relocation_settle_threshold: 0.68
+  commands.racket_target.station_relocation_settle_floor: 0.30
+  commands.racket_target.station_relocation_contact_threshold: 0.60
+  commands.racket_target.station_relocation_contact_floor: 0.42
+  commands.racket_target.station_relocation_safety_threshold: 0.995
+  commands.racket_target.station_relocation_safety_floor: 0.985
+  commands.racket_target.station_relocation_min_resolved_events: 16384
+  commands.racket_target.station_relocation_required_advance_checks: 12
+  commands.racket_target.station_relocation_required_regress_checks: 6

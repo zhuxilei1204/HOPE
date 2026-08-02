@@ -1,0 +1,178 @@
+schema_version: 1
+contract_id: hope_observable_contact_v1
+status: frozen_semantics_pending_tangential_calibration
+description: >-
+  Ball/racket contact contract for a deployment system that observes ball-centre
+  position but cannot observe ball angular velocity. Spin is a latent disturbance,
+  never an actor/planner input or a deterministic reward target.
+
+coordinate_frame:
+  id: table
+  source_of_truth: configs/ball_physics.yaml
+  handedness: right
+  origin: near_side_left_corner_on_table_surface
+  axes:
+    x: toward_opponent
+    y: left
+    z: up
+  table_bounds_m:
+    x: [0.0, 2.74]
+    y: [-1.525, 0.0]
+    surface_z: 0.0
+  transform_rule: >-
+    Ball state, racket TCP, planner command, base pose, and station must be
+    transformed into this frame before command construction or evaluation.
+
+time_contract:
+  units: seconds
+  required_fields:
+    - measurement_timestamp
+    - command_timestamp
+    - expected_strike_timestamp
+  time_to_strike_definition: expected_strike_timestamp - policy_observation_timestamp
+  stale_or_reordered_samples: invalid
+
+observed_ball_state:
+  fields:
+    - name: position
+      dimensions: 3
+      units: m
+      frame: table
+    - name: linear_velocity
+      dimensions: 3
+      units: m/s
+      frame: table
+    - name: measurement_timestamp
+      dimensions: 1
+      units: s
+      frame: monotonic_clock
+  prohibited_fields:
+    - orientation
+    - angular_velocity
+    - spin_axis
+    - spin_rate
+
+planner_command:
+  fields:
+    - name: racket_target_position
+      dimensions: 3
+      units: m
+      frame: table
+    - name: racket_target_contact_velocity
+      dimensions: 3
+      units: m/s
+      frame: table
+    - name: racket_target_normal
+      dimensions: 3
+      units: unit_vector
+      frame: table
+    - name: time_to_strike
+      dimensions: 1
+      units: s
+      frame: scalar
+    - name: swing_side
+      dimensions: 1
+      units: enum
+      frame: scalar
+    - name: station_xy
+      dimensions: 2
+      units: m
+      frame: table
+  normal_rules:
+    unit_norm_tolerance: 0.001
+    sign_must_match_swing_side: true
+    invalid_normal_fallback_required: true
+
+latent_spin:
+  observable: false
+  planner_input: forbidden
+  actor_input: forbidden
+  critic_input: forbidden
+  deterministic_reward_target: forbidden
+  handling: tangential_contact_disturbance
+  rationale: >-
+    Motive provides ball-centre trajectories but no reliable ball orientation.
+    A policy must therefore be robust to spin-induced tangential uncertainty
+    instead of depending on a hidden PhysX angular state.
+
+contact_model:
+  source_of_truth: configs/ball_physics.yaml
+  normal_component:
+    type: deterministic_moving_plane
+    contact_point_velocity_required: true
+    restitution_source: contact.paddle.restitution
+  tangential_component:
+    type: conditional_residual_distribution
+    conditioning:
+      - incoming_ball_linear_velocity
+      - racket_contact_point_velocity
+      - racket_target_normal
+      - contact_point_offset
+      - table_bounce_count
+    fitted_from:
+      - pre_contact_ball_positions
+      - post_contact_ball_positions
+      - timestamps
+    angular_velocity_required: false
+    calibration_status: blocked_insufficient_independent_real_contact_sessions
+    calibration_data_gate:
+      weak_physical_contacts_min: 30
+      independent_sessions_min: 3
+      session_group_holdout_contacts_min: 10
+      current_weak_physical_contacts: 7
+      current_independent_sessions: 1
+      geometric_face_crossing_is_contact_label: false
+  primary_training_truth:
+    ball_state: position_and_linear_velocity_only
+    outgoing_target: robust_distribution_not_single_hidden_spin_trajectory
+  robustness_evaluation:
+    spin_enabled_physx_or_mujoco: allowed
+    role: stress_test_only
+    may_be_used_as_deterministic_actor_target: false
+
+reward_rules:
+  actor_command_tracking:
+    position: allowed
+    contact_point_velocity: allowed
+    normal: allowed
+    timing: allowed
+  physical_outcome:
+    contact: allowed
+    net_cross: allowed
+    opponent_bounce: allowed
+    outgoing_linear_velocity: robust_or_interval_loss_only
+  prohibited:
+    - angular_velocity_tracking
+    - deterministic_tangential_velocity_from_hidden_spin
+    - compensating_contact_model_bias_with_actor_reward
+
+validation_gates:
+  physics_substep_capture_rate_min: 0.95
+  duplicate_or_out_of_order_events_max: 0
+  deterministic_repeat_outgoing_std_mps_max: 0.02
+  center_contact_normal_error_deg_max: 3.0
+  normal_component_residual_mps_max: 0.10
+  tangential_distribution:
+    holdout_required: true
+    interval_probability: 0.90
+    empirical_coverage_min: 0.85
+    empirical_coverage_max: 0.95
+    mean_vector_bias_mps_max: 0.20
+  train_ready_requires:
+    - tangential_component_calibrated
+    - coordinate_transform_hash_frozen
+    - planner_command_timestamp_contract_verified
+
+evidence:
+  p0_report: analysis/closed_loop_v2_20260731/P0_P1_VALIDATION_RESULT_20260731_ZH.md
+  physics_ball_config: configs/ball_physics.yaml
+  p0_center_normal_error_deg: 0.349
+  p0_normal_residual_mps: 0.055
+  p0_tangential_residual_mps: 0.546
+  p0_pre_racket_spin_range_radps: [66.0, 100.0]
+  n2_real_contact_audit: >-
+    analysis/closed_loop_v2_20260731/n2_real_contact_residuals_20260731/summary.json
+  n2_per_event_audit: >-
+    analysis/closed_loop_v2_20260731/n2_real_contact_residuals_20260731/per_event_audit.csv
+  n2_provisional_distribution: >-
+    analysis/closed_loop_v2_20260731/n2_real_contact_residuals_20260731/provisional_distribution.yaml

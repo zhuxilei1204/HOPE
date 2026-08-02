@@ -1,0 +1,14 @@
+defaults:
+  - HOPEPingPongStrikeRecoveryAntiIdleCommon122V2
+  - _self_
+
+name: HOPEPingPongProtected22750AntiIdle122V2
+actor_obs_contract: hope_pingpong_stability122
+
+overrides:
+  # Preserve the validated model_22750 task distribution. No motion-target
+  # seeding or three-stage reset is introduced on this route.
+  commands.racket_target.table_workspace_motion_seed_blend_start: 0.0
+  commands.racket_target.table_workspace_motion_seed_end_level: 0.0
+  commands.racket_target.healthy_three_stage_enabled: false
+

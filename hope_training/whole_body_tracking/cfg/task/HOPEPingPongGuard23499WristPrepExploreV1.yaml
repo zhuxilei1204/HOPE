@@ -1,0 +1,12 @@
+# W1 plus selective right-wrist pitch/yaw PPO exploration.
+
+defaults:
+  - HOPEPingPongGuard23499WristPrepTimingV1
+  - _self_
+
+name: HOPEPingPongGuard23499WristPrepExploreV1
+actor_obs_contract: hope_pingpong_stability122
+
+action_noise_std_overrides:
+  right_wrist_pitch_joint: 1.20
+  right_wrist_yaw_joint: 1.20

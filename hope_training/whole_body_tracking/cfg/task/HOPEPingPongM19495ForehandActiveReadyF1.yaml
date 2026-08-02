@@ -1,0 +1,169 @@
+# model_19495 forehand-only active READY experiment.
+#
+# READY is a stable region: upright/quiet/two-foot support must all be healthy,
+# while waist and legs remain free to compensate. The upper-body anchor is the
+# median stable forehand READY state from the validated model_19495 MuJoCo trace.
+# The incorrect deep-squat motion frame is not rewarded during frozen holds.
+
+defaults:
+  - HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionNormal114B17996ReadyBalancePerturbedV1
+  - _self_
+
+name: HOPEPingPongM19495ForehandActiveReadyF1
+
+env:
+  episode_length_s: 45.0
+
+overrides:
+  episode_length_s: 45.0
+  commands.motion.stand_episode_prob: 0.25
+  commands.motion.stand_episode_hold_steps: 100000
+  commands.motion.hold_steps_range: [100, 140]
+  commands.motion.stand_start_prob: 0.55
+  commands.motion.stand_start_min_hold: 100
+  commands.motion.core_clip_count: 1
+
+  commands.racket_target.deploy_ready_hold_prob: 1.0
+  commands.racket_target.functional_ready_joint_names:
+    - left_shoulder_pitch_joint
+    - left_shoulder_roll_joint
+    - left_shoulder_yaw_joint
+    - left_elbow_joint
+    - left_wrist_roll_joint
+    - left_wrist_pitch_joint
+    - left_wrist_yaw_joint
+    - right_shoulder_pitch_joint
+    - right_shoulder_roll_joint
+    - right_shoulder_yaw_joint
+    - right_elbow_joint
+    - right_wrist_roll_joint
+    - right_wrist_pitch_joint
+    - right_wrist_yaw_joint
+  commands.racket_target.functional_ready_joint_positions:
+    [-0.246565, 0.618356, 0.026664, 0.333463, -0.591667, -0.344093, 0.642940,
+     -0.776556, -0.598302, 0.696394, 0.069711, 0.078304, -0.150026, 0.055182]
+  commands.racket_target.functional_ready_joint_std: 0.34
+  commands.racket_target.active_ready_required_consecutive_steps: 15
+  commands.racket_target.active_ready_score_threshold: 0.55
+  commands.racket_target.active_ready_max_height_error: 0.11
+  commands.racket_target.active_ready_max_upright_error: 0.30
+  commands.racket_target.active_ready_max_base_lin_vel: 0.28
+  commands.racket_target.active_ready_max_base_ang_vel: 0.90
+  commands.racket_target.active_ready_min_feet_contact: 0.50
+
+  commands.racket_target.cycle_v2_enabled: true
+  commands.racket_target.cycle_v2_required_outcome: contact
+  commands.racket_target.cycle_v2_count_no_command_as_visible: true
+  commands.racket_target.cycle_v2_visible_deadline_steps: 100
+  commands.racket_target.cycle_v2_total_deadline_steps: 140
+  commands.racket_target.cycle_v2_fail_on_strike_without_ready: true
+  commands.racket_target.cycle_v2_fail_unresolved_on_resample: true
+  commands.racket_target.cycle_v2_ready_mode: core_hard_soft
+  commands.racket_target.cycle_v2_use_functional_ready: true
+  commands.racket_target.cycle_v2_required_consecutive_ready_steps: 15
+  commands.racket_target.cycle_v2_ready_threshold: 0.55
+  commands.racket_target.cycle_v2_max_height_error: 0.11
+  commands.racket_target.cycle_v2_max_upright_error: 0.30
+  commands.racket_target.cycle_v2_max_base_lin_vel: 0.28
+  commands.racket_target.cycle_v2_max_base_ang_vel: 0.90
+  commands.racket_target.cycle_v2_min_feet_contact: 0.50
+  commands.racket_target.cycle_v2_require_healthy_impact: false
+
+  # A missed READY cycle is a negative event, not an environment reset. Physical fall/table
+  # safety terminations remain enabled, so bad post-hit states must still be recovered in-place.
+  terminations.cycle_v2_ready_timeout: null
+
+  # Remove the deep-squat clip-frame attractor only while the reference clock is held.
+  # Active-swing motion weights and kernels remain identical to model_19495.
+  rewards.motion_global_anchor_pos.params:
+    command_name: motion
+    std: 0.30
+    hold_scale: 0.0
+  rewards.motion_global_anchor_ori.params:
+    command_name: motion
+    std: 0.40
+    hold_scale: 0.0
+  rewards.motion_body_pos.params:
+    command_name: motion
+    std: 0.30
+    body_names:
+      [pelvis_link, left_hip_roll_Link, left_knee_Link, left_ankle_roll_Link,
+       right_hip_roll_Link, right_knee_Link, right_ankle_roll_Link, torso_Link,
+       left_shoulder_roll_Link, left_elbow_Link, left_wrist_yaw_Link,
+       right_shoulder_roll_Link, right_elbow_Link]
+    hold_scale: 0.0
+  rewards.motion_body_ori.params:
+    command_name: motion
+    std: 0.40
+    body_names:
+      [pelvis_link, left_hip_roll_Link, left_knee_Link, left_ankle_roll_Link,
+       right_hip_roll_Link, right_knee_Link, right_ankle_roll_Link, torso_Link,
+       left_shoulder_roll_Link, left_elbow_Link, left_wrist_yaw_Link,
+       right_shoulder_roll_Link, right_elbow_Link]
+    hold_scale: 0.0
+  rewards.motion_body_lin_vel.params:
+    command_name: motion
+    std: 1.0
+    body_names:
+      [pelvis_link, left_hip_roll_Link, left_knee_Link, left_ankle_roll_Link,
+       right_hip_roll_Link, right_knee_Link, right_ankle_roll_Link, torso_Link,
+       left_shoulder_roll_Link, left_elbow_Link, left_wrist_yaw_Link,
+       right_shoulder_roll_Link, right_elbow_Link]
+    hold_scale: 0.0
+  rewards.motion_body_ang_vel.params:
+    command_name: motion
+    std: 3.14
+    body_names:
+      [pelvis_link, left_hip_roll_Link, left_knee_Link, left_ankle_roll_Link,
+       right_hip_roll_Link, right_knee_Link, right_ankle_roll_Link, torso_Link,
+       left_shoulder_roll_Link, left_elbow_Link, left_wrist_yaw_Link,
+       right_shoulder_roll_Link, right_elbow_Link]
+    hold_scale: 0.0
+  rewards.racket_wrist_motion_pos.params:
+    motion_command_name: motion
+    racket_command_name: racket_target
+    std: 0.65
+    body_names: [right_wrist_yaw_Link]
+    release_window_s: 0.14
+    release_scale: 0.40
+    hold_scale: 0.0
+  rewards.racket_wrist_motion_ori.params:
+    motion_command_name: motion
+    racket_command_name: racket_target
+    std: 1.0
+    body_names: [right_wrist_yaw_Link]
+    release_window_s: 0.14
+    release_scale: 0.40
+    hold_scale: 0.0
+
+  rewards.no_command_ready_balance.weight: 0.0
+  rewards.functional_no_command_ready.weight: 1.30
+  rewards.functional_no_command_ready.params:
+    command_name: racket_target
+    start_step: 0
+    warmup_steps: 1200
+    start_scale: 0.45
+  rewards.no_command_forehand_joint_anchor.weight: 0.35
+  rewards.no_command_forehand_joint_anchor.params:
+    command_name: racket_target
+    start_step: 0
+    warmup_steps: 1200
+    start_scale: 0.35
+  rewards.active_ready_sustained_bonus.weight: 5.0
+  rewards.cycle_v2_ready_success_bonus.weight: 4.0
+  rewards.cycle_v2_ready_success_bonus.params:
+    command_name: racket_target
+    tier_multipliers: [1.0, 1.25, 1.50]
+    start_step: 0
+    warmup_steps: 1200
+    start_scale: 0.30
+  rewards.cycle_v2_ready_fail.weight: -2.0
+  rewards.cycle_v2_streak_bonus.weight: 6.0
+  rewards.cycle_v2_streak_bonus.params:
+    command_name: racket_target
+    min_streak: 4
+    min_ability_level: 0.0
+    start_step: 0
+    warmup_steps: 1800
+    start_scale: 0.20
+  rewards.phase_action_overflow.weight: -0.06

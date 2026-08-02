@@ -1,0 +1,10 @@
+# V9 fixes one credit-assignment bug in V8A: a contact followed by a hard
+# termination is settled as a failed shot before the environment resets.
+defaults:
+  - HOPEPingPongStage2SafetyCreditSoft114V8A
+  - _self_
+
+name: HOPEPingPongStage2SafetyCreditTerminal114V9
+
+overrides:
+  rewards.physical_recovery_settlement.params.failure_cost: 0.50

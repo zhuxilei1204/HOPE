@@ -1,0 +1,70 @@
+# Preserve the F2 forehand active-READY lifecycle and improve contact quality
+# against the nominal analytic moving-racket collision model.
+
+defaults:
+  - HOPEPingPongM19495ForehandActiveReadySafeHitF2
+  - _self_
+
+name: HOPEPingPongM22494F2HitPrecisionNominalH1
+
+overrides:
+  # Contact is already saturated in physical eval. Keep its learning slope but
+  # move reward budget toward velocity direction and post-impact outcome.
+  rewards.health_gated_soft_ball_contact.weight: 4.8
+  rewards.health_gated_ball_contact.weight: 2.4
+
+  rewards.racket_velocity_projection.weight: 3.2
+  rewards.racket_velocity_projection.params:
+    command_name: racket_target
+    min_speed_ratio: 0.92
+    speed_std: 0.24
+    lateral_std: 0.50
+    start_step: 0
+    warmup_steps: 1000
+    start_scale: 0.55
+    minimum_health_multiplier: 0.55
+    final_minimum_health_multiplier: 0.35
+
+  rewards.impact_outgoing_velocity.weight: 5.2
+  rewards.impact_outgoing_velocity.params:
+    command_name: racket_target
+    std: 1.10
+    start_step: 0
+    warmup_steps: 1200
+    start_scale: 0.60
+    minimum_health_multiplier: 0.55
+    final_minimum_health_multiplier: 0.35
+
+  rewards.prestrike_blade_direction.weight: 0.40
+  rewards.prestrike_blade_direction.params:
+    command_name: racket_target
+    std: 0.55
+    start_s: 0.30
+    full_s: 0.10
+    start_step: 0
+    warmup_steps: 1200
+    start_scale: 0.25
+
+  rewards.contact_net_margin.weight: 1.8
+  rewards.contact_net_margin.params:
+    command_name: racket_target
+    pos_std: 0.17
+    approach_speed: 0.10
+    approach_std: 0.75
+    normal_speed: 0.0
+    normal_std: 0.75
+    window_s: 0.18
+    min_forward_speed: 2.70
+    forward_std: 0.35
+    min_upward_speed: 0.75
+    upward_std: 0.45
+    min_clearance: 0.05
+    clearance_std: 0.06
+    swing_side: 1.0
+    start_step: 0
+    warmup_steps: 1200
+    start_scale: 0.30
+    minimum_health_multiplier: 0.55
+    final_minimum_health_multiplier: 0.35
+
+  rewards.robust_contact_net_margin.weight: 0.0

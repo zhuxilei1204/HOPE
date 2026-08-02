@@ -1,0 +1,65 @@
+name: HOPEPingPongStage2CommandExecutorDiverse114V5
+gym_task: HOPE-PingPong-Stage2-Physical-AgibotA3-v0
+experiment_name: hope_pingpong_stage2_command_executor114_v5
+actor_obs_contract: hope_pingpong_normal114
+
+defaults:
+  - /base/env_base@_here_
+  - /base/sim_base@_here_
+  - /base/randomization_base@_here_
+  - _self_
+
+motion_manifest: hope_training/motions/stage1_core_two_motion_20260801/manifest.tsv
+
+env:
+  num_envs: 256
+  env_spacing: 6.0
+  episode_length_s: 12.0
+
+motion:
+  wrap_teleport: false
+
+actor_obs:
+  racket_target_normal_w: true
+  stability_feedback: false
+
+runtime:
+  prune_zero_weight_rewards: true
+
+domain_rand:
+  link_mass_range: [0.95, 1.05]
+  pd_gain_range: [0.95, 1.05]
+
+overrides:
+  commands.physical_shadow.route_geometry_mode: independent
+  commands.physical_shadow.pre_bounce_time_range: [0.44, 0.68]
+  commands.physical_shadow.post_bounce_time_range: [0.28, 0.48]
+  commands.physical_shadow.bounce_dx_range: [0.24, 0.78]
+  commands.physical_shadow.bounce_y_jitter_range: [-0.18, 0.18]
+  commands.physical_shadow.route_sample_attempts: 8
+  commands.physical_shadow.post_bounce_command_refresh_enabled: true
+  commands.physical_shadow.command_refresh_continuous_post_bounce: true
+  commands.physical_shadow.command_refresh_freeze_tts_s: 0.20
+  commands.physical_shadow.command_refresh_solution_blend: 1.0
+  commands.physical_shadow.command_refresh_update_dynamic_station: true
+
+  commands.racket_target.table_workspace_fixed_level: 0.25
+  commands.racket_target.table_workspace_motion_seed_blend_start: 0.0
+  commands.racket_target.table_workspace_motion_seed_end_level: 0.0
+  commands.racket_target.impact_inverse_command_curriculum_enabled: false
+  commands.racket_target.impact_inverse_command_start_blend: 1.0
+  commands.racket_target.planner_perturb_curriculum_source: fixed
+  commands.racket_target.planner_perturb_fixed_scale: 0.0
+  commands.racket_target.ability_curriculum_start_ball_scale: 0.70
+  commands.racket_target.ballistic_flight_time_range: [0.42, 0.78]
+  commands.racket_target.ballistic_land_x_range: [1.95, 3.05]
+  commands.racket_target.ballistic_land_y_range: [-0.55, 0.55]
+
+  rewards.physical_contact_planner_alignment.weight: 1.5
+  rewards.physical_contact_planner_alignment.params.position_std: 0.10
+  rewards.physical_contact_planner_alignment.params.velocity_std: 0.85
+  rewards.physical_contact_planner_alignment.params.direction_std_deg: 22.0
+  rewards.physical_contact_planner_alignment.params.normal_std_deg: 18.0
+  rewards.physical_contact_planner_alignment.params.timing_std_s: 0.08
+  rewards.physical_capability_curriculum.params.fixed_level: 0.0
+  rewards.physical_outcome_events.params.impact_inverse_quality_floor: 1.0

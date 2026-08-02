@@ -1,0 +1,2339 @@
+[INFO][AppLauncher]: Using device: cuda:0
+[INFO][AppLauncher]: Loading experience file: /mnt/ssd/zxl/IsaacLab/apps/isaaclab.python.headless.kit
+[2026-08-01 20:15:24,961][asyncio][DEBUG] - Using selector: EpollSelector
+[2026-08-01 20:15:26,339][trimesh.util][DEBUG] - falling back to hashlib hashing: `pip install xxhash`for 50x faster cache checks
+[2026-08-01 20:15:26,564][h5py._conv][DEBUG] - Creating converter from 7 to 5
+[2026-08-01 20:15:26,564][h5py._conv][DEBUG] - Creating converter from 5 to 7
+[2026-08-01 20:15:26,564][h5py._conv][DEBUG] - Creating converter from 7 to 5
+[2026-08-01 20:15:26,564][h5py._conv][DEBUG] - Creating converter from 5 to 7
+[2026-08-01 20:15:26,602][matplotlib][DEBUG] - matplotlib data path: /home/zxl/miniconda3/envs/zxl-pace/lib/python3.10/site-packages/matplotlib/mpl-data
+[2026-08-01 20:15:26,605][matplotlib][DEBUG] - CONFIGDIR=/home/zxl/.config/matplotlib
+[2026-08-01 20:15:26,606][matplotlib][DEBUG] - interactive is False
+[2026-08-01 20:15:26,606][matplotlib][DEBUG] - platform is linux
+[2026-08-01 20:15:26,644][matplotlib][DEBUG] - CACHEDIR=/home/zxl/.cache/matplotlib
+[2026-08-01 20:15:26,645][matplotlib.font_manager][DEBUG] - Using fontManager instance from /home/zxl/.cache/matplotlib/fontlist-v390.json
+[Warning] [simulation_app.simulation_app] Modules: ['omni.kit_app'] were loaded before SimulationApp was started and might not be loaded correctly.
+[Warning] [simulation_app.simulation_app] Please check to make sure no extra omniverse or pxr modules are imported before the call to SimulationApp(...)
+Loading user config located at: '/home/zxl/miniconda3/envs/zxl-pace/lib/python3.10/site-packages/omni/data/Kit/Isaac-Sim/4.5/user.config.json'
+[Info] [carb] Logging to file: /home/zxl/miniconda3/envs/zxl-pace/lib/python3.10/site-packages/omni/logs/Kit/Isaac-Sim/4.5/kit_20260801_201524.log
+2026-08-01 12:15:24 [0ms] [Warning] [omni.kit.app.plugin] No crash reporter present, dumps uploading isn't available.
+2026-08-01 12:15:24 [1ms] [Warning] [omni.ext.plugin] [ext: rendering_modes] Extensions config 'extension.toml' doesn't exist '/mnt/ssd/zxl/IsaacLab/apps/rendering_modes' or '/mnt/ssd/zxl/IsaacLab/apps/rendering_modes/config'
+2026-08-01 12:15:24 [69ms] [Warning] [omni.usd_config.extension] Enable omni.materialx.libs extension to use MaterialX
+2026-08-01 12:15:25 [118ms] [Warning] [omni.platforminfo.plugin] failed to open the default display.  Can't verify X Server version.
+2026-08-01 12:15:25 [254ms] [Warning] [omni.datastore] OmniHub is inaccessible
+2026-08-01 12:15:25 [309ms] [Warning] [omni.isaac.dynamic_control] omni.isaac.dynamic_control is deprecated as of Isaac Sim 4.5. No action is needed from end-users.
+2026-08-01 12:15:27 [2,606ms] [Warning] [carb.cudainterop.plugin] CUDA_VISIBLE_DEVICES environment variable is set.
+2026-08-01 12:15:27 [2,606ms] [Warning] [carb.cudainterop.plugin] Note CUDA device enumeration and Omniverse device enumeration are different.
+2026-08-01 12:15:27 [2,606ms] [Warning] [carb.cudainterop.plugin] Setting CUDA_VISIBLE_DEVICES can lead to undesired behavior or crashes.
+2026-08-01 12:15:27 [2,611ms] [Warning] [gpu.foundation.plugin] Skipping NVIDIA GPU due CUDA being in bad state: NVIDIA GeForce RTX 5090
+2026-08-01 12:15:27 [2,611ms] [Warning] [gpu.foundation.plugin] Please restart your system if CUDA is known to work in your system.
+2026-08-01 12:15:27 [2,611ms] [Warning] [gpu.foundation.plugin] Skipping NVIDIA GPU due CUDA being in bad state: NVIDIA GeForce RTX 5090
+2026-08-01 12:15:27 [2,611ms] [Warning] [gpu.foundation.plugin] Please restart your system if CUDA is known to work in your system.
+
+|---------------------------------------------------------------------------------------------|
+| Driver Version: 580.105.08    | Graphics API: Vulkan
+|=============================================================================================|
+| GPU | Name                             | Active | LDA | GPU Memory | Vendor-ID | LUID       |
+|     |                                  |        |     |            | Device-ID | UUID       |
+|     |                                  |        |     |            | Bus-ID    |            |
+|---------------------------------------------------------------------------------------------|
+| 0   | NVIDIA GeForce RTX 5090          | Yes: 0 |     | 32607   MB | 10de      | 0          |
+|     |                                  |        |     |            | 2b85      | c2a01bc3.. |
+|     |                                  |        |     |            | 1         |            |
+|---------------------------------------------------------------------------------------------|
+| 1   | NVIDIA GeForce RTX 5090          |        |     | 32607   MB | 10de      | 0          |
+|     |                                  |        |     |            | 2b85      | 837a84cc.. |
+|     |                                  |        |     |            | 7         |            |
+|=============================================================================================|
+| OS: 24.04.2 LTS (Noble Numbat) ubuntu, Version: 24.04.2, Kernel: 6.17.0-35-generic
+| Processor: Intel(R) Core(TM) i9-14900K
+| Bare Metal Cores: 24 | Bare Metal Logical Cores: 48
+| Available Cores:  32 
+|---------------------------------------------------------------------------------------------|
+| Total Memory (MB): 128491 | [2026-08-01 20:15:28,291][git.cmd][DEBUG] - Popen(['git', 'version'], cwd=/mnt/ssd/zxl/HOPE_latest_20260721/hope_training/whole_body_tracking, stdin=None, shell=False, universal_newlines=False)
+[2026-08-01 20:15:28,293][git.cmd][DEBUG] - Popen(['git', 'version'], cwd=/mnt/ssd/zxl/HOPE_latest_20260721/hope_training/whole_body_tracking, stdin=None, shell=False, universal_newlines=False)
+[INFO]: Parsing configuration from: <class 'whole_body_tracking.tasks.tracking.config.agibot_a3.hope_stage2_physical_env_cfg.HOPEStage2PhysicalEnvCfg'>
+[train.py] motion clip 0: /mnt/ssd/zxl/HOPE_latest_20260721/hope_training/motions/user_four_motion_manual_hits_a3fk_yaw_leg_stabilized_20260724/user_forehand_raised_30fps_contact075_50hz_a3fk_aligned.npz
+[train.py] motion clip 1: /mnt/ssd/zxl/HOPE_latest_20260721/hope_training/motions/user_four_motion_manual_hits_a3fk_yaw_leg_stabilized_20260724/user_backhand_raised_30fps_contact040_50hz_a3fk_aligned.npz
+[train.py] runtime reward pruning: removed 73 stateless zero-weight term(s); kept 0 stateful zero-weight term(s).
+[train.py]     pruned rewards: ['action_rate', 'active_ready_survival_milestone_bonus', 'active_ready_sustained_bonus', 'backhand_racket_position', 'backhand_soft_ball_contact', 'balanced_ball_contact', 'balanced_net_cross', 'balanced_opponent_bounce', 'balanced_soft_ball_contact', 'ball_contact', 'contact_net_margin', 'cycle_contact_ready', 'cycle_net_ready', 'cycle_return_ready', 'cycle_success_bonus', 'cycle_v2_ready_fail', 'cycle_v2_ready_success_bonus', 'cycle_v2_streak_bonus', 'deferred_recovery_outcome_bonus', 'exact_impact_outgoing_velocity_alignment', 'exact_impact_planner_task_space_alignment', 'exact_impact_racket_velocity_alignment', 'follow_through_recovery', 'functional_no_command_ready', 'health_gated_backhand_soft_ball_contact', 'health_gated_ball_contact', 'health_gated_net_cross', 'health_gated_opponent_bounce', 'health_gated_soft_ball_contact', 'impact_forward_lift', 'impact_outgoing_velocity', 'motion_anchor_height', 'motion_body_ang_vel', 'motion_body_lin_vel', 'motion_body_ori', 'motion_body_pos', 'motion_global_anchor_ori', 'motion_global_anchor_pos', 'net_cross', 'next_ball_readiness', 'next_prestrike_reachable', 'next_swing_ready_bonus', 'no_command_forehand_joint_anchor', 'no_command_ready_balance', 'no_command_ready_progress', 'one_sided_trunk_waist_recovery', 'one_sided_trunk_waist_strike', 'opponent_bounce', 'phase_action_rate', 'phase_lower_body_motion_prior', 'post_contact_arm_racket_ready', 'post_contact_directional_recovery', 'post_contact_ready_fail', 'post_contact_ready_region', 'post_contact_ready_success_bonus', 'post_contact_recovery_ready', 'post_net_arm_racket_ready', 'post_net_recovery_ready', 'post_return_arm_racket_ready', 'post_return_recovery_ready', 'post_strike_lower_body_action_rate', 'prestrike_blade_direction', 'racket_velocity_projection', 'racket_wrist_motion_ori', 'racket_wrist_motion_pos', 'robust_contact_net_margin', 'soft_ball_contact', 'station_relocation_arrival_bonus', 'station_relocation_settle_bonus', 'strike_inactivity', 'targeted_strike_attempt', 'torso_com_balance', 'torso_com_recovery_balance']
+[train.py] task=HOPE-PingPong-Stage2-Physical-AgibotA3-v0 num_envs=64 — applied 13 task override(s):
+[train.py]     episode_length_s = 12.0
+[train.py]     commands.motion.wrap_teleport = False
+[train.py]     events.link_mass = (0.97, 1.03)
+[train.py]     events.pd_gains = (0.97, 1.03)
+[train.py]     observations.policy.racket_target_normal_w = enabled
+[train.py]     rewards.physical_outcome_events.weight = 5.0
+[train.py]     rewards.physical_outcome_events.params.contact_quality_scale = 2.0
+[train.py]     rewards.physical_recovery_settlement.weight = 3.0
+[train.py]     commands.racket_target.strike_phase_per_clip = (0.4, 0.4)
+[train.py]     commands.motion.motion_start_warmup_phase_per_clip = (0.4, 0.4)
+[train.py]     commands.racket_target.swing_side_per_clip = (1.0, -1.0)
+[train.py]     commands.racket_target.mount_normal_sign_per_clip = (1.0, -1.0)
+[train.py]     commands.racket_target.racket_pos_range_per_clip = from motion metadata
+[train.py] experiment=hope_pingpong_stage2_physical114 | log_dir=/mnt/ssd/zxl/HOPE_latest_20260721/hope_training/whole_body_tracking/logs/rsl_rl/hope_pingpong_stage2_physical114/2026-08-01_20-15-28_stage2_physq_smoke
+Free Memory: 119800
+| Total Page/Swap (MB): 8191 | Free Page/Swap: 7149
+|---------------------------------------------------------------------------------------------|
+2026-08-01 12:15:27 [2,946ms] [Warning] [gpu.foundation.plugin] IOMMU is enabled.
+2026-08-01 12:15:27 [2,946ms] [Warning] [gpu.foundation.plugin] Detected IOMMU is enabled. Running CUDA peer-to-peer bandwidth and latency validation.
+Unidirectional P2P=Enabled Bandwidth (P2P Writes) Matrix (GB/s)
+   D\D     0 
+     0 1522.90 
+P2P=Enabled Latency (P2P Writes) Matrix (us)
+   GPU     0 
+     0   2.08 
+
+   CPU     0 
+     0   1.28 
+2026-08-01 12:15:29 [4,941ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPreviewSurface.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-08-01 12:15:29 [4,941ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdUVTexture.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-08-01 12:15:29 [4,941ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_float.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-08-01 12:15:29 [4,941ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_float2.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-08-01 12:15:29 [4,941ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_float3.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-08-01 12:15:29 [4,941ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_float4.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-08-01 12:15:29 [4,942ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_int.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-08-01 12:15:29 [4,942ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_string.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-08-01 12:15:29 [4,942ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_normal.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-08-01 12:15:29 [4,942ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_point.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-08-01 12:15:29 [4,942ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_vector.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-08-01 12:15:29 [4,942ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_matrix.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-08-01 12:15:29 [4,942ms] [Warning]Setting seed: 8271
+[INFO]: Base environment:
+	Environment device    : cuda:0
+	Environment seed      : 8271
+	Physics step-size     : 0.0025
+	Rendering step-size   : 0.02
+	Environment step-size : 0.02
+[INFO]: Time taken for scene creation : 1.545810 seconds
+[INFO]: Scene manager:  <class InteractiveScene>
+	Number of environments: 64
+	Environment spacing   : 6.0
+	Source prim name      : /World/envs/env_0
+	Global prim paths     : ['/World/ground']
+	Replicate physics     : True
+[INFO]: Starting the simulation. This may take a few seconds. Please wait...
+[INFO]: Time taken for simulation start : 0.521460 seconds
+[INFO] Command Manager:  <CommandManager> contains 3 active terms.
++-----------------------------------------------------+
+|                 Active Command Terms                |
++-------+-----------------+---------------------------+
+| Index | Name            |            Type           |
++-------+-----------------+---------------------------+
+|   0   | motion          |       MotionCommand       |
+|   1   | racket_target   |    RacketTargetCommand    |
+|   2   | physical_shadow | PhysicalBallShadowCommand |
++-------+-----------------+---------------------------+
+
+[INFO] Event Manager:  <EventManager> contains 2 active terms.
++---------------------------------------+
+| Active Event Terms in Mode: 'startup' |
++---------+-----------------------------+
+|  Index  | Name                        |
++---------+-----------------------------+
+|    0    | physics_material            |
+|    1    | base_com                    |
+|    2    | link_mass                   |
+|    3    | joint_default_pos           |
+|    4    | racket_material             |
++---------+-----------------------------+
++-------------------------------------+
+| Active Event Terms in Mode: 'reset' |
++--------------+----------------------+
+|    Index     | Name                 |
++--------------+----------------------+
+|      0       | pd_gains             |
++--------------+----------------------+
+
+[INFO] Recorder Manager:  <RecorderManager> contains 0 active terms.
++-----------------------+
+| Active Recorder Terms |
++------------+----------+
+|   Index    | Name     |
++------------+----------+
++------------+----------+
+
+[INFO] Action Manager:  <ActionManager> contains 1 active terms.
++---------------------------------+
+| Active Action Terms (shape: 31) |
++-------+-----------+-------------+
+| Index | Name      |   Dimension |
++-------+-----------+-------------+
+|   0   | joint_pos |          31 |
++-------+-----------+-------------+
+
+[INFO] Observation Manager: <ObservationManager> contains 2 groups.
++-------------------------------------------------------------+
+| Active Observation Terms in Group: 'policy' (shape: (114,)) |
++----------+--------------------------------------+-----------+
+|  Index   | Name                                 |   Shape   |
++----------+--------------------------------------+-----------+
+|    0     | base_ang_vel                         |    (3,)   |
+|    1     | joint_pos                            |   (31,)   |
+|    2     | joint_vel                            |   (31,)   |
+|    3     | last_action                          |   (31,)   |
+|    4     | projected_gravity                    |    (3,)   |
+|    5     | base_forward_xy                      |    (2,)   |
+|    6     | fixed_station_error_xy               |    (2,)   |
+|    7     | racket_target_rel_base               |    (3,)   |
+|    8     | racket_target_vel_w                  |    (3,)   |
+|    9     | time_to_strike                       |    (1,)   |
+|    10    | swing_side                           |    (1,)   |
+|    11    | racket_target_normal_w               |    (3,)   |
++----------+--------------------------------------+-----------+
++-------------------------------------------------------------+
+| Active Observation Terms in Group: 'critic' (shape: (324,)) |
++----------+--------------------------------------+-----------+
+|  Index   | Name                                 |   Shape   |
++----------+--------------------------------------+-----------+
+|    0     | base_ang_vel                         |    (3,)   |
+|    1     | joint_pos                            |   (31,)   |
+|    2     | joint_vel                            |   (31,)   |
+|    3     | last_action                          |   (31,)   |
+|    4     | projected_gravity                    |    (3,)   |
+|    5     | base_forward_xy                      |    (2,)   |
+|    6     | fixed_station_error_xy               |    (2,)   |
+|    7     | racket_target_rel_base               |    (3,)   |
+|    8     | racket_target_vel_w                  |    (3,)   |
+|    9     | time_to_strike                       |    (1,)   |
+|    10    | swing_side                           |    (1,)   |
+|    11    | base_lin_vel                         |    (3,)   |
+|    12    | motion_command                       |   (62,)   |
+|    13    | motion_anchor_pos_b                  |    (3,)   |
+|    14    | motion_anchor_ori_b                  |    (6,)   |
+|    15    | robot_body_pos_b                     |   (42,)   |
+|    16    | robot_body_ori_b                     |   (84,)   |
+|    17    | racket_pos_b                         |    (3,)   |
+|    18    | racket_lin_vel_w                     |    (3,)   |
+|    19    | racket_normal_w                      |    (3,)   |
+|    20    | racket_target_normal_w               |    (3,)   |
+|    21    | episode_time_left                    |    (1,)   |
++----------+--------------------------------------+-----------+
+
+[INFO] Termination Manager:  <TerminationManager> contains 5 active terms.
++-----------------------------------------------+
+|            Active Termination Terms           |
++-------+----------------------------+----------+
+| Index | Name                       | Time Out |
++-------+----------------------------+----------+
+|   0   | time_out                   |   True   |
+|   1   | base_too_low               |  False   |
+|   2   | base_tilted                |  False   |
+|   3   | table_touch                |  False   |
+|   4   | persistent_action_overflow |  False   |
++-------+----------------------------+----------+
+
+[INFO] Reward Manager:  <RewardManager> contains 34 active terms.
++--------------------------------------------------------+
+|                  Active Reward Terms                   |
++-------+---------------------------------------+--------+
+| Index | Name                                  | Weight |
++-------+---------------------------------------+--------+
+|   0   | undesired_contacts                    |   -0.1 |
+|   1   | feet_contact_slip                     |  -0.05 |
+|   2   | table_no_touch                        |   -0.5 |
+|   3   | alive                                 |   0.02 |
+|   4   | upright                               |   -0.4 |
+|   5   | imitation                             |    1.2 |
+|   6   | racket_position                       |    0.8 |
+|   7   | racket_velocity                       |   0.45 |
+|   8   | planner_racket_task_space_crossfade   |    3.5 |
+|   9   | blade_direction                       |   0.45 |
+|   10  | healthy_trunk_support                 |    0.8 |
+|   11  | pre_strike_station                    |   0.15 |
+|   12  | recovery_health                       |   0.55 |
+|   13  | no_command_ready_stability            |    0.2 |
+|   14  | post_strike_base_ang_vel              |   0.14 |
+|   15  | phase_action_overflow                 |   -0.3 |
+|   16  | strike_balance                        |   0.22 |
+|   17  | prestrike_station_progress            |   0.45 |
+|   18  | lower_body_support                    |   0.65 |
+|   19  | termination_penalty                   |  -12.0 |
+|   20  | phase_action_rate_waist               |  -0.04 |
+|   21  | phase_action_rate_upper               | -0.006 |
+|   22  | phase_action_rate_legs                | -0.008 |
+|   23  | joint_limit                           |   -1.0 |
+|   24  | prestrike_racket_progress             |    1.0 |
+|   25  | near_impact_planner_velocity_progress |   1.25 |
+|   26  | operational_joint_margin              |   -0.6 |
+|   27  | joint_target_slew                     | -0.035 |
+|   28  | actuator_waist_feasibility            |  -0.02 |
+|   29  | actuator_right_arm_feasibility        | -0.005 |
+|   30  | actuator_leg_feasibility              | -0.015 |
+|   31  | physical_outcome_events               |    5.0 |
+|   32  | physical_recovery_settlement          |    3.0 |
+|   33  | physical_capability_curriculum        |    1.0 |
++-------+---------------------------------------+--------+
+
+[INFO] Curriculum Manager:  <CurriculumManager> contains 0 active terms.
++-------------------------+
+| Active Curriculum Terms |
++-------------+-----------+
+|    Index    | Name      |
++-------------+-----------+
++-------------+-----------+
+
+[INFO]: Completed setting up the environment...
+[train.py] joint-order gate: using canonical->articulation permutation [2, 5, 8, 11, 16, 12, 17, 21, 23, 25, 27, 29, 13, 18, 22, 24, 26, 28, 30, 0, 3, 6, 9, 14, 19, 1, 4, 7, 10, 15, 20]
+[train.py] actor observation contract validated: hope_pingpong_normal114 (114D)
+/mnt/ssd/zxl/IsaacLab/source/isaaclab/isaaclab/envs/mdp/events.py:501: UserWarning: To copy construct from a tensor, it is recommended to use sourceTensor.detach().clone() or sourceTensor.detach().clone().requires_grad_(True), rather than torch.tensor(sourceTensor).
+  actuator_joint_indices = torch.tensor(actuator.joint_indices, device=asset.device)
+Actor MLP: Sequential(
+  (0): Linear(in_features=114, out_features=512, bias=True)
+  (1): ELU(alpha=1.0)
+  (2): Linear(in_features=512, out_features=256, bias=True)
+  (3): ELU(alpha=1.0)
+  (4): Linear(in_features=256, out_features=128, bias=True)
+  (5): ELU(alpha=1.0)
+  (6): Linear(in_features=128, out_features=31, bias=True)
+)
+Critic MLP: Sequential(
+  (0): Linear(in_features=324, out_features=512, bias=True)
+  (1): ELU(alpha=1.0)
+  (2): Linear(in_features=512, out_features=256, bias=True)
+  (3): ELU(alpha=1.0)
+  (4): Linear(in_features=256, out_features=128, bias=True)
+  (5): ELU(alpha=1.0)
+  (6): Linear(in_features=128, out_features=1, bias=True)
+)
+[train.py] actor-only warm start loaded; critic, exploration state, optimizer, and iteration remain fresh: /mnt/ssd/zxl/HOPE_latest_20260721/hope_training/whole_body_tracking/logs/rsl_rl/hope_pingpong_stage1_operational114/2026-08-01_18-31-02_stage1polishP1_fromB1500_250/model_1749.pt
+[train.py] action-noise std overrides applied: 0:0.15->0.15, 1:0.15->0.15, 2:0.15->0.15, 3:0.15->0.15, 4:0.15->0.15, 5:0.15->0.15, 6:0.15->0.15, 7:0.15->0.15, 8:0.15->0.15, 9:0.15->0.15, 10:0.15->0.15, 11:0.15->0.15, 12:0.15->0.15, 13:0.15->0.15, 14:0.15->0.15, 15:0.15->0.15, 16:0.15->0.15, 17:0.15->0.15, 18:0.15->0.15, 19:0.15->0.15, 20:0.15->0.15, 21:0.15->0.15, 22:0.15->0.15, 23:0.15->0.15, 24:0.15->0.15, 25:0.15->0.15, 26:0.15->0.15, 27:0.15->0.15, 28:0.15->0.15, 29:0.15->0.15, 30:0.15->0.15
+[train.py] global action-noise std applied: 0.15
+[train.py] actor anchor enabled: coefficient=3, first_layer_input_exempt_start=None, first_layer_input_exempt_end=None, exempt_coefficient=0, reference=/mnt/ssd/zxl/HOPE_latest_20260721/hope_training/whole_body_tracking/logs/rsl_rl/hope_pingpong_stage1_operational114/2026-08-01_18-31-02_stage1polishP1_fromB1500_250/model_1749.pt
+/mnt/ssd/zxl/IsaacLab/source/isaaclab/isaaclab/envs/mdp/events.py:501: UserWarning: To copy construct from a tensor, it is recommended to use sourceTensor.detach().clone() or sourceTensor.detach().clone().requires_grad_(True), rather than torch.tensor(sourceTensor).
+  actuator_joint_indices = torch.tensor(actuator.joint_indices, device=asset.device)
+################################################################################
+                        [1m Learning iteration 0/3 [0m                        
+
+                       Computation: 584 steps/s (collection: 3.369s, learning 0.138s)
+             Mean action noise std: 0.15
+          Mean value_function loss: 0.0451
+               Mean surrogate loss: 0.3075
+                 Mean entropy loss: -14.8234
+        Mean actor_anchor_rms loss: 0.0001
+Mean actor_anchor_relative_l2 loss: 0.0023
+ Mean actor_anchor_exempt_rms loss: 0.0000
+                       Mean reward: 0.19
+               Mean episode length: 5.67
+ Episode_Reward/undesired_contacts: 0.0000
+  Episode_Reward/feet_contact_slip: -0.0001
+     Episode_Reward/table_no_touch: -0.0000
+              Episode_Reward/alive: 0.0003
+            Episode_Reward/upright: -0.0001
+          Episode_Reward/imitation: 0.0108
+    Episode_Reward/racket_position: 0.0000
+    Episode_Reward/racket_velocity: 0.0000
+Episode_Reward/planner_racket_task_space_crossfade: 0.0001
+    Episode_Reward/blade_direction: 0.0000
+Episode_Reward/healthy_trunk_support: 0.0000
+ Episode_Reward/pre_strike_station: 0.0018
+    Episode_Reward/recovery_health: 0.0006
+Episode_Reward/no_command_ready_stability: 0.0000
+Episode_Reward/post_strike_base_ang_vel: 0.0000
+Episode_Reward/phase_action_overflow: 0.0000
+     Episode_Reward/strike_balance: 0.0002
+Episode_Reward/prestrike_station_progress: 0.0000
+ Episode_Reward/lower_body_support: 0.0007
+Episode_Reward/termination_penalty: 0.0000
+Episode_Reward/phase_action_rate_waist: -0.0000
+Episode_Reward/phase_action_rate_upper: -0.0000
+Episode_Reward/phase_action_rate_legs: -0.0000
+        Episode_Reward/joint_limit: -0.0002
+Episode_Reward/prestrike_racket_progress: 0.0105
+Episode_Reward/near_impact_planner_velocity_progress: -0.0001
+Episode_Reward/operational_joint_margin: -0.0000
+  Episode_Reward/joint_target_slew: -0.0005
+Episode_Reward/actuator_waist_feasibility: -0.0000
+Episode_Reward/actuator_right_arm_feasibility: -0.0000
+Episode_Reward/actuator_leg_feasibility: -0.0000
+Episode_Reward/physical_outcome_events: 0.0000
+Episode_Reward/physical_recovery_settlement: 0.0000
+Episode_Reward/physical_capability_curriculum: 0.0000
+    Metrics/motion/error_joint_pos: 0.9615
+    Metrics/motion/error_joint_vel: 7.4514
+     Metrics/motion/error_body_pos: 2.8272
+     Metrics/motion/error_body_rot: 0.3141
+       Metrics/motion/motion_phase: 0.0415
+            Metrics/motion/in_hold: 0.0000
+Metrics/motion/motion_start_warmup_prob: 0.7266
+Metrics/motion/motion_start_lifecycle_progress: 0.0000
+Metrics/motion/motion_start_effective_prestrike_fraction: 0.9688
+Metrics/motion/motion_start_effective_recovery_fraction: 0.0000
+Metrics/motion/motion_start_effective_rsi_fraction: 0.0000
+ Metrics/motion/motion_start_reset: 0.9688
+Metrics/motion/motion_start_prestrike_reset: 0.0000
+Metrics/motion/motion_start_recovery_reset: 0.0000
+Metrics/motion/motion_start_rsi_reset: 0.0000
+ Metrics/motion/single_cycle_reset: 0.0000
+     Metrics/motion/motion_clip_id: 0.0938
+Metrics/motion/motion_supplemental_clip: 0.0000
+      Metrics/motion/stand_episode: 0.0000
+Metrics/motion/default_stand_reset: 0.0000
+Metrics/motion/error_body_pos_lower: 2.8340
+Metrics/motion/error_body_rot_lower: 0.3517
+Metrics/motion/error_body_lin_vel_lower: 0.3238
+Metrics/motion/error_body_ang_vel_lower: 1.5656
+Metrics/motion/reference_body_lin_speed_lower: 0.0355
+Metrics/motion/robot_body_lin_speed_lower: 0.3186
+Metrics/motion/error_body_pos_core: 2.8418
+Metrics/motion/error_body_rot_core: 0.1242
+Metrics/motion/error_body_lin_vel_core: 0.2529
+Metrics/motion/error_body_ang_vel_core: 1.7571
+Metrics/motion/reference_body_lin_speed_core: 0.0338
+Metrics/motion/robot_body_lin_speed_core: 0.2556
+Metrics/motion/error_body_pos_upper: 2.8156
+Metrics/motion/error_body_rot_upper: 0.3397
+Metrics/motion/error_body_lin_vel_upper: 1.1748
+Metrics/motion/error_body_ang_vel_upper: 3.1590
+Metrics/motion/reference_body_lin_speed_upper: 0.0487
+Metrics/motion/robot_body_lin_speed_upper: 1.1783
+Metrics/motion/error_joint_pos_waist: 0.1843
+Metrics/motion/error_joint_vel_waist: 2.7914
+Metrics/motion/reference_joint_speed_waist: 0.0561
+Metrics/motion/error_joint_pos_arms: 0.7831
+Metrics/motion/error_joint_vel_arms: 4.9112
+Metrics/motion/reference_joint_speed_arms: 0.0924
+Metrics/motion/error_joint_pos_legs: 0.5234
+Metrics/motion/error_joint_vel_legs: 4.7511
+Metrics/motion/reference_joint_speed_legs: 0.0101
+Metrics/racket_target/racket_pos_error: 0.0000
+Metrics/racket_target/racket_vel_error: 0.0000
+Metrics/racket_target/time_to_strike: 1.0187
+Metrics/racket_target/return_success: 0.0000
+Metrics/racket_target/prev_return_success: 0.0000
+Metrics/racket_target/prev_net_cross: 0.0000
+Metrics/racket_target/current_net_cross: 0.0000
+Metrics/racket_target/racket_pos_curriculum_scale: 0.3552
+Metrics/racket_target/impact_inverse_command_blend: 0.0000
+Metrics/racket_target/steps_since_target_resample: 6.2188
+Metrics/racket_target/recovery_height_error: 0.0189
+Metrics/racket_target/recovery_upright_error: 0.1220
+Metrics/racket_target/recovery_base_lin_vel: 0.1570
+Metrics/racket_target/recovery_base_ang_vel: 1.6616
+Metrics/racket_target/recovery_station_error: 0.0189
+Metrics/racket_target/recovery_feet_contact_frac: 0.8906
+Metrics/racket_target/recovery_racket_speed: 2.2387
+Metrics/racket_target/recovery_height_score: 0.9093
+Metrics/racket_target/recovery_upright_score: 0.7608
+Metrics/racket_target/recovery_lin_vel_score: 0.6136
+Metrics/racket_target/recovery_ang_vel_score: 0.0204
+Metrics/racket_target/recovery_station_score: 0.9589
+Metrics/racket_target/recovery_racket_score: 0.0078
+Metrics/racket_target/recovery_arm_score: 0.8445
+Metrics/racket_target/recovery_ready_score: 0.6413
+Metrics/racket_target/recovery_anchor_arm_score: 0.9688
+Metrics/racket_target/recovery_core_ready_score: 0.2856
+Metrics/racket_target/recovery_functional_ready_score: 0.2425
+Metrics/racket_target/waist_action_overflow_rms: 0.0000
+Metrics/racket_target/right_arm_action_overflow_rms: 0.0000
+Metrics/racket_target/leg_action_overflow_rms: 0.0000
+Metrics/racket_target/operational_margin_fraction: 0.0030
+Metrics/racket_target/waist_operational_margin_fraction: 0.0000
+Metrics/racket_target/right_arm_operational_margin_fraction: 0.0000
+Metrics/racket_target/leg_operational_margin_fraction: 0.0078
+Metrics/racket_target/waist_operational_excess_rms: 0.0000
+Metrics/racket_target/right_arm_operational_excess_rms: 0.0000
+Metrics/racket_target/leg_operational_excess_rms: 0.0004
+Metrics/racket_target/q_des_velocity_violation_fraction: 0.0685
+Metrics/racket_target/waist_q_des_velocity_violation_fraction: 0.0000
+Metrics/racket_target/right_arm_q_des_velocity_violation_fraction: 0.0402
+Metrics/racket_target/leg_q_des_velocity_violation_fraction: 0.1250
+Metrics/racket_target/q_des_acceleration_violation_fraction: 0.7379
+Metrics/racket_target/waist_q_des_acceleration_violation_fraction: 0.6667
+Metrics/racket_target/right_arm_q_des_acceleration_violation_fraction: 0.9554
+Metrics/racket_target/leg_q_des_acceleration_violation_fraction: 0.8828
+Metrics/racket_target/waist_q_des_velocity_rms: 3.5233
+Metrics/racket_target/right_arm_q_des_velocity_rms: 6.3714
+Metrics/racket_target/leg_q_des_velocity_rms: 8.4325
+Metrics/racket_target/waist_q_des_acceleration_rms: 289.3909
+Metrics/racket_target/right_arm_q_des_acceleration_rms: 711.3477
+Metrics/racket_target/leg_q_des_acceleration_rms: 725.6034
+Metrics/racket_target/action_operational_feasibility_score: 0.9668
+Metrics/racket_target/actuator_overflow_consecutive_steps: 0.0000
+Metrics/racket_target/actuator_overflow_severe: 0.0000
+Metrics/racket_target/recovery_phase_gate: 0.9688
+Metrics/racket_target/recovery_phase_ready_score: 0.6413
+Metrics/racket_target/recovery_contact_ready_score: 0.0000
+Metrics/racket_target/recovery_net_ready_score: 0.0000
+Metrics/racket_target/recovery_return_ready_score: 0.0000
+Metrics/racket_target/cycle_success_ready_score: 0.0000
+Metrics/racket_target/cycle_success_soft: 0.0000
+Metrics/racket_target/cycle_success_binary: 0.0000
+Metrics/racket_target/cycle_v2_pending: 0.0000
+Metrics/racket_target/cycle_v2_attempt_latch: 0.0000
+Metrics/racket_target/cycle_v2_ready_success_latch: 0.0000
+Metrics/racket_target/cycle_v2_ready_fail_latch: 0.0000
+Metrics/racket_target/cycle_v2_attempt_event: 0.0000
+Metrics/racket_target/cycle_v2_ready_success_event: 0.0000
+Metrics/racket_target/cycle_v2_ready_fail_event: 0.0000
+Metrics/racket_target/cycle_v2_unresolved_resample_fail_event: 0.0000
+Metrics/racket_target/cycle_v2_resolved_event: 0.0000
+Metrics/racket_target/cycle_v2_command_visible_steps: 0.0000
+Metrics/racket_target/cycle_v2_elapsed_steps: 0.0000
+Metrics/racket_target/cycle_v2_ready_score: 0.0000
+Metrics/racket_target/cycle_v2_ready_ok: 0.0000
+Metrics/racket_target/cycle_v2_visible: 0.0000
+Metrics/racket_target/cycle_v2_ready_score_ok: 0.0000
+Metrics/racket_target/cycle_v2_height_ok: 0.0000
+Metrics/racket_target/cycle_v2_upright_ok: 0.0000
+Metrics/racket_target/cycle_v2_base_lin_vel_ok: 0.0000
+Metrics/racket_target/cycle_v2_base_ang_vel_ok: 0.0000
+Metrics/racket_target/cycle_v2_feet_ok: 0.0000
+Metrics/racket_target/cycle_v2_core_ready_ok: 0.0000
+Metrics/racket_target/cycle_v2_ready_consecutive_steps: 0.0000
+Metrics/racket_target/single_cycle_bootstrap: 0.0000
+Metrics/racket_target/single_cycle_swing_completed: 0.0000
+Metrics/racket_target/single_cycle_recovery_active: 0.0000
+Metrics/racket_target/single_cycle_recovery_elapsed_steps: 0.0000
+Metrics/racket_target/single_cycle_ready_consecutive_steps: 0.0000
+Metrics/racket_target/single_cycle_safe_timeout_event: 0.0000
+Metrics/racket_target/single_cycle_deadline_timeout_event: 0.0000
+Metrics/racket_target/single_cycle_timeout_latch: 0.0000
+Metrics/racket_target/single_cycle_hard_failure_event: 0.0000
+Metrics/racket_target/single_cycle_probability: 0.0000
+Metrics/racket_target/single_cycle_curriculum_level: 0.0000
+Metrics/racket_target/single_cycle_effective_deadline_steps: 96.8750
+Metrics/racket_target/single_cycle_selected_events: 0.0000
+Metrics/racket_target/single_cycle_completed_events: 0.0000
+Metrics/racket_target/single_cycle_safe_timeout_events: 0.0000
+Metrics/racket_target/single_cycle_deadline_timeout_events: 0.0000
+Metrics/racket_target/single_cycle_hard_failure_events: 0.0000
+Metrics/racket_target/active_ready_consecutive_steps: 0.0000
+Metrics/racket_target/active_ready_success_event: 0.0000
+Metrics/racket_target/active_ready_success_latch: 0.0000
+Metrics/racket_target/active_ready_survival_steps: 0.0000
+Metrics/racket_target/active_ready_survival_next_milestone: 0.0000
+Metrics/racket_target/active_ready_survival_milestone_event: 0.0000
+Metrics/racket_target/no_command_ready_active: 0.0000
+Metrics/racket_target/no_command_from_stand_episode: 0.0000
+Metrics/racket_target/no_command_from_default_stand_reset: 0.0000
+Metrics/racket_target/no_command_ready_upright_ok: 0.0000
+Metrics/racket_target/no_command_ready_motion_ok: 0.0000
+Metrics/racket_target/no_command_ready_score: 0.0000
+Metrics/racket_target/no_command_ready_progress: 0.0000
+Metrics/racket_target/no_command_ready_station_error: 0.0000
+Metrics/racket_target/no_command_ready_fixed_station_error: 0.0000
+Metrics/racket_target/healthy_training_stage: 2.9062
+Metrics/racket_target/healthy_stage_planted_rehearsal: 0.0000
+Metrics/racket_target/healthy_stage_station_hold_seen: 0.0000
+Metrics/racket_target/healthy_stage_station_arrived: 0.0000
+Metrics/racket_target/healthy_stage_station_settled: 0.0000
+Metrics/racket_target/healthy_stage_station_settle_steps: 0.0000
+Metrics/racket_target/station_relocation_active: 0.0000
+Metrics/racket_target/station_relocation_target_offset_y: 0.0000
+Metrics/racket_target/station_relocation_error: 0.0000
+Metrics/racket_target/station_relocation_arrival_event: 0.0000
+Metrics/racket_target/station_relocation_settle_event: 0.0000
+Metrics/racket_target/station_relocation_release_event: 0.0000
+Metrics/racket_target/station_relocation_timeout_event: 0.0000
+Metrics/racket_target/station_relocation_elapsed_steps: 0.0000
+Metrics/racket_target/station_relocation_hold_deadline_steps: 0.0000
+Metrics/racket_target/lifecycle_recovery_hold_active: 0.0000
+Metrics/racket_target/lifecycle_recovery_release_success_event: 0.0000
+Metrics/racket_target/lifecycle_recovery_release_fail_event: 0.0000
+Metrics/racket_target/station_relocation_level: 0.0000
+Metrics/racket_target/station_relocation_arrival_ema: 0.0000
+Metrics/racket_target/station_relocation_settle_ema: 0.0000
+Metrics/racket_target/station_relocation_contact_ema: 0.0000
+Metrics/racket_target/station_relocation_safety_ema: 0.0000
+Metrics/racket_target/station_relocation_resolved_events: 0.0000
+Metrics/racket_target/station_relocation_terminal_reset_events: 0.0000
+Metrics/racket_target/station_relocation_advance_streak: 0.0000
+Metrics/racket_target/station_relocation_regress_streak: 0.0000
+Metrics/racket_target/station_relocation_effective_max_lin_vel: 0.0000
+Metrics/racket_target/station_relocation_effective_max_ang_vel: 0.0000
+Metrics/racket_target/station_relocation_effective_min_settle_steps: 0.0000
+Metrics/racket_target/ability_curriculum_level: 0.0000
+Metrics/racket_target/ability_curriculum_scale: 0.3552
+Metrics/racket_target/ability_curriculum_resolved_events: 0.0000
+Metrics/racket_target/ability_curriculum_total_resolved_events: 0.0000
+Metrics/racket_target/ability_curriculum_advance_streak: 0.0000
+Metrics/racket_target/ability_curriculum_regress_streak: 0.0000
+Metrics/racket_target/ability_contact_ema: 0.0000
+Metrics/racket_target/ability_net_ema: 0.0000
+Metrics/racket_target/ability_success_ema: 0.0000
+Metrics/racket_target/ability_recovery_ema: 0.0000
+Metrics/racket_target/ability_cycle_ema: 0.0000
+Metrics/racket_target/ability_cycle_attempt_ema: 0.0000
+Metrics/racket_target/ability_cycle_resolved_ema: 0.0000
+Metrics/racket_target/ability_forehand_contact_ema: 0.0000
+Metrics/racket_target/ability_forehand_net_ema: 0.0000
+Metrics/racket_target/ability_forehand_success_ema: 0.0000
+Metrics/racket_target/ability_backhand_contact_ema: 0.0000
+Metrics/racket_target/ability_backhand_net_ema: 0.0000
+Metrics/racket_target/ability_backhand_success_ema: 0.0000
+Metrics/racket_target/ability_attempt_ema: 0.0000
+Metrics/racket_target/ability_targeted_attempt_ema: 0.0000
+Metrics/racket_target/impact_health_floor_progress: 0.0000
+Metrics/racket_target/ability_safety_ema: 0.9688
+Metrics/racket_target/ability_station_saturation_ema: 0.0000
+Metrics/racket_target/ability_healthy_normal_ema: 0.0000
+Metrics/racket_target/ability_station_arrival_ema: 0.0000
+Metrics/racket_target/ability_station_settle_ema: 0.0000
+Metrics/racket_target/planner_hit_plane_blend: 0.9688
+Metrics/racket_target/planner_hit_plane_x_delta: -0.0045
+Metrics/racket_target/true_strike_table_x: 0.1587
+Metrics/racket_target/planner_target_table_x: 0.1587
+Metrics/racket_target/workspace_level: 0.0000
+Metrics/racket_target/workspace_fringe_sample: 0.0000
+Metrics/racket_target/workspace_target_lateral_norm: 0.5379
+Metrics/racket_target/workspace_target_table_y: -0.3886
+Metrics/racket_target/workspace_playable_y_min: -0.6999
+Metrics/racket_target/workspace_playable_y_max: 0.6999
+Metrics/racket_target/workspace_active_y_lo: -0.3694
+Metrics/racket_target/workspace_active_y_hi: -0.2531
+Metrics/racket_target/workspace_motion_seed_blend: 0.9688
+Metrics/racket_target/incoming_ball_horizontal_speed: 1.1095
+Metrics/racket_target/incoming_ball_speed: 1.5735
+Metrics/racket_target/incoming_ball_speed_curriculum_level: 0.0000
+Metrics/racket_target/incoming_ball_speed_sample_low: 0.8719
+Metrics/racket_target/incoming_ball_speed_sample_high: 1.2109
+Metrics/racket_target/station_saturated: 0.0000
+Metrics/racket_target/station_raw_clip_excess: 0.0000
+Metrics/racket_target/station_saturated_x: 0.0000
+Metrics/racket_target/station_saturated_y: 0.0000
+Metrics/racket_target/station_raw_clip_excess_x: 0.0000
+Metrics/racket_target/station_raw_clip_excess_y: 0.0000
+Metrics/racket_target/current_swing_opportunity: 0.0000
+Metrics/racket_target/current_swing_attempt: 0.0000
+Metrics/racket_target/current_swing_targeted_attempt: 0.0000
+Metrics/racket_target/prev_swing_targeted_attempt: 0.0000
+Metrics/racket_target/current_swing_unsafe: 0.0000
+Metrics/racket_target/current_swing_station_saturated: 0.0000
+Metrics/racket_target/impact_health_score: 0.9194
+Metrics/racket_target/impact_health_ok: 0.9688
+Metrics/racket_target/impact_health_backlean_violation: 0.0000
+Metrics/racket_target/impact_health_waist_backfold: 0.0000
+Metrics/racket_target/impact_health_base_retreat: 0.0070
+Metrics/racket_target/impact_health_torso_gravity_x: 0.1929
+Metrics/racket_target/impact_health_torso_ang_vel: 0.3152
+Metrics/racket_target/impact_health_com_x: 0.0378
+Metrics/racket_target/impact_health_com_y: 0.0264
+Metrics/racket_target/post_contact_ready_pending: 0.0000
+Metrics/racket_target/post_contact_ready_elapsed_steps: 0.0000
+Metrics/racket_target/post_contact_ready_consecutive_steps: 0.0000
+Metrics/racket_target/post_contact_ready_diagnostic_pending: 0.0000
+Metrics/racket_target/post_contact_ready_diagnostic_elapsed_steps: 0.0000
+Metrics/racket_target/post_contact_ready_durable_pending: 0.0000
+Metrics/racket_target/post_contact_ready_durable_consecutive_steps: 0.0000
+Metrics/racket_target/post_contact_ready_durable_ready_now: 0.0000
+Metrics/racket_target/post_contact_ready_durable_success_event: 0.0000
+Metrics/racket_target/post_contact_ready_durable_fail_event: 0.0000
+Metrics/racket_target/post_contact_ready_durable_resolution_success_rate: 0.0000
+Metrics/racket_target/post_contact_ready_durable_resolution_fail_rate: 0.0000
+Metrics/racket_target/post_contact_ready_durable_resolution_success_latency_steps: 0.0000
+Metrics/racket_target/post_contact_ready_durable_resolution_fail_latency_steps: 0.0000
+Metrics/racket_target/post_contact_ready_durable_fail_backlean_rate: 0.0000
+Metrics/racket_target/post_contact_ready_durable_fail_forward_lean_rate: 0.0000
+Metrics/racket_target/post_contact_ready_durable_fail_torso_ang_vel_rate: 0.0000
+Metrics/racket_target/post_contact_ready_durable_fail_base_lin_vel_rate: 0.0000
+Metrics/racket_target/post_contact_ready_durable_fail_base_ang_vel_rate: 0.0000
+Metrics/racket_target/post_contact_ready_durable_fail_racket_speed_rate: 0.0000
+Metrics/racket_target/post_contact_ready_durable_fail_height_rate: 0.0000
+Metrics/racket_target/post_contact_ready_durable_fail_com_x_rate: 0.0000
+Metrics/racket_target/post_contact_ready_durable_fail_com_y_rate: 0.0000
+Metrics/racket_target/post_contact_ready_durable_fail_feet_rate: 0.0000
+Metrics/racket_target/post_contact_ready_durable_fail_station_rate: 0.0000
+Metrics/racket_target/post_contact_ready_durable_fail_arm_rate: 0.0000
+Metrics/racket_target/post_contact_ready_terminal_window_active: 0.0000
+Metrics/racket_target/post_contact_ready_terminal_quality: 0.0000
+Metrics/racket_target/post_contact_ready_terminal_settlement_event: 0.0000
+Metrics/racket_target/post_contact_ready_operational_ready_now: 0.0000
+Metrics/racket_target/post_contact_ready_operational_consecutive_steps: 0.0000
+Metrics/racket_target/post_contact_ready_safe_settlement_event: 0.0000
+Metrics/racket_target/post_contact_ready_unsafe_settlement_event: 0.0000
+Metrics/racket_target/post_contact_ready_incomplete_settlement_event: 0.0000
+Metrics/racket_target/post_contact_ready_safe_net_cycle_event: 0.0000
+Metrics/racket_target/post_contact_ready_terminal_quality_mean: 0.0000
+Metrics/racket_target/post_contact_ready_safe_terminal_quality_mean: 0.0000
+Metrics/racket_target/post_contact_ready_terminal_safe_rate: 0.0000
+Metrics/racket_target/post_contact_ready_terminal_unsafe_rate: 0.0000
+Metrics/racket_target/post_contact_ready_terminal_incomplete_rate: 0.0000
+Metrics/racket_target/post_contact_ready_safe_net_cycle_rate: 0.0000
+Metrics/racket_target/post_contact_ready_score: 0.0000
+Metrics/racket_target/post_contact_ready_now: 0.0000
+Metrics/racket_target/post_contact_ready_success_event: 0.0000
+Metrics/racket_target/post_contact_ready_fail_event: 0.0000
+Metrics/racket_target/post_contact_ready_outcome_tier: 0.0000
+Metrics/racket_target/post_contact_ready_face_quality: 0.0000
+Metrics/racket_target/post_contact_ready_safe_face_net_cycle_value: 0.0000
+Metrics/racket_target/post_contact_ready_planner_speed_ratio: 0.0000
+Metrics/racket_target/post_contact_ready_planner_direction_error_rad: 0.0000
+Metrics/racket_target/post_contact_ready_planner_position_error: 0.0000
+Metrics/racket_target/post_contact_ready_impact_health_score: 0.0000
+Metrics/racket_target/post_contact_ready_peak_base_ang_vel: 0.0000
+Metrics/racket_target/post_contact_ready_peak_ang_vel_excess_increment: 0.0000
+Metrics/racket_target/post_contact_ready_envelope_violation_latch: 0.0000
+Metrics/racket_target/post_contact_ready_envelope_violation_event: 0.0000
+Metrics/racket_target/post_contact_ready_envelope_first_violation_step: 0.0000
+Metrics/racket_target/post_contact_ready_envelope_attempts: 0.0000
+Metrics/racket_target/post_contact_ready_envelope_violation_rate: 0.0000
+Metrics/racket_target/post_contact_ready_envelope_tilt_violation_rate: 0.0000
+Metrics/racket_target/post_contact_ready_envelope_pitch_violation_rate: 0.0000
+Metrics/racket_target/post_contact_ready_envelope_com_violation_rate: 0.0000
+Metrics/racket_target/post_contact_ready_envelope_waist_violation_rate: 0.0000
+Metrics/racket_target/post_contact_ready_envelope_leg_violation_rate: 0.0000
+Metrics/racket_target/post_contact_ready_envelope_base_ang_vel_violation_rate: 0.0000
+Metrics/racket_target/post_contact_ready_resolution_success_rate: 0.0000
+Metrics/racket_target/post_contact_ready_resolution_fail_rate: 0.0000
+Metrics/racket_target/post_contact_ready_resolution_success_latency_steps: 0.0000
+Metrics/racket_target/post_contact_ready_resolution_fail_latency_steps: 0.0000
+Metrics/racket_target/post_contact_ready_max_tilt: 0.0000
+Metrics/racket_target/post_contact_ready_max_abs_pitch: 0.0000
+Metrics/racket_target/post_contact_ready_max_com_x: 0.0000
+Metrics/racket_target/post_contact_ready_max_com_y: 0.0000
+Metrics/racket_target/post_contact_ready_max_waist_overflow: 0.0000
+Metrics/racket_target/post_contact_ready_max_leg_overflow: 0.0000
+Metrics/racket_target/post_contact_ready_settlement_velocity_score_ema: 0.0000
+Metrics/racket_target/post_contact_ready_settlement_position_gate_ema: 0.0000
+Metrics/racket_target/post_contact_ready_settlement_health_gate_ema: 0.0000
+Metrics/racket_target/post_contact_ready_settlement_recovery_gate_ema: 0.0000
+Metrics/racket_target/post_contact_ready_settlement_total_score_ema: 0.0000
+Metrics/racket_target/post_contact_recovery_backlean_error: 0.0000
+Metrics/racket_target/post_contact_recovery_directional_progress: 0.0000
+Metrics/racket_target/post_contact_ready_torso_ok: 0.0000
+Metrics/racket_target/post_contact_ready_motion_ok: 0.0000
+Metrics/racket_target/post_contact_ready_support_ok: 0.0000
+Metrics/racket_target/post_contact_ready_arm_ok: 0.0000
+Metrics/racket_target/post_contact_ready_base_lin_vel_ok: 0.0000
+Metrics/racket_target/post_contact_ready_base_ang_vel_ok: 0.0000
+Metrics/racket_target/post_contact_ready_racket_speed_ok: 0.0000
+Metrics/racket_target/post_contact_ready_height_ok: 0.0000
+Metrics/racket_target/post_contact_ready_com_x_ok: 0.0000
+Metrics/racket_target/post_contact_ready_com_y_ok: 0.0000
+Metrics/racket_target/post_contact_ready_feet_ok: 0.0000
+Metrics/racket_target/post_contact_ready_station_ok: 0.0000
+Metrics/racket_target/post_contact_ready_fail_torso: 0.0000
+Metrics/racket_target/post_contact_ready_fail_base_lin_vel: 0.0000
+Metrics/racket_target/post_contact_ready_fail_base_ang_vel: 0.0000
+Metrics/racket_target/post_contact_ready_fail_racket_speed: 0.0000
+Metrics/racket_target/post_contact_ready_fail_support: 0.0000
+Metrics/racket_target/post_contact_ready_fail_arm: 0.0000
+Metrics/racket_target/post_contact_ready_shadow_now: 0.0000
+Metrics/racket_target/post_contact_ready_shadow_consecutive_steps: 0.0000
+Metrics/racket_target/post_contact_ready_shadow_success_latch: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_level: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_fraction: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_success_ema: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_shadow_success_ema: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_resolved_events: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_successful_events: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_targeted_attempt_ema: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_return_success_ema: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_completed_swings: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_advance_streak: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_advance_guard_ok: 0.0000
+Metrics/racket_target/post_contact_ready_effective_max_torso_ang_vel: 0.0000
+Metrics/racket_target/post_contact_ready_effective_max_base_lin_vel: 0.0000
+Metrics/racket_target/post_contact_ready_effective_max_base_ang_vel: 0.0000
+Metrics/racket_target/post_contact_ready_effective_max_racket_speed: 0.0000
+Metrics/racket_target/post_contact_ready_effective_min_feet_contact: 0.0000
+Metrics/racket_target/post_contact_ready_effective_required_consecutive_steps: 0.0000
+Metrics/racket_target/post_contact_ready_effective_deadline_steps: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_advance_threshold: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_advance_min_events: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_shadow_threshold: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_min_targeted_attempt_ema: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_min_return_success_ema: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_min_completed_swings: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_required_advance_checks: 0.0000
+Metrics/racket_target/racket_normal_error_deg: 75.5617
+Metrics/racket_target/impact_normal_error_deg: 0.0000
+Metrics/racket_target/impact_racket_vel_error_mps: 0.0000
+Metrics/racket_target/impact_racket_speed_ratio: 0.0000
+Metrics/racket_target/impact_racket_vel_angle_deg: 0.0000
+Metrics/racket_target/impact_racket_actual_vel_x: 0.0000
+Metrics/racket_target/impact_racket_actual_vel_y: 0.0000
+Metrics/racket_target/impact_racket_actual_vel_z: 0.0000
+Metrics/racket_target/impact_racket_target_vel_x: 0.0000
+Metrics/racket_target/impact_racket_target_vel_y: 0.0000
+Metrics/racket_target/impact_racket_target_vel_z: 0.0000
+Metrics/racket_target/impact_ball_out_error_mps: 0.0000
+Metrics/racket_target/impact_face_radial_error_m: 0.0000
+Metrics/racket_target/impact_face_normal_gap_m: 0.0000
+Metrics/racket_target/impact_face_quality: 0.0000
+Metrics/racket_target/impact_center_contact: 0.0000
+Metrics/racket_target/impact_center_net_cross: 0.0000
+Metrics/racket_target/impact_center_on_opponent: 0.0000
+Metrics/racket_target/impact_rim_contact: 0.0000
+Metrics/racket_target/impact_rim_net_cross: 0.0000
+Metrics/racket_target/impact_rim_on_opponent: 0.0000
+Metrics/racket_target/impact_analytic_outer_contact: 0.0000
+Metrics/racket_target/impact_analytic_outer_net_cross: 0.0000
+Metrics/racket_target/impact_analytic_outer_on_opponent: 0.0000
+Metrics/racket_target/impact_planner_pos_error_m: 0.0000
+Metrics/racket_target/impact_planner_vel_error_mps: 0.0000
+Metrics/racket_target/impact_planner_speed_ratio: 0.0000
+Metrics/racket_target/impact_planner_vel_angle_deg: 0.0000
+Metrics/racket_target/impact_healthy_normal_ok: 0.0000
+Metrics/racket_target/impact_healthy_contact: 0.0000
+Metrics/racket_target/impact_healthy_net_cross: 0.0000
+Metrics/racket_target/impact_healthy_on_opponent: 0.0000
+Metrics/racket_target/current_swing_impact_health_score: 0.0000
+Metrics/racket_target/current_swing_healthy_contact: 0.0000
+Metrics/racket_target/current_swing_healthy_net_cross: 0.0000
+Metrics/racket_target/current_swing_healthy_on_opponent: 0.0000
+Metrics/racket_target/current_swing_healthy_normal_ok: 0.0000
+Metrics/racket_target/current_swing_contact: 0.0000
+Metrics/racket_target/current_swing_net_cross: 0.0000
+Metrics/racket_target/current_swing_on_opponent: 0.0000
+Metrics/racket_target/current_swing_center_contact: 0.0000
+Metrics/racket_target/current_swing_center_net_cross: 0.0000
+Metrics/racket_target/current_swing_center_on_opponent: 0.0000
+Metrics/racket_target/current_swing_rim_contact: 0.0000
+Metrics/racket_target/current_swing_rim_net_cross: 0.0000
+Metrics/racket_target/current_swing_rim_on_opponent: 0.0000
+Metrics/racket_target/current_swing_analytic_outer_contact: 0.0000
+Metrics/racket_target/current_swing_analytic_outer_net_cross: 0.0000
+Metrics/racket_target/current_swing_analytic_outer_on_opponent: 0.0000
+Metrics/racket_target/cycle_v2_outcome_tier: -0.9688
+Metrics/racket_target/cycle_v2_streak: 0.0000
+Metrics/racket_target/closed_loop_recovery_trigger_event: 0.0000
+Metrics/racket_target/closed_loop_cycle_success_event: 0.0000
+Metrics/racket_target/closed_loop_durable_cycle_success_event: 0.0000
+Metrics/racket_target/closed_loop_phase_id: 0.9688
+Metrics/racket_target/closed_loop_phase_ready_no_command: 0.0000
+Metrics/racket_target/closed_loop_phase_command_acquire: 0.9688
+Metrics/racket_target/closed_loop_phase_pre_strike: 0.0000
+Metrics/racket_target/closed_loop_phase_strike: 0.0000
+Metrics/racket_target/closed_loop_phase_follow_through: 0.0000
+Metrics/racket_target/closed_loop_phase_recovery: 0.0000
+Metrics/racket_target/closed_loop_phase_next_ready: 0.0000
+Metrics/racket_target/post_contact_phase_impact_0_100ms_attempts: 0.0000
+Metrics/racket_target/post_contact_phase_impact_0_100ms_tilt_gt_0p1_rate: 0.0000
+Metrics/racket_target/post_contact_phase_impact_0_100ms_pitch_gt_0p1_rate: 0.0000
+Metrics/racket_target/post_contact_phase_impact_0_100ms_waist_overflow_gt_1p0_rate: 0.0000
+Metrics/racket_target/post_contact_phase_impact_0_100ms_base_ang_vel_gt_0p8_rate: 0.0000
+Metrics/racket_target/post_contact_phase_brake_100_300ms_attempts: 0.0000
+Metrics/racket_target/post_contact_phase_brake_100_300ms_tilt_gt_0p1_rate: 0.0000
+Metrics/racket_target/post_contact_phase_brake_100_300ms_pitch_gt_0p1_rate: 0.0000
+Metrics/racket_target/post_contact_phase_brake_100_300ms_waist_overflow_gt_1p0_rate: 0.0000
+Metrics/racket_target/post_contact_phase_brake_100_300ms_base_ang_vel_gt_0p8_rate: 0.0000
+Metrics/racket_target/post_contact_phase_settle_300_600ms_attempts: 0.0000
+Metrics/racket_target/post_contact_phase_settle_300_600ms_tilt_gt_0p1_rate: 0.0000
+Metrics/racket_target/post_contact_phase_settle_300_600ms_pitch_gt_0p1_rate: 0.0000
+Metrics/racket_target/post_contact_phase_settle_300_600ms_waist_overflow_gt_1p0_rate: 0.0000
+Metrics/racket_target/post_contact_phase_settle_300_600ms_base_ang_vel_gt_0p8_rate: 0.0000
+Metrics/racket_target/post_contact_phase_ready_after_600ms_attempts: 0.0000
+Metrics/racket_target/post_contact_phase_ready_after_600ms_tilt_gt_0p1_rate: 0.0000
+Metrics/racket_target/post_contact_phase_ready_after_600ms_pitch_gt_0p1_rate: 0.0000
+Metrics/racket_target/post_contact_phase_ready_after_600ms_waist_overflow_gt_1p0_rate: 0.0000
+Metrics/racket_target/post_contact_phase_ready_after_600ms_base_ang_vel_gt_0p8_rate: 0.0000
+     Metrics/physical_shadow/phase: 0.7188
+Metrics/physical_shadow/route_valid: 0.9688
+Metrics/physical_shadow/serve_event: 0.0000
+Metrics/physical_shadow/incoming_bounce_event: 0.0000
+Metrics/physical_shadow/contact_event: 0.0000
+Metrics/physical_shadow/net_cross_event: 0.0000
+Metrics/physical_shadow/outgoing_landing_event: 0.0000
+Metrics/physical_shadow/opponent_bounce_event: 0.0000
+Metrics/physical_shadow/landing_short_event: 0.0000
+Metrics/physical_shadow/landing_long_event: 0.0000
+Metrics/physical_shadow/landing_side_event: 0.0000
+Metrics/physical_shadow/landing_no_net_event: 0.0000
+Metrics/physical_shadow/abort_event: 0.0000
+Metrics/physical_shadow/timeout_event: 0.0000
+Metrics/physical_shadow/route_unalignable_event: 0.0000
+Metrics/physical_shadow/route_invalid_event: 0.0000
+Metrics/physical_shadow/incoming_net_collision_event: 0.0000
+Metrics/physical_shadow/reset_abort_event: 0.0000
+Metrics/physical_shadow/incoming_bounce_latch: 0.0000
+Metrics/physical_shadow/contact_latch: 0.0000
+Metrics/physical_shadow/net_cross_latch: 0.0000
+Metrics/physical_shadow/opponent_bounce_latch: 0.0000
+Metrics/physical_shadow/launch_timing_error_s: -0.0003
+Metrics/physical_shadow/contact_true_target_error: 0.0000
+Metrics/physical_shadow/contact_planner_position_error: 0.0000
+Metrics/physical_shadow/contact_planner_velocity_error: 0.0000
+Metrics/physical_shadow/contact_planner_velocity_direction_error_deg: 0.0000
+Metrics/physical_shadow/contact_planner_normal_error_deg: 0.0000
+Metrics/physical_shadow/contact_outgoing_velocity_error: 0.0000
+Metrics/physical_shadow/contact_outgoing_speed: 0.0000
+Metrics/physical_shadow/contact_target_outgoing_speed: 0.0000
+Metrics/physical_shadow/contact_outgoing_speed_ratio: 0.0000
+Metrics/physical_shadow/contact_outgoing_direction_error_deg: 0.0000
+Metrics/physical_shadow/contact_outgoing_velocity_x: 0.0000
+Metrics/physical_shadow/contact_outgoing_velocity_y: 0.0000
+Metrics/physical_shadow/contact_outgoing_velocity_z: 0.0000
+Metrics/physical_shadow/contact_target_outgoing_velocity_x: 0.0000
+Metrics/physical_shadow/contact_target_outgoing_velocity_y: 0.0000
+Metrics/physical_shadow/contact_target_outgoing_velocity_z: 0.0000
+Metrics/physical_shadow/contact_incoming_velocity_error: 0.0000
+Metrics/physical_shadow/contact_incoming_velocity_direction_error_deg: 0.0000
+Metrics/physical_shadow/contact_route_incoming_velocity_error: 0.0000
+Metrics/physical_shadow/contact_route_incoming_velocity_direction_error_deg: 0.0000
+Metrics/physical_shadow/contact_actual_route_incoming_velocity_error: 0.0000
+Metrics/physical_shadow/contact_command_normal_only_error: 0.0000
+Metrics/physical_shadow/contact_command_training_model_error: 0.0000
+Metrics/physical_shadow/contact_command_physics_model_error: 0.0000
+Metrics/physical_shadow/contact_actual_training_model_residual: 0.0000
+Metrics/physical_shadow/contact_actual_physics_model_residual: 0.0000
+Metrics/physical_shadow/contact_actual_normal_only_model_residual: 0.0000
+Metrics/physical_shadow/contact_actual_training_predicted_target_error: 0.0000
+Metrics/physical_shadow/contact_actual_physics_predicted_target_error: 0.0000
+Metrics/physical_shadow/contact_actual_normal_only_predicted_target_error: 0.0000
+Metrics/physical_shadow/contact_force_direction_valid: 0.0000
+Metrics/physical_shadow/contact_force_vs_racket_normal_angle_deg: 0.0000
+Metrics/physical_shadow/contact_actual_force_direction_model_residual: 0.0000
+Metrics/physical_shadow/contact_actual_force_direction_predicted_target_error: 0.0000
+Metrics/physical_shadow/contact_physx_data_valid: 0.0000
+Metrics/physical_shadow/contact_physx_force: 0.0000
+Metrics/physical_shadow/contact_physx_separation: 0.0000
+Metrics/physical_shadow/contact_physx_normal_error_deg: 0.0000
+Metrics/physical_shadow/contact_physx_point_radial_error: 0.0000
+Metrics/physical_shadow/contact_actual_physx_normal_model_residual: 0.0000
+Metrics/physical_shadow/contact_actual_physx_normal_predicted_target_error: 0.0000
+Metrics/physical_shadow/contact_physx_substep_valid: 0.0000
+Metrics/physical_shadow/contact_physx_substep_normal_error_deg: 0.0000
+Metrics/physical_shadow/contact_physx_substep_point_radial_error: 0.0000
+Metrics/physical_shadow/contact_physx_substep_point_normal_offset: 0.0000
+Metrics/physical_shadow/contact_physx_patch_substeps: 0.0000
+Metrics/physical_shadow/contact_physx_normal_impulse: 0.0000
+Metrics/physical_shadow/contact_physx_capture_lag_s: 0.0000
+Metrics/physical_shadow/contact_physx_contact_point_speed_delta: 0.0000
+Metrics/physical_shadow/contact_physx_substep_link_model_residual: 0.0000
+Metrics/physical_shadow/contact_physx_substep_point_model_residual: 0.0000
+Metrics/physical_shadow/contact_physx_substep_outgoing_target_error: 0.0000
+Metrics/physical_shadow/contact_physx_measured_restitution: 0.0000
+Metrics/physical_shadow/contact_physx_pre_ball_speed: 0.0000
+Metrics/physical_shadow/contact_physx_post_ball_speed: 0.0000
+Metrics/physical_shadow/contact_physx_point_x: 0.0000
+Metrics/physical_shadow/contact_physx_point_y: 0.0000
+Metrics/physical_shadow/contact_physx_point_z: 0.0000
+Metrics/physical_shadow/contact_physx_normal_x: 0.0000
+Metrics/physical_shadow/contact_physx_normal_y: 0.0000
+Metrics/physical_shadow/contact_physx_normal_z: 0.0000
+Metrics/physical_shadow/contact_physx_pre_ball_velocity_x: 0.0000
+Metrics/physical_shadow/contact_physx_pre_ball_velocity_y: 0.0000
+Metrics/physical_shadow/contact_physx_pre_ball_velocity_z: 0.0000
+Metrics/physical_shadow/contact_physx_post_ball_velocity_x: 0.0000
+Metrics/physical_shadow/contact_physx_post_ball_velocity_y: 0.0000
+Metrics/physical_shadow/contact_physx_post_ball_velocity_z: 0.0000
+Metrics/physical_shadow/contact_physx_pre_racket_point_velocity_x: 0.0000
+Metrics/physical_shadow/contact_physx_pre_racket_point_velocity_y: 0.0000
+Metrics/physical_shadow/contact_physx_pre_racket_point_velocity_z: 0.0000
+Metrics/physical_shadow/contact_physx_post_racket_point_velocity_x: 0.0000
+Metrics/physical_shadow/contact_physx_post_racket_point_velocity_y: 0.0000
+Metrics/physical_shadow/contact_physx_post_racket_point_velocity_z: 0.0000
+Metrics/physical_shadow/contact_physx_pre_ball_angular_velocity_x: 0.0000
+Metrics/physical_shadow/contact_physx_pre_ball_angular_velocity_y: 0.0000
+Metrics/physical_shadow/contact_physx_pre_ball_angular_velocity_z: 0.0000
+Metrics/physical_shadow/contact_physx_post_ball_angular_velocity_x: 0.0000
+Metrics/physical_shadow/contact_physx_post_ball_angular_velocity_y: 0.0000
+Metrics/physical_shadow/contact_physx_post_ball_angular_velocity_z: 0.0000
+Metrics/physical_shadow/contact_physx_pre_ball_surface_tangent_speed: 0.0000
+Metrics/physical_shadow/contact_physx_post_ball_spin_speed: 0.0000
+Metrics/physical_shadow/contact_impact_normal_error_deg: 0.0000
+Metrics/physical_shadow/contact_wire_impact_normal_gap_deg: 0.0000
+Metrics/physical_shadow/contact_face_radial_error: 0.0000
+Metrics/physical_shadow/contact_time_to_strike: 0.0000
+Metrics/physical_shadow/landing_target_error: 0.0000
+Metrics/physical_shadow/landing_target_x_error: 0.0000
+Metrics/physical_shadow/landing_target_y_error: 0.0000
+Metrics/physical_shadow/landing_position_x: 0.0000
+Metrics/physical_shadow/landing_position_y: 0.0000
+Metrics/physical_shadow/minimum_ball_racket_distance: 1.8729
+      Episode_Termination/time_out: 0.9688
+  Episode_Termination/base_too_low: 0.0000
+   Episode_Termination/base_tilted: 0.0000
+   Episode_Termination/table_touch: 0.0000
+Episode_Termination/persistent_action_overflow: 0.0000
+--------------------------------------------------------------------------------
+                   Total timesteps: 2048
+                    Iteration time: 3.51s
+                      Time elapsed: 00:00:03
+                               ETA: 00:00:10
+
+[2026-08-01 20:15:35,061][git.util][DEBUG] - sys.platform='linux', git_executable='git'
+[2026-08-01 20:15:35,061][git.cmd][DEBUG] - Popen(['git', 'cat-file', '--batch-check'], cwd=/mnt/ssd/zxl/PACE-ICRA2026, stdin=<valid stream>, shell=False, universal_newlines=False)
+[2026-08-01 20:15:35,063][git.cmd][DEBUG] - Popen(['git', 'cat-file', '--batch'], cwd=/mnt/ssd/zxl/PACE-ICRA2026, stdin=<valid stream>, shell=False, universal_newlines=False)
+Storing git diff for 'PACE-ICRA2026' in: /mnt/ssd/zxl/HOPE_latest_20260721/hope_training/whole_body_tracking/logs/rsl_rl/hope_pingpong_stage2_physical114/2026-08-01_20-15-28_stage2_physq_smoke/git/PACE-ICRA2026.diff
+[2026-08-01 20:15:35,065][git.cmd][DEBUG] - Popen(['git', 'status'], cwd=/mnt/ssd/zxl/PACE-ICRA2026, stdin=None, shell=False, universal_newlines=False)
+[2026-08-01 20:15:35,068][git.cmd][DEBUG] - Popen(['git', 'diff', 'f680833fa6dd25066f6d1bff1a8f66c566269348'], cwd=/mnt/ssd/zxl/PACE-ICRA2026, stdin=None, shell=False, universal_newlines=False)
+[2026-08-01 20:15:35,074][git.util][DEBUG] - sys.platform='linux', git_executable='git'
+[2026-08-01 20:15:35,075][git.cmd][DEBUG] - Popen(['git', 'cat-file', '--batch-check'], cwd=/mnt/ssd/zxl/HOPE_latest_20260721, stdin=<valid stream>, shell=False, universal_newlines=False)
+[2026-08-01 20:15:35,077][git.cmd][DEBUG] - Popen(['git', 'cat-file', '--batch'], cwd=/mnt/ssd/zxl/HOPE_latest_20260721, stdin=<valid stream>, shell=False, universal_newlines=False)
+Storing git diff for 'HOPE_latest_20260721' in: /mnt/ssd/zxl/HOPE_latest_20260721/hope_training/whole_body_tracking/logs/rsl_rl/hope_pingpong_stage2_physical114/2026-08-01_20-15-28_stage2_physq_smoke/git/HOPE_latest_20260721.diff
+[2026-08-01 20:15:35,078][git.cmd][DEBUG] - Popen(['git', 'status'], cwd=/mnt/ssd/zxl/HOPE_latest_20260721, stdin=None, shell=False, universal_newlines=False)
+[2026-08-01 20:15:35,087][git.cmd][DEBUG] - Popen(['git', 'diff', 'b99de9c8263d8acc9cebf93db6b7631b921597ed'], cwd=/mnt/ssd/zxl/HOPE_latest_20260721, stdin=None, shell=False, universal_newlines=False)
+/mnt/ssd/zxl/IsaacLab/source/isaaclab/isaaclab/envs/mdp/events.py:501: UserWarning: To copy construct from a tensor, it is recommended to use sourceTensor.detach().clone() or sourceTensor.detach().clone().requires_grad_(True), rather than torch.tensor(sourceTensor).
+  actuator_joint_indices = torch.tensor(actuator.joint_indices, device=asset.device)
+################################################################################
+                        [1m Learning iteration 1/3 [0m                        
+
+                       Computation: 767 steps/s (collection: 2.622s, learning 0.048s)
+             Mean action noise std: 0.15
+          Mean value_function loss: 0.6755
+               Mean surrogate loss: -0.0136
+                 Mean entropy loss: -14.8231
+        Mean actor_anchor_rms loss: 0.0001
+Mean actor_anchor_relative_l2 loss: 0.0024
+ Mean actor_anchor_exempt_rms loss: 0.0000
+                       Mean reward: 0.77
+               Mean episode length: 26.14
+ Episode_Reward/undesired_contacts: 0.0000
+  Episode_Reward/feet_contact_slip: -0.0007
+     Episode_Reward/table_no_touch: -0.0000
+              Episode_Reward/alive: 0.0014
+            Episode_Reward/upright: -0.0025
+          Episode_Reward/imitation: 0.0513
+    Episode_Reward/racket_position: 0.0000
+    Episode_Reward/racket_velocity: 0.0000
+Episode_Reward/planner_racket_task_space_crossfade: 0.0092
+    Episode_Reward/blade_direction: 0.0000
+Episode_Reward/healthy_trunk_support: 0.0044
+ Episode_Reward/pre_strike_station: 0.0092
+    Episode_Reward/recovery_health: 0.0006
+Episode_Reward/no_command_ready_stability: 0.0000
+Episode_Reward/post_strike_base_ang_vel: 0.0000
+Episode_Reward/phase_action_overflow: -0.0000
+     Episode_Reward/strike_balance: 0.0009
+Episode_Reward/prestrike_station_progress: -0.0019
+ Episode_Reward/lower_body_support: 0.0042
+Episode_Reward/termination_penalty: -0.0062
+Episode_Reward/phase_action_rate_waist: -0.0000
+Episode_Reward/phase_action_rate_upper: -0.0001
+Episode_Reward/phase_action_rate_legs: -0.0000
+        Episode_Reward/joint_limit: -0.0016
+Episode_Reward/prestrike_racket_progress: 0.0389
+Episode_Reward/near_impact_planner_velocity_progress: -0.0000
+Episode_Reward/operational_joint_margin: -0.0020
+  Episode_Reward/joint_target_slew: -0.0022
+Episode_Reward/actuator_waist_feasibility: -0.0000
+Episode_Reward/actuator_right_arm_feasibility: -0.0000
+Episode_Reward/actuator_leg_feasibility: -0.0000
+Episode_Reward/physical_outcome_events: 0.0000
+Episode_Reward/physical_recovery_settlement: 0.0000
+Episode_Reward/physical_capability_curriculum: 0.0000
+    Metrics/motion/error_joint_pos: 1.3293
+    Metrics/motion/error_joint_vel: 4.9995
+     Metrics/motion/error_body_pos: 0.1477
+     Metrics/motion/error_body_rot: 0.6233
+       Metrics/motion/motion_phase: 0.2737
+            Metrics/motion/in_hold: 0.0000
+Metrics/motion/motion_start_warmup_prob: 0.7500
+Metrics/motion/motion_start_lifecycle_progress: 0.0000
+Metrics/motion/motion_start_effective_prestrike_fraction: 1.0000
+Metrics/motion/motion_start_effective_recovery_fraction: 0.0000
+Metrics/motion/motion_start_effective_rsi_fraction: 0.0000
+ Metrics/motion/motion_start_reset: 1.0000
+Metrics/motion/motion_start_prestrike_reset: 0.0000
+Metrics/motion/motion_start_recovery_reset: 0.0000
+Metrics/motion/motion_start_rsi_reset: 0.0000
+ Metrics/motion/single_cycle_reset: 0.0000
+     Metrics/motion/motion_clip_id: 0.9375
+Metrics/motion/motion_supplemental_clip: 0.0000
+      Metrics/motion/stand_episode: 0.0000
+Metrics/motion/default_stand_reset: 0.0000
+Metrics/motion/error_body_pos_lower: 0.1344
+Metrics/motion/error_body_rot_lower: 0.6018
+Metrics/motion/error_body_lin_vel_lower: 0.2744
+Metrics/motion/error_body_ang_vel_lower: 1.1962
+Metrics/motion/reference_body_lin_speed_lower: 0.0151
+Metrics/motion/robot_body_lin_speed_lower: 0.2736
+Metrics/motion/error_body_pos_core: 0.0841
+Metrics/motion/error_body_rot_core: 0.3991
+Metrics/motion/error_body_lin_vel_core: 0.5607
+Metrics/motion/error_body_ang_vel_core: 1.6291
+Metrics/motion/reference_body_lin_speed_core: 0.0129
+Metrics/motion/robot_body_lin_speed_core: 0.5595
+Metrics/motion/error_body_pos_upper: 0.1822
+Metrics/motion/error_body_rot_upper: 0.7196
+Metrics/motion/error_body_lin_vel_upper: 1.1548
+Metrics/motion/error_body_ang_vel_upper: 2.0885
+Metrics/motion/reference_body_lin_speed_upper: 0.0350
+Metrics/motion/robot_body_lin_speed_upper: 1.1645
+Metrics/motion/error_joint_pos_waist: 0.3745
+Metrics/motion/error_joint_vel_waist: 2.0230
+Metrics/motion/reference_joint_speed_waist: 0.0153
+Metrics/motion/error_joint_pos_arms: 1.0598
+Metrics/motion/error_joint_vel_arms: 3.1574
+Metrics/motion/reference_joint_speed_arms: 0.0924
+Metrics/motion/error_joint_pos_legs: 0.6937
+Metrics/motion/error_joint_vel_legs: 3.2482
+Metrics/motion/reference_joint_speed_legs: 0.0049
+Metrics/racket_target/racket_pos_error: 0.0000
+Metrics/racket_target/racket_vel_error: 0.0000
+Metrics/racket_target/time_to_strike: 0.3587
+Metrics/racket_target/return_success: 0.0000
+Metrics/racket_target/prev_return_success: 0.0000
+Metrics/racket_target/prev_net_cross: 0.0000
+Metrics/racket_target/current_net_cross: 0.0000
+Metrics/racket_target/racket_pos_curriculum_scale: 0.3667
+Metrics/racket_target/impact_inverse_command_blend: 0.0000
+Metrics/racket_target/steps_since_target_resample: 41.0625
+Metrics/racket_target/recovery_height_error: 0.0839
+Metrics/racket_target/recovery_upright_error: 0.3703
+Metrics/racket_target/recovery_base_lin_vel: 0.4048
+Metrics/racket_target/recovery_base_ang_vel: 1.2309
+Metrics/racket_target/recovery_station_error: 0.1175
+Metrics/racket_target/recovery_feet_contact_frac: 0.7812
+Metrics/racket_target/recovery_racket_speed: 1.0142
+Metrics/racket_target/recovery_height_score: 0.6491
+Metrics/racket_target/recovery_upright_score: 0.3334
+Metrics/racket_target/recovery_lin_vel_score: 0.4970
+Metrics/racket_target/recovery_ang_vel_score: 0.1767
+Metrics/racket_target/recovery_station_score: 0.7085
+Metrics/racket_target/recovery_racket_score: 0.2081
+Metrics/racket_target/recovery_arm_score: 0.5319
+Metrics/racket_target/recovery_ready_score: 0.4837
+Metrics/racket_target/recovery_anchor_arm_score: 1.0000
+Metrics/racket_target/recovery_core_ready_score: 0.2861
+Metrics/racket_target/recovery_functional_ready_score: 0.2560
+Metrics/racket_target/waist_action_overflow_rms: 0.0000
+Metrics/racket_target/right_arm_action_overflow_rms: 0.0000
+Metrics/racket_target/leg_action_overflow_rms: 0.0110
+Metrics/racket_target/operational_margin_fraction: 0.0101
+Metrics/racket_target/waist_operational_margin_fraction: 0.0000
+Metrics/racket_target/right_arm_operational_margin_fraction: 0.0000
+Metrics/racket_target/leg_operational_margin_fraction: 0.0260
+Metrics/racket_target/waist_operational_excess_rms: 0.0000
+Metrics/racket_target/right_arm_operational_excess_rms: 0.0000
+Metrics/racket_target/leg_operational_excess_rms: 0.0086
+Metrics/racket_target/q_des_velocity_violation_fraction: 0.0444
+Metrics/racket_target/waist_q_des_velocity_violation_fraction: 0.0000
+Metrics/racket_target/right_arm_q_des_velocity_violation_fraction: 0.0446
+Metrics/racket_target/leg_q_des_velocity_violation_fraction: 0.0859
+Metrics/racket_target/q_des_acceleration_violation_fraction: 0.6331
+Metrics/racket_target/waist_q_des_acceleration_violation_fraction: 0.8646
+Metrics/racket_target/right_arm_q_des_acceleration_violation_fraction: 0.5491
+Metrics/racket_target/leg_q_des_acceleration_violation_fraction: 0.8099
+Metrics/racket_target/waist_q_des_velocity_rms: 5.6465
+Metrics/racket_target/right_arm_q_des_velocity_rms: 4.6684
+Metrics/racket_target/leg_q_des_velocity_rms: 7.2601
+Metrics/racket_target/waist_q_des_acceleration_rms: 373.6870
+Metrics/racket_target/right_arm_q_des_acceleration_rms: 346.7656
+Metrics/racket_target/leg_q_des_acceleration_rms: 697.7454
+Metrics/racket_target/action_operational_feasibility_score: 0.8233
+Metrics/racket_target/actuator_overflow_consecutive_steps: 0.0000
+Metrics/racket_target/actuator_overflow_severe: 0.0000
+Metrics/racket_target/recovery_phase_gate: 0.0312
+Metrics/racket_target/recovery_phase_ready_score: 0.0214
+Metrics/racket_target/recovery_contact_ready_score: 0.0000
+Metrics/racket_target/recovery_net_ready_score: 0.0000
+Metrics/racket_target/recovery_return_ready_score: 0.0000
+Metrics/racket_target/cycle_success_ready_score: 0.0000
+Metrics/racket_target/cycle_success_soft: 0.0000
+Metrics/racket_target/cycle_success_binary: 0.0000
+Metrics/racket_target/cycle_v2_pending: 0.0000
+Metrics/racket_target/cycle_v2_attempt_latch: 0.0000
+Metrics/racket_target/cycle_v2_ready_success_latch: 0.0000
+Metrics/racket_target/cycle_v2_ready_fail_latch: 0.0000
+Metrics/racket_target/cycle_v2_attempt_event: 0.0000
+Metrics/racket_target/cycle_v2_ready_success_event: 0.0000
+Metrics/racket_target/cycle_v2_ready_fail_event: 0.0000
+Metrics/racket_target/cycle_v2_unresolved_resample_fail_event: 0.0000
+Metrics/racket_target/cycle_v2_resolved_event: 0.0000
+Metrics/racket_target/cycle_v2_command_visible_steps: 0.0000
+Metrics/racket_target/cycle_v2_elapsed_steps: 0.0000
+Metrics/racket_target/cycle_v2_ready_score: 0.0000
+Metrics/racket_target/cycle_v2_ready_ok: 0.0000
+Metrics/racket_target/cycle_v2_visible: 0.0000
+Metrics/racket_target/cycle_v2_ready_score_ok: 0.0000
+Metrics/racket_target/cycle_v2_height_ok: 0.0000
+Metrics/racket_target/cycle_v2_upright_ok: 0.0000
+Metrics/racket_target/cycle_v2_base_lin_vel_ok: 0.0000
+Metrics/racket_target/cycle_v2_base_ang_vel_ok: 0.0000
+Metrics/racket_target/cycle_v2_feet_ok: 0.0000
+Metrics/racket_target/cycle_v2_core_ready_ok: 0.0000
+Metrics/racket_target/cycle_v2_ready_consecutive_steps: 0.0000
+Metrics/racket_target/single_cycle_bootstrap: 0.0000
+Metrics/racket_target/single_cycle_swing_completed: 0.0000
+Metrics/racket_target/single_cycle_recovery_active: 0.0000
+Metrics/racket_target/single_cycle_recovery_elapsed_steps: 0.0000
+Metrics/racket_target/single_cycle_ready_consecutive_steps: 0.0000
+Metrics/racket_target/single_cycle_safe_timeout_event: 0.0000
+Metrics/racket_target/single_cycle_deadline_timeout_event: 0.0000
+Metrics/racket_target/single_cycle_timeout_latch: 0.0000
+Metrics/racket_target/single_cycle_hard_failure_event: 0.0000
+Metrics/racket_target/single_cycle_probability: 0.0000
+Metrics/racket_target/single_cycle_curriculum_level: 0.0000
+Metrics/racket_target/single_cycle_effective_deadline_steps: 100.0000
+Metrics/racket_target/single_cycle_selected_events: 0.0000
+Metrics/racket_target/single_cycle_completed_events: 0.0000
+Metrics/racket_target/single_cycle_safe_timeout_events: 0.0000
+Metrics/racket_target/single_cycle_deadline_timeout_events: 0.0000
+Metrics/racket_target/single_cycle_hard_failure_events: 0.0000
+Metrics/racket_target/active_ready_consecutive_steps: 0.0000
+Metrics/racket_target/active_ready_success_event: 0.0000
+Metrics/racket_target/active_ready_success_latch: 0.0000
+Metrics/racket_target/active_ready_survival_steps: 0.0000
+Metrics/racket_target/active_ready_survival_next_milestone: 0.0000
+Metrics/racket_target/active_ready_survival_milestone_event: 0.0000
+Metrics/racket_target/no_command_ready_active: 0.0000
+Metrics/racket_target/no_command_from_stand_episode: 0.0000
+Metrics/racket_target/no_command_from_default_stand_reset: 0.0000
+Metrics/racket_target/no_command_ready_upright_ok: 0.0000
+Metrics/racket_target/no_command_ready_motion_ok: 0.0000
+Metrics/racket_target/no_command_ready_score: 0.0000
+Metrics/racket_target/no_command_ready_progress: 0.0000
+Metrics/racket_target/no_command_ready_station_error: 0.0000
+Metrics/racket_target/no_command_ready_fixed_station_error: 0.0000
+Metrics/racket_target/healthy_training_stage: 3.0000
+Metrics/racket_target/healthy_stage_planted_rehearsal: 0.0000
+Metrics/racket_target/healthy_stage_station_hold_seen: 0.0000
+Metrics/racket_target/healthy_stage_station_arrived: 0.0000
+Metrics/racket_target/healthy_stage_station_settled: 0.0000
+Metrics/racket_target/healthy_stage_station_settle_steps: 0.0000
+Metrics/racket_target/station_relocation_active: 0.0000
+Metrics/racket_target/station_relocation_target_offset_y: 0.0000
+Metrics/racket_target/station_relocation_error: 0.0000
+Metrics/racket_target/station_relocation_arrival_event: 0.0000
+Metrics/racket_target/station_relocation_settle_event: 0.0000
+Metrics/racket_target/station_relocation_release_event: 0.0000
+Metrics/racket_target/station_relocation_timeout_event: 0.0000
+Metrics/racket_target/station_relocation_elapsed_steps: 0.0000
+Metrics/racket_target/station_relocation_hold_deadline_steps: 0.0000
+Metrics/racket_target/lifecycle_recovery_hold_active: 0.0000
+Metrics/racket_target/lifecycle_recovery_release_success_event: 0.0000
+Metrics/racket_target/lifecycle_recovery_release_fail_event: 0.0000
+Metrics/racket_target/station_relocation_level: 0.0000
+Metrics/racket_target/station_relocation_arrival_ema: 0.0000
+Metrics/racket_target/station_relocation_settle_ema: 0.0000
+Metrics/racket_target/station_relocation_contact_ema: 0.0000
+Metrics/racket_target/station_relocation_safety_ema: 0.0000
+Metrics/racket_target/station_relocation_resolved_events: 0.0000
+Metrics/racket_target/station_relocation_terminal_reset_events: 0.0000
+Metrics/racket_target/station_relocation_advance_streak: 0.0000
+Metrics/racket_target/station_relocation_regress_streak: 0.0000
+Metrics/racket_target/station_relocation_effective_max_lin_vel: 0.0000
+Metrics/racket_target/station_relocation_effective_max_ang_vel: 0.0000
+Metrics/racket_target/station_relocation_effective_min_settle_steps: 0.0000
+Metrics/racket_target/ability_curriculum_level: 0.0000
+Metrics/racket_target/ability_curriculum_scale: 0.3667
+Metrics/racket_target/ability_curriculum_resolved_events: 0.0000
+Metrics/racket_target/ability_curriculum_total_resolved_events: 0.0000
+Metrics/racket_target/ability_curriculum_advance_streak: 0.0000
+Metrics/racket_target/ability_curriculum_regress_streak: 0.0000
+Metrics/racket_target/ability_contact_ema: 0.0000
+Metrics/racket_target/ability_net_ema: 0.0000
+Metrics/racket_target/ability_success_ema: 0.0000
+Metrics/racket_target/ability_recovery_ema: 0.0000
+Metrics/racket_target/ability_cycle_ema: 0.0000
+Metrics/racket_target/ability_cycle_attempt_ema: 0.0000
+Metrics/racket_target/ability_cycle_resolved_ema: 0.0000
+Metrics/racket_target/ability_forehand_contact_ema: 0.0000
+Metrics/racket_target/ability_forehand_net_ema: 0.0000
+Metrics/racket_target/ability_forehand_success_ema: 0.0000
+Metrics/racket_target/ability_backhand_contact_ema: 0.0000
+Metrics/racket_target/ability_backhand_net_ema: 0.0000
+Metrics/racket_target/ability_backhand_success_ema: 0.0000
+Metrics/racket_target/ability_attempt_ema: 0.0000
+Metrics/racket_target/ability_targeted_attempt_ema: 0.0000
+Metrics/racket_target/impact_health_floor_progress: 0.0000
+Metrics/racket_target/ability_safety_ema: 1.0000
+Metrics/racket_target/ability_station_saturation_ema: 0.0000
+Metrics/racket_target/ability_healthy_normal_ema: 0.0000
+Metrics/racket_target/ability_station_arrival_ema: 0.0000
+Metrics/racket_target/ability_station_settle_ema: 0.0000
+Metrics/racket_target/planner_hit_plane_blend: 1.0000
+Metrics/racket_target/planner_hit_plane_x_delta: 0.0058
+Metrics/racket_target/true_strike_table_x: 0.1657
+Metrics/racket_target/planner_target_table_x: 0.1657
+Metrics/racket_target/workspace_level: 0.0000
+Metrics/racket_target/workspace_fringe_sample: 0.0000
+Metrics/racket_target/workspace_target_lateral_norm: 0.1283
+Metrics/racket_target/workspace_target_table_y: -0.0927
+Metrics/racket_target/workspace_playable_y_min: -0.7225
+Metrics/racket_target/workspace_playable_y_max: 0.7225
+Metrics/racket_target/workspace_active_y_lo: -0.0450
+Metrics/racket_target/workspace_active_y_hi: 0.0750
+Metrics/racket_target/workspace_motion_seed_blend: 1.0000
+Metrics/racket_target/incoming_ball_horizontal_speed: 1.1680
+Metrics/racket_target/incoming_ball_speed: 1.5754
+Metrics/racket_target/incoming_ball_speed_curriculum_level: 0.0000
+Metrics/racket_target/incoming_ball_speed_sample_low: 0.9000
+Metrics/racket_target/incoming_ball_speed_sample_high: 1.2500
+Metrics/racket_target/station_saturated: 0.0000
+Metrics/racket_target/station_raw_clip_excess: 0.0000
+Metrics/racket_target/station_saturated_x: 0.0000
+Metrics/racket_target/station_saturated_y: 0.0000
+Metrics/racket_target/station_raw_clip_excess_x: 0.0000
+Metrics/racket_target/station_raw_clip_excess_y: 0.0000
+Metrics/racket_target/current_swing_opportunity: 0.0000
+Metrics/racket_target/current_swing_attempt: 0.0000
+Metrics/racket_target/current_swing_targeted_attempt: 0.0000
+Metrics/racket_target/prev_swing_targeted_attempt: 0.0000
+Metrics/racket_target/current_swing_unsafe: 0.3125
+Metrics/racket_target/current_swing_station_saturated: 0.0000
+Metrics/racket_target/impact_health_score: 0.6435
+Metrics/racket_target/impact_health_ok: 0.6875
+Metrics/racket_target/impact_health_backlean_violation: 0.1942
+Metrics/racket_target/impact_health_waist_backfold: 0.0079
+Metrics/racket_target/impact_health_base_retreat: 0.0224
+Metrics/racket_target/impact_health_torso_gravity_x: -0.0841
+Metrics/racket_target/impact_health_torso_ang_vel: 1.2702
+Metrics/racket_target/impact_health_com_x: 0.1398
+Metrics/racket_target/impact_health_com_y: 0.1150
+Metrics/racket_target/post_contact_ready_pending: 0.0000
+Metrics/racket_target/post_contact_ready_elapsed_steps: 0.0000
+Metrics/racket_target/post_contact_ready_consecutive_steps: 0.0000
+Metrics/racket_target/post_contact_ready_diagnostic_pending: 0.0000
+Metrics/racket_target/post_contact_ready_diagnostic_elapsed_steps: 0.0000
+Metrics/racket_target/post_contact_ready_durable_pending: 0.0000
+Metrics/racket_target/post_contact_ready_durable_consecutive_steps: 0.0000
+Metrics/racket_target/post_contact_ready_durable_ready_now: 0.0000
+Metrics/racket_target/post_contact_ready_durable_success_event: 0.0000
+Metrics/racket_target/post_contact_ready_durable_fail_event: 0.0000
+Metrics/racket_target/post_contact_ready_durable_resolution_success_rate: 0.0000
+Metrics/racket_target/post_contact_ready_durable_resolution_fail_rate: 0.0000
+Metrics/racket_target/post_contact_ready_durable_resolution_success_latency_steps: 0.0000
+Metrics/racket_target/post_contact_ready_durable_resolution_fail_latency_steps: 0.0000
+Metrics/racket_target/post_contact_ready_durable_fail_backlean_rate: 0.0000
+Metrics/racket_target/post_contact_ready_durable_fail_forward_lean_rate: 0.0000
+Metrics/racket_target/post_contact_ready_durable_fail_torso_ang_vel_rate: 0.0000
+Metrics/racket_target/post_contact_ready_durable_fail_base_lin_vel_rate: 0.0000
+Metrics/racket_target/post_contact_ready_durable_fail_base_ang_vel_rate: 0.0000
+Metrics/racket_target/post_contact_ready_durable_fail_racket_speed_rate: 0.0000
+Metrics/racket_target/post_contact_ready_durable_fail_height_rate: 0.0000
+Metrics/racket_target/post_contact_ready_durable_fail_com_x_rate: 0.0000
+Metrics/racket_target/post_contact_ready_durable_fail_com_y_rate: 0.0000
+Metrics/racket_target/post_contact_ready_durable_fail_feet_rate: 0.0000
+Metrics/racket_target/post_contact_ready_durable_fail_station_rate: 0.0000
+Metrics/racket_target/post_contact_ready_durable_fail_arm_rate: 0.0000
+Metrics/racket_target/post_contact_ready_terminal_window_active: 0.0000
+Metrics/racket_target/post_contact_ready_terminal_quality: 0.0000
+Metrics/racket_target/post_contact_ready_terminal_settlement_event: 0.0000
+Metrics/racket_target/post_contact_ready_operational_ready_now: 0.0000
+Metrics/racket_target/post_contact_ready_operational_consecutive_steps: 0.0000
+Metrics/racket_target/post_contact_ready_safe_settlement_event: 0.0000
+Metrics/racket_target/post_contact_ready_unsafe_settlement_event: 0.0000
+Metrics/racket_target/post_contact_ready_incomplete_settlement_event: 0.0000
+Metrics/racket_target/post_contact_ready_safe_net_cycle_event: 0.0000
+Metrics/racket_target/post_contact_ready_terminal_quality_mean: 0.0000
+Metrics/racket_target/post_contact_ready_safe_terminal_quality_mean: 0.0000
+Metrics/racket_target/post_contact_ready_terminal_safe_rate: 0.0000
+Metrics/racket_target/post_contact_ready_terminal_unsafe_rate: 0.0000
+Metrics/racket_target/post_contact_ready_terminal_incomplete_rate: 0.0000
+Metrics/racket_target/post_contact_ready_safe_net_cycle_rate: 0.0000
+Metrics/racket_target/post_contact_ready_score: 0.0000
+Metrics/racket_target/post_contact_ready_now: 0.0000
+Metrics/racket_target/post_contact_ready_success_event: 0.0000
+Metrics/racket_target/post_contact_ready_fail_event: 0.0000
+Metrics/racket_target/post_contact_ready_outcome_tier: 0.0000
+Metrics/racket_target/post_contact_ready_face_quality: 0.0000
+Metrics/racket_target/post_contact_ready_safe_face_net_cycle_value: 0.0000
+Metrics/racket_target/post_contact_ready_planner_speed_ratio: 0.0000
+Metrics/racket_target/post_contact_ready_planner_direction_error_rad: 0.0000
+Metrics/racket_target/post_contact_ready_planner_position_error: 0.0000
+Metrics/racket_target/post_contact_ready_impact_health_score: 0.0000
+Metrics/racket_target/post_contact_ready_peak_base_ang_vel: 0.0000
+Metrics/racket_target/post_contact_ready_peak_ang_vel_excess_increment: 0.0000
+Metrics/racket_target/post_contact_ready_envelope_violation_latch: 0.0000
+Metrics/racket_target/post_contact_ready_envelope_violation_event: 0.0000
+Metrics/racket_target/post_contact_ready_envelope_first_violation_step: 0.0000
+Metrics/racket_target/post_contact_ready_envelope_attempts: 0.0000
+Metrics/racket_target/post_contact_ready_envelope_violation_rate: 0.0000
+Metrics/racket_target/post_contact_ready_envelope_tilt_violation_rate: 0.0000
+Metrics/racket_target/post_contact_ready_envelope_pitch_violation_rate: 0.0000
+Metrics/racket_target/post_contact_ready_envelope_com_violation_rate: 0.0000
+Metrics/racket_target/post_contact_ready_envelope_waist_violation_rate: 0.0000
+Metrics/racket_target/post_contact_ready_envelope_leg_violation_rate: 0.0000
+Metrics/racket_target/post_contact_ready_envelope_base_ang_vel_violation_rate: 0.0000
+Metrics/racket_target/post_contact_ready_resolution_success_rate: 0.0000
+Metrics/racket_target/post_contact_ready_resolution_fail_rate: 0.0000
+Metrics/racket_target/post_contact_ready_resolution_success_latency_steps: 0.0000
+Metrics/racket_target/post_contact_ready_resolution_fail_latency_steps: 0.0000
+Metrics/racket_target/post_contact_ready_max_tilt: 0.0000
+Metrics/racket_target/post_contact_ready_max_abs_pitch: 0.0000
+Metrics/racket_target/post_contact_ready_max_com_x: 0.0000
+Metrics/racket_target/post_contact_ready_max_com_y: 0.0000
+Metrics/racket_target/post_contact_ready_max_waist_overflow: 0.0000
+Metrics/racket_target/post_contact_ready_max_leg_overflow: 0.0000
+Metrics/racket_target/post_contact_ready_settlement_velocity_score_ema: 0.0000
+Metrics/racket_target/post_contact_ready_settlement_position_gate_ema: 0.0000
+Metrics/racket_target/post_contact_ready_settlement_health_gate_ema: 0.0000
+Metrics/racket_target/post_contact_ready_settlement_recovery_gate_ema: 0.0000
+Metrics/racket_target/post_contact_ready_settlement_total_score_ema: 0.0000
+Metrics/racket_target/post_contact_recovery_backlean_error: 0.0000
+Metrics/racket_target/post_contact_recovery_directional_progress: 0.0000
+Metrics/racket_target/post_contact_ready_torso_ok: 0.0000
+Metrics/racket_target/post_contact_ready_motion_ok: 0.0000
+Metrics/racket_target/post_contact_ready_support_ok: 0.0000
+Metrics/racket_target/post_contact_ready_arm_ok: 0.0000
+Metrics/racket_target/post_contact_ready_base_lin_vel_ok: 0.0000
+Metrics/racket_target/post_contact_ready_base_ang_vel_ok: 0.0000
+Metrics/racket_target/post_contact_ready_racket_speed_ok: 0.0000
+Metrics/racket_target/post_contact_ready_height_ok: 0.0000
+Metrics/racket_target/post_contact_ready_com_x_ok: 0.0000
+Metrics/racket_target/post_contact_ready_com_y_ok: 0.0000
+Metrics/racket_target/post_contact_ready_feet_ok: 0.0000
+Metrics/racket_target/post_contact_ready_station_ok: 0.0000
+Metrics/racket_target/post_contact_ready_fail_torso: 0.0000
+Metrics/racket_target/post_contact_ready_fail_base_lin_vel: 0.0000
+Metrics/racket_target/post_contact_ready_fail_base_ang_vel: 0.0000
+Metrics/racket_target/post_contact_ready_fail_racket_speed: 0.0000
+Metrics/racket_target/post_contact_ready_fail_support: 0.0000
+Metrics/racket_target/post_contact_ready_fail_arm: 0.0000
+Metrics/racket_target/post_contact_ready_shadow_now: 0.0000
+Metrics/racket_target/post_contact_ready_shadow_consecutive_steps: 0.0000
+Metrics/racket_target/post_contact_ready_shadow_success_latch: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_level: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_fraction: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_success_ema: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_shadow_success_ema: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_resolved_events: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_successful_events: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_targeted_attempt_ema: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_return_success_ema: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_completed_swings: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_advance_streak: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_advance_guard_ok: 0.0000
+Metrics/racket_target/post_contact_ready_effective_max_torso_ang_vel: 0.0000
+Metrics/racket_target/post_contact_ready_effective_max_base_lin_vel: 0.0000
+Metrics/racket_target/post_contact_ready_effective_max_base_ang_vel: 0.0000
+Metrics/racket_target/post_contact_ready_effective_max_racket_speed: 0.0000
+Metrics/racket_target/post_contact_ready_effective_min_feet_contact: 0.0000
+Metrics/racket_target/post_contact_ready_effective_required_consecutive_steps: 0.0000
+Metrics/racket_target/post_contact_ready_effective_deadline_steps: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_advance_threshold: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_advance_min_events: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_shadow_threshold: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_min_targeted_attempt_ema: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_min_return_success_ema: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_min_completed_swings: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_required_advance_checks: 0.0000
+Metrics/racket_target/racket_normal_error_deg: 27.8390
+Metrics/racket_target/impact_normal_error_deg: 0.0000
+Metrics/racket_target/impact_racket_vel_error_mps: 0.0000
+Metrics/racket_target/impact_racket_speed_ratio: 0.0000
+Metrics/racket_target/impact_racket_vel_angle_deg: 0.0000
+Metrics/racket_target/impact_racket_actual_vel_x: 0.0000
+Metrics/racket_target/impact_racket_actual_vel_y: 0.0000
+Metrics/racket_target/impact_racket_actual_vel_z: 0.0000
+Metrics/racket_target/impact_racket_target_vel_x: 0.0000
+Metrics/racket_target/impact_racket_target_vel_y: 0.0000
+Metrics/racket_target/impact_racket_target_vel_z: 0.0000
+Metrics/racket_target/impact_ball_out_error_mps: 0.0000
+Metrics/racket_target/impact_face_radial_error_m: 0.0000
+Metrics/racket_target/impact_face_normal_gap_m: 0.0000
+Metrics/racket_target/impact_face_quality: 0.0000
+Metrics/racket_target/impact_center_contact: 0.0000
+Metrics/racket_target/impact_center_net_cross: 0.0000
+Metrics/racket_target/impact_center_on_opponent: 0.0000
+Metrics/racket_target/impact_rim_contact: 0.0000
+Metrics/racket_target/impact_rim_net_cross: 0.0000
+Metrics/racket_target/impact_rim_on_opponent: 0.0000
+Metrics/racket_target/impact_analytic_outer_contact: 0.0000
+Metrics/racket_target/impact_analytic_outer_net_cross: 0.0000
+Metrics/racket_target/impact_analytic_outer_on_opponent: 0.0000
+Metrics/racket_target/impact_planner_pos_error_m: 0.0000
+Metrics/racket_target/impact_planner_vel_error_mps: 0.0000
+Metrics/racket_target/impact_planner_speed_ratio: 0.0000
+Metrics/racket_target/impact_planner_vel_angle_deg: 0.0000
+Metrics/racket_target/impact_healthy_normal_ok: 0.0000
+Metrics/racket_target/impact_healthy_contact: 0.0000
+Metrics/racket_target/impact_healthy_net_cross: 0.0000
+Metrics/racket_target/impact_healthy_on_opponent: 0.0000
+Metrics/racket_target/current_swing_impact_health_score: 0.0000
+Metrics/racket_target/current_swing_healthy_contact: 0.0000
+Metrics/racket_target/current_swing_healthy_net_cross: 0.0000
+Metrics/racket_target/current_swing_healthy_on_opponent: 0.0000
+Metrics/racket_target/current_swing_healthy_normal_ok: 0.0000
+Metrics/racket_target/current_swing_contact: 0.0000
+Metrics/racket_target/current_swing_net_cross: 0.0000
+Metrics/racket_target/current_swing_on_opponent: 0.0000
+Metrics/racket_target/current_swing_center_contact: 0.0000
+Metrics/racket_target/current_swing_center_net_cross: 0.0000
+Metrics/racket_target/current_swing_center_on_opponent: 0.0000
+Metrics/racket_target/current_swing_rim_contact: 0.0000
+Metrics/racket_target/current_swing_rim_net_cross: 0.0000
+Metrics/racket_target/current_swing_rim_on_opponent: 0.0000
+Metrics/racket_target/current_swing_analytic_outer_contact: 0.0000
+Metrics/racket_target/current_swing_analytic_outer_net_cross: 0.0000
+Metrics/racket_target/current_swing_analytic_outer_on_opponent: 0.0000
+Metrics/racket_target/cycle_v2_outcome_tier: -1.0000
+Metrics/racket_target/cycle_v2_streak: 0.0000
+Metrics/racket_target/closed_loop_recovery_trigger_event: 0.0000
+Metrics/racket_target/closed_loop_cycle_success_event: 0.0000
+Metrics/racket_target/closed_loop_durable_cycle_success_event: 0.0000
+Metrics/racket_target/closed_loop_phase_id: 1.4375
+Metrics/racket_target/closed_loop_phase_ready_no_command: 0.0000
+Metrics/racket_target/closed_loop_phase_command_acquire: 0.5625
+Metrics/racket_target/closed_loop_phase_pre_strike: 0.4375
+Metrics/racket_target/closed_loop_phase_strike: 0.0000
+Metrics/racket_target/closed_loop_phase_follow_through: 0.0000
+Metrics/racket_target/closed_loop_phase_recovery: 0.0000
+Metrics/racket_target/closed_loop_phase_next_ready: 0.0000
+Metrics/racket_target/post_contact_phase_impact_0_100ms_attempts: 0.0000
+Metrics/racket_target/post_contact_phase_impact_0_100ms_tilt_gt_0p1_rate: 0.0000
+Metrics/racket_target/post_contact_phase_impact_0_100ms_pitch_gt_0p1_rate: 0.0000
+Metrics/racket_target/post_contact_phase_impact_0_100ms_waist_overflow_gt_1p0_rate: 0.0000
+Metrics/racket_target/post_contact_phase_impact_0_100ms_base_ang_vel_gt_0p8_rate: 0.0000
+Metrics/racket_target/post_contact_phase_brake_100_300ms_attempts: 0.0000
+Metrics/racket_target/post_contact_phase_brake_100_300ms_tilt_gt_0p1_rate: 0.0000
+Metrics/racket_target/post_contact_phase_brake_100_300ms_pitch_gt_0p1_rate: 0.0000
+Metrics/racket_target/post_contact_phase_brake_100_300ms_waist_overflow_gt_1p0_rate: 0.0000
+Metrics/racket_target/post_contact_phase_brake_100_300ms_base_ang_vel_gt_0p8_rate: 0.0000
+Metrics/racket_target/post_contact_phase_settle_300_600ms_attempts: 0.0000
+Metrics/racket_target/post_contact_phase_settle_300_600ms_tilt_gt_0p1_rate: 0.0000
+Metrics/racket_target/post_contact_phase_settle_300_600ms_pitch_gt_0p1_rate: 0.0000
+Metrics/racket_target/post_contact_phase_settle_300_600ms_waist_overflow_gt_1p0_rate: 0.0000
+Metrics/racket_target/post_contact_phase_settle_300_600ms_base_ang_vel_gt_0p8_rate: 0.0000
+Metrics/racket_target/post_contact_phase_ready_after_600ms_attempts: 0.0000
+Metrics/racket_target/post_contact_phase_ready_after_600ms_tilt_gt_0p1_rate: 0.0000
+Metrics/racket_target/post_contact_phase_ready_after_600ms_pitch_gt_0p1_rate: 0.0000
+Metrics/racket_target/post_contact_phase_ready_after_600ms_waist_overflow_gt_1p0_rate: 0.0000
+Metrics/racket_target/post_contact_phase_ready_after_600ms_base_ang_vel_gt_0p8_rate: 0.0000
+Metrics/racket_target/physical_contact_health_score: 0.0000
+Metrics/racket_target/physical_contact_outcome_quality: 0.0000
+Metrics/racket_target/physical_recovery_pending: 0.0000
+Metrics/racket_target/physical_recovery_tier: 0.0000
+Metrics/racket_target/physical_recovery_success_event: 0.0000
+Metrics/racket_target/physical_recovery_failure_event: 0.0000
+Metrics/racket_target/physical_ability_level: 0.0000
+Metrics/racket_target/physical_ability_batch_events: 2.9375
+Metrics/racket_target/physical_ability_contact_ema: 0.0000
+Metrics/racket_target/physical_ability_net_ema: 0.0000
+Metrics/racket_target/physical_ability_bounce_ema: 0.0000
+Metrics/racket_target/physical_ability_recovery_ema: 0.0000
+Metrics/racket_target/physical_ability_safety_ema: 0.0000
+Metrics/racket_target/base_pitch_like_signed: -0.3080
+Metrics/racket_target/base_backward_velocity: 0.1223
+Metrics/racket_target/waist_action_rms: 0.5147
+Metrics/racket_target/right_arm_action_rms: 4.5670
+Metrics/racket_target/leg_action_rms: 0.4492
+Metrics/racket_target/action_abs_max: 7.1971
+Metrics/racket_target/applied_action_abs_max: 7.1971
+Metrics/racket_target/leg_action_abs_max: 0.8697
+Metrics/racket_target/effective_action_abs_max: 7.1971
+Metrics/racket_target/action_clamp_fraction: 0.0101
+Metrics/racket_target/waist_action_clamp_fraction: 0.0000
+Metrics/racket_target/right_arm_action_clamp_fraction: 0.0000
+Metrics/racket_target/leg_action_clamp_fraction: 0.0260
+Metrics/racket_target/waist_q_tracking_error_rms: 0.3485
+Metrics/racket_target/right_arm_q_tracking_error_rms: 0.1668
+Metrics/racket_target/leg_q_tracking_error_rms: 0.1969
+Metrics/racket_target/waist_torque_clip_fraction: 0.0000
+Metrics/racket_target/right_arm_torque_clip_fraction: 0.0000
+Metrics/racket_target/leg_torque_clip_fraction: 0.0000
+Metrics/racket_target/waist_action_delta_rms: 0.3594
+Metrics/racket_target/right_arm_action_delta_rms: 0.4253
+Metrics/racket_target/leg_action_delta_rms: 0.2791
+Metrics/racket_target/waist_joint_vel_rms: 1.1603
+Metrics/racket_target/right_arm_joint_vel_rms: 1.0697
+Metrics/racket_target/leg_joint_vel_rms: 0.9371
+Metrics/racket_target/recovery_leg_action_abs_max: 0.0274
+Metrics/racket_target/recovery_leg_action_delta_rms: 0.0084
+Metrics/racket_target/recovery_leg_joint_vel_rms: 0.0357
+     Metrics/physical_shadow/phase: 1.7812
+Metrics/physical_shadow/route_valid: 1.0000
+Metrics/physical_shadow/serve_event: 0.0000
+Metrics/physical_shadow/incoming_bounce_event: 0.0312
+Metrics/physical_shadow/contact_event: 0.0000
+Metrics/physical_shadow/net_cross_event: 0.0000
+Metrics/physical_shadow/outgoing_landing_event: 0.0000
+Metrics/physical_shadow/opponent_bounce_event: 0.0000
+Metrics/physical_shadow/landing_short_event: 0.0000
+Metrics/physical_shadow/landing_long_event: 0.0000
+Metrics/physical_shadow/landing_side_event: 0.0000
+Metrics/physical_shadow/landing_no_net_event: 0.0000
+Metrics/physical_shadow/abort_event: 0.0000
+Metrics/physical_shadow/timeout_event: 0.0000
+Metrics/physical_shadow/route_unalignable_event: 0.0000
+Metrics/physical_shadow/route_invalid_event: 0.0000
+Metrics/physical_shadow/incoming_net_collision_event: 0.0000
+Metrics/physical_shadow/reset_abort_event: 0.0000
+Metrics/physical_shadow/incoming_bounce_latch: 0.7812
+Metrics/physical_shadow/contact_latch: 0.0000
+Metrics/physical_shadow/net_cross_latch: 0.0000
+Metrics/physical_shadow/opponent_bounce_latch: 0.0000
+Metrics/physical_shadow/launch_timing_error_s: 0.0021
+Metrics/physical_shadow/contact_true_target_error: 0.0000
+Metrics/physical_shadow/contact_planner_position_error: 0.0000
+Metrics/physical_shadow/contact_planner_velocity_error: 0.0000
+Metrics/physical_shadow/contact_planner_velocity_direction_error_deg: 0.0000
+Metrics/physical_shadow/contact_planner_normal_error_deg: 0.0000
+Metrics/physical_shadow/contact_outgoing_velocity_error: 0.0000
+Metrics/physical_shadow/contact_outgoing_speed: 0.0000
+Metrics/physical_shadow/contact_target_outgoing_speed: 0.0000
+Metrics/physical_shadow/contact_outgoing_speed_ratio: 0.0000
+Metrics/physical_shadow/contact_outgoing_direction_error_deg: 0.0000
+Metrics/physical_shadow/contact_outgoing_velocity_x: 0.0000
+Metrics/physical_shadow/contact_outgoing_velocity_y: 0.0000
+Metrics/physical_shadow/contact_outgoing_velocity_z: 0.0000
+Metrics/physical_shadow/contact_target_outgoing_velocity_x: 0.0000
+Metrics/physical_shadow/contact_target_outgoing_velocity_y: 0.0000
+Metrics/physical_shadow/contact_target_outgoing_velocity_z: 0.0000
+Metrics/physical_shadow/contact_incoming_velocity_error: 0.0000
+Metrics/physical_shadow/contact_incoming_velocity_direction_error_deg: 0.0000
+Metrics/physical_shadow/contact_route_incoming_velocity_error: 0.0000
+Metrics/physical_shadow/contact_route_incoming_velocity_direction_error_deg: 0.0000
+Metrics/physical_shadow/contact_actual_route_incoming_velocity_error: 0.0000
+Metrics/physical_shadow/contact_command_normal_only_error: 0.0000
+Metrics/physical_shadow/contact_command_training_model_error: 0.0000
+Metrics/physical_shadow/contact_command_physics_model_error: 0.0000
+Metrics/physical_shadow/contact_actual_training_model_residual: 0.0000
+Metrics/physical_shadow/contact_actual_physics_model_residual: 0.0000
+Metrics/physical_shadow/contact_actual_normal_only_model_residual: 0.0000
+Metrics/physical_shadow/contact_actual_training_predicted_target_error: 0.0000
+Metrics/physical_shadow/contact_actual_physics_predicted_target_error: 0.0000
+Metrics/physical_shadow/contact_actual_normal_only_predicted_target_error: 0.0000
+Metrics/physical_shadow/contact_force_direction_valid: 0.0000
+Metrics/physical_shadow/contact_force_vs_racket_normal_angle_deg: 0.0000
+Metrics/physical_shadow/contact_actual_force_direction_model_residual: 0.0000
+Metrics/physical_shadow/contact_actual_force_direction_predicted_target_error: 0.0000
+Metrics/physical_shadow/contact_physx_data_valid: 0.0000
+Metrics/physical_shadow/contact_physx_force: 0.0000
+Metrics/physical_shadow/contact_physx_separation: 0.0000
+Metrics/physical_shadow/contact_physx_normal_error_deg: 0.0000
+Metrics/physical_shadow/contact_physx_point_radial_error: 0.0000
+Metrics/physical_shadow/contact_actual_physx_normal_model_residual: 0.0000
+Metrics/physical_shadow/contact_actual_physx_normal_predicted_target_error: 0.0000
+Metrics/physical_shadow/contact_physx_substep_valid: 0.0000
+Metrics/physical_shadow/contact_physx_substep_normal_error_deg: 0.0000
+Metrics/physical_shadow/contact_physx_substep_point_radial_error: 0.0000
+Metrics/physical_shadow/contact_physx_substep_point_normal_offset: 0.0000
+Metrics/physical_shadow/contact_physx_patch_substeps: 0.0000
+Metrics/physical_shadow/contact_physx_normal_impulse: 0.0000
+Metrics/physical_shadow/contact_physx_capture_lag_s: 0.0000
+Metrics/physical_shadow/contact_physx_contact_point_speed_delta: 0.0000
+Metrics/physical_shadow/contact_physx_substep_link_model_residual: 0.0000
+Metrics/physical_shadow/contact_physx_substep_point_model_residual: 0.0000
+Metrics/physical_shadow/contact_physx_substep_outgoing_target_error: 0.0000
+Metrics/physical_shadow/contact_physx_measured_restitution: 0.0000
+Metrics/physical_shadow/contact_physx_pre_ball_speed: 0.0000
+Metrics/physical_shadow/contact_physx_post_ball_speed: 0.0000
+Metrics/physical_shadow/contact_physx_point_x: 0.0000
+Metrics/physical_shadow/contact_physx_point_y: 0.0000
+Metrics/physical_shadow/contact_physx_point_z: 0.0000
+Metrics/physical_shadow/contact_physx_normal_x: 0.0000
+Metrics/physical_shadow/contact_physx_normal_y: 0.0000
+Metrics/physical_shadow/contact_physx_normal_z: 0.0000
+Metrics/physical_shadow/contact_physx_pre_ball_velocity_x: 0.0000
+Metrics/physical_shadow/contact_physx_pre_ball_velocity_y: 0.0000
+Metrics/physical_shadow/contact_physx_pre_ball_velocity_z: 0.0000
+Metrics/physical_shadow/contact_physx_post_ball_velocity_x: 0.0000
+Metrics/physical_shadow/contact_physx_post_ball_velocity_y: 0.0000
+Metrics/physical_shadow/contact_physx_post_ball_velocity_z: 0.0000
+Metrics/physical_shadow/contact_physx_pre_racket_point_velocity_x: 0.0000
+Metrics/physical_shadow/contact_physx_pre_racket_point_velocity_y: 0.0000
+Metrics/physical_shadow/contact_physx_pre_racket_point_velocity_z: 0.0000
+Metrics/physical_shadow/contact_physx_post_racket_point_velocity_x: 0.0000
+Metrics/physical_shadow/contact_physx_post_racket_point_velocity_y: 0.0000
+Metrics/physical_shadow/contact_physx_post_racket_point_velocity_z: 0.0000
+Metrics/physical_shadow/contact_physx_pre_ball_angular_velocity_x: 0.0000
+Metrics/physical_shadow/contact_physx_pre_ball_angular_velocity_y: 0.0000
+Metrics/physical_shadow/contact_physx_pre_ball_angular_velocity_z: 0.0000
+Metrics/physical_shadow/contact_physx_post_ball_angular_velocity_x: 0.0000
+Metrics/physical_shadow/contact_physx_post_ball_angular_velocity_y: 0.0000
+Metrics/physical_shadow/contact_physx_post_ball_angular_velocity_z: 0.0000
+Metrics/physical_shadow/contact_physx_pre_ball_surface_tangent_speed: 0.0000
+Metrics/physical_shadow/contact_physx_post_ball_spin_speed: 0.0000
+Metrics/physical_shadow/contact_impact_normal_error_deg: 0.0000
+Metrics/physical_shadow/contact_wire_impact_normal_gap_deg: 0.0000
+Metrics/physical_shadow/contact_face_radial_error: 0.0000
+Metrics/physical_shadow/contact_time_to_strike: 0.0000
+Metrics/physical_shadow/landing_target_error: 0.0000
+Metrics/physical_shadow/landing_target_x_error: 0.0000
+Metrics/physical_shadow/landing_target_y_error: 0.0000
+Metrics/physical_shadow/landing_position_x: 0.0000
+Metrics/physical_shadow/landing_position_y: 0.0000
+Metrics/physical_shadow/minimum_ball_racket_distance: 0.9342
+      Episode_Termination/time_out: 0.6875
+  Episode_Termination/base_too_low: 0.0000
+   Episode_Termination/base_tilted: 0.3125
+   Episode_Termination/table_touch: 0.0000
+Episode_Termination/persistent_action_overflow: 0.0000
+--------------------------------------------------------------------------------
+                   Total timesteps: 4096
+                    Iteration time: 2.67s
+                      Time elapsed: 00:00:06
+                               ETA: 00:00:06
+
+################################################################################
+                        [1m Learning iteration 2/3 [0m                        
+
+                       Computation: 839 steps/s (collection: 2.394s, learning 0.045s)
+             Mean action noise std: 0.15
+          Mean value_function loss: 0.1474
+               Mean surrogate loss: -0.0199
+                 Mean entropy loss: -14.8235
+        Mean actor_anchor_rms loss: 0.0001
+Mean actor_anchor_relative_l2 loss: 0.0025
+ Mean actor_anchor_exempt_rms loss: 0.0000
+                       Mean reward: 1.42
+               Mean episode length: 42.30
+ Episode_Reward/undesired_contacts: 0.0000
+  Episode_Reward/feet_contact_slip: -0.0004
+     Episode_Reward/table_no_touch: -0.0000
+              Episode_Reward/alive: 0.0025
+            Episode_Reward/upright: -0.0012
+          Episode_Reward/imitation: 0.0481
+    Episode_Reward/racket_position: 0.0044
+    Episode_Reward/racket_velocity: 0.0033
+Episode_Reward/planner_racket_task_space_crossfade: 0.0361
+    Episode_Reward/blade_direction: 0.0033
+Episode_Reward/healthy_trunk_support: 0.0462
+ Episode_Reward/pre_strike_station: 0.0160
+    Episode_Reward/recovery_health: 0.0234
+Episode_Reward/no_command_ready_stability: 0.0065
+Episode_Reward/post_strike_base_ang_vel: 0.0018
+Episode_Reward/phase_action_overflow: -0.0000
+     Episode_Reward/strike_balance: 0.0023
+Episode_Reward/prestrike_station_progress: -0.0007
+ Episode_Reward/lower_body_support: 0.0110
+Episode_Reward/termination_penalty: 0.0000
+Episode_Reward/phase_action_rate_waist: -0.0001
+Episode_Reward/phase_action_rate_upper: -0.0001
+Episode_Reward/phase_action_rate_legs: -0.0001
+        Episode_Reward/joint_limit: -0.0031
+Episode_Reward/prestrike_racket_progress: 0.0444
+Episode_Reward/near_impact_planner_velocity_progress: 0.0051
+Episode_Reward/operational_joint_margin: -0.0031
+  Episode_Reward/joint_target_slew: -0.0048
+Episode_Reward/actuator_waist_feasibility: -0.0000
+Episode_Reward/actuator_right_arm_feasibility: -0.0000
+Episode_Reward/actuator_leg_feasibility: -0.0000
+Episode_Reward/physical_outcome_events: 0.0033
+Episode_Reward/physical_recovery_settlement: 0.0000
+Episode_Reward/physical_capability_curriculum: 0.0000
+    Metrics/motion/error_joint_pos: 1.4067
+    Metrics/motion/error_joint_vel: 4.3843
+     Metrics/motion/error_body_pos: 0.1137
+     Metrics/motion/error_body_rot: 0.5078
+       Metrics/motion/motion_phase: 0.2869
+            Metrics/motion/in_hold: 0.0625
+Metrics/motion/motion_start_warmup_prob: 0.7500
+Metrics/motion/motion_start_lifecycle_progress: 0.0000
+Metrics/motion/motion_start_effective_prestrike_fraction: 1.0000
+Metrics/motion/motion_start_effective_recovery_fraction: 0.0000
+Metrics/motion/motion_start_effective_rsi_fraction: 0.0000
+ Metrics/motion/motion_start_reset: 0.4375
+Metrics/motion/motion_start_prestrike_reset: 0.0000
+Metrics/motion/motion_start_recovery_reset: 0.0000
+Metrics/motion/motion_start_rsi_reset: 0.0000
+ Metrics/motion/single_cycle_reset: 0.0000
+     Metrics/motion/motion_clip_id: 0.5000
+Metrics/motion/motion_supplemental_clip: 0.0000
+      Metrics/motion/stand_episode: 0.0625
+Metrics/motion/default_stand_reset: 0.5625
+Metrics/motion/error_body_pos_lower: 0.1288
+Metrics/motion/error_body_rot_lower: 0.6279
+Metrics/motion/error_body_lin_vel_lower: 0.1318
+Metrics/motion/error_body_ang_vel_lower: 0.8241
+Metrics/motion/reference_body_lin_speed_lower: 0.0311
+Metrics/motion/robot_body_lin_speed_lower: 0.1181
+Metrics/motion/error_body_pos_core: 0.0665
+Metrics/motion/error_body_rot_core: 0.3323
+Metrics/motion/error_body_lin_vel_core: 0.1280
+Metrics/motion/error_body_ang_vel_core: 0.8034
+Metrics/motion/reference_body_lin_speed_core: 0.0385
+Metrics/motion/robot_body_lin_speed_core: 0.1195
+Metrics/motion/error_body_pos_upper: 0.1143
+Metrics/motion/error_body_rot_upper: 0.4462
+Metrics/motion/error_body_lin_vel_upper: 0.4521
+Metrics/motion/error_body_ang_vel_upper: 1.5171
+Metrics/motion/reference_body_lin_speed_upper: 0.1165
+Metrics/motion/robot_body_lin_speed_upper: 0.5024
+Metrics/motion/error_joint_pos_waist: 0.5284
+Metrics/motion/error_joint_vel_waist: 0.8960
+Metrics/motion/reference_joint_speed_waist: 0.0283
+Metrics/motion/error_joint_pos_arms: 1.1014
+Metrics/motion/error_joint_vel_arms: 3.0423
+Metrics/motion/reference_joint_speed_arms: 0.2767
+Metrics/motion/error_joint_pos_legs: 0.6386
+Metrics/motion/error_joint_vel_legs: 2.9730
+Metrics/motion/reference_joint_speed_legs: 0.0118
+Metrics/racket_target/racket_pos_error: 0.0095
+Metrics/racket_target/racket_vel_error: 0.2826
+Metrics/racket_target/time_to_strike: 0.3081
+Metrics/racket_target/return_success: 0.0000
+Metrics/racket_target/prev_return_success: 0.0000
+Metrics/racket_target/prev_net_cross: 0.0000
+Metrics/racket_target/current_net_cross: 0.0000
+Metrics/racket_target/racket_pos_curriculum_scale: 0.3667
+Metrics/racket_target/impact_inverse_command_blend: 0.0000
+Metrics/racket_target/steps_since_target_resample: 71.8438
+Metrics/racket_target/recovery_height_error: 0.0135
+Metrics/racket_target/recovery_upright_error: 0.1766
+Metrics/racket_target/recovery_base_lin_vel: 0.1121
+Metrics/racket_target/recovery_base_ang_vel: 0.9860
+Metrics/racket_target/recovery_station_error: 0.0580
+Metrics/racket_target/recovery_feet_contact_frac: 0.9844
+Metrics/racket_target/recovery_racket_speed: 1.5478
+Metrics/racket_target/recovery_height_score: 0.9790
+Metrics/racket_target/recovery_upright_score: 0.6272
+Metrics/racket_target/recovery_lin_vel_score: 0.7883
+Metrics/racket_target/recovery_ang_vel_score: 0.2709
+Metrics/racket_target/recovery_station_score: 0.9179
+Metrics/racket_target/recovery_racket_score: 0.0227
+Metrics/racket_target/recovery_arm_score: 0.6905
+Metrics/racket_target/recovery_ready_score: 0.6940
+Metrics/racket_target/recovery_anchor_arm_score: 1.0000
+Metrics/racket_target/recovery_core_ready_score: 0.5395
+Metrics/racket_target/recovery_functional_ready_score: 0.4498
+Metrics/racket_target/waist_action_overflow_rms: 0.0000
+Metrics/racket_target/right_arm_action_overflow_rms: 0.0000
+Metrics/racket_target/leg_action_overflow_rms: 0.0000
+Metrics/racket_target/operational_margin_fraction: 0.0000
+Metrics/racket_target/waist_operational_margin_fraction: 0.0000
+Metrics/racket_target/right_arm_operational_margin_fraction: 0.0000
+Metrics/racket_target/leg_operational_margin_fraction: 0.0000
+Metrics/racket_target/waist_operational_excess_rms: 0.0000
+Metrics/racket_target/right_arm_operational_excess_rms: 0.0000
+Metrics/racket_target/leg_operational_excess_rms: 0.0000
+Metrics/racket_target/q_des_velocity_violation_fraction: 0.0363
+Metrics/racket_target/waist_q_des_velocity_violation_fraction: 0.0000
+Metrics/racket_target/right_arm_q_des_velocity_violation_fraction: 0.0000
+Metrics/racket_target/leg_q_des_velocity_violation_fraction: 0.0938
+Metrics/racket_target/q_des_acceleration_violation_fraction: 0.5554
+Metrics/racket_target/waist_q_des_acceleration_violation_fraction: 0.6771
+Metrics/racket_target/right_arm_q_des_acceleration_violation_fraction: 0.4777
+Metrics/racket_target/leg_q_des_acceleration_violation_fraction: 0.6953
+Metrics/racket_target/waist_q_des_velocity_rms: 2.7568
+Metrics/racket_target/right_arm_q_des_velocity_rms: 3.8910
+Metrics/racket_target/leg_q_des_velocity_rms: 7.0305
+Metrics/racket_target/waist_q_des_acceleration_rms: 284.9845
+Metrics/racket_target/right_arm_q_des_acceleration_rms: 278.2591
+Metrics/racket_target/leg_q_des_acceleration_rms: 557.4153
+Metrics/racket_target/action_operational_feasibility_score: 1.0000
+Metrics/racket_target/actuator_overflow_consecutive_steps: 0.0000
+Metrics/racket_target/actuator_overflow_severe: 0.0000
+Metrics/racket_target/recovery_phase_gate: 0.0625
+Metrics/racket_target/recovery_phase_ready_score: 0.0433
+Metrics/racket_target/recovery_contact_ready_score: 0.0000
+Metrics/racket_target/recovery_net_ready_score: 0.0000
+Metrics/racket_target/recovery_return_ready_score: 0.0000
+Metrics/racket_target/cycle_success_ready_score: 0.0000
+Metrics/racket_target/cycle_success_soft: 0.0000
+Metrics/racket_target/cycle_success_binary: 0.0000
+Metrics/racket_target/cycle_v2_pending: 0.0000
+Metrics/racket_target/cycle_v2_attempt_latch: 0.0000
+Metrics/racket_target/cycle_v2_ready_success_latch: 0.0000
+Metrics/racket_target/cycle_v2_ready_fail_latch: 0.0000
+Metrics/racket_target/cycle_v2_attempt_event: 0.0000
+Metrics/racket_target/cycle_v2_ready_success_event: 0.0000
+Metrics/racket_target/cycle_v2_ready_fail_event: 0.0000
+Metrics/racket_target/cycle_v2_unresolved_resample_fail_event: 0.0000
+Metrics/racket_target/cycle_v2_resolved_event: 0.0000
+Metrics/racket_target/cycle_v2_command_visible_steps: 0.0000
+Metrics/racket_target/cycle_v2_elapsed_steps: 0.0000
+Metrics/racket_target/cycle_v2_ready_score: 0.0000
+Metrics/racket_target/cycle_v2_ready_ok: 0.0000
+Metrics/racket_target/cycle_v2_visible: 0.0000
+Metrics/racket_target/cycle_v2_ready_score_ok: 0.0000
+Metrics/racket_target/cycle_v2_height_ok: 0.0000
+Metrics/racket_target/cycle_v2_upright_ok: 0.0000
+Metrics/racket_target/cycle_v2_base_lin_vel_ok: 0.0000
+Metrics/racket_target/cycle_v2_base_ang_vel_ok: 0.0000
+Metrics/racket_target/cycle_v2_feet_ok: 0.0000
+Metrics/racket_target/cycle_v2_core_ready_ok: 0.0000
+Metrics/racket_target/cycle_v2_ready_consecutive_steps: 0.0000
+Metrics/racket_target/single_cycle_bootstrap: 0.0000
+Metrics/racket_target/single_cycle_swing_completed: 0.0000
+Metrics/racket_target/single_cycle_recovery_active: 0.0000
+Metrics/racket_target/single_cycle_recovery_elapsed_steps: 0.0000
+Metrics/racket_target/single_cycle_ready_consecutive_steps: 0.0000
+Metrics/racket_target/single_cycle_safe_timeout_event: 0.0000
+Metrics/racket_target/single_cycle_deadline_timeout_event: 0.0000
+Metrics/racket_target/single_cycle_timeout_latch: 0.0000
+Metrics/racket_target/single_cycle_hard_failure_event: 0.0000
+Metrics/racket_target/single_cycle_probability: 0.0000
+Metrics/racket_target/single_cycle_curriculum_level: 0.0000
+Metrics/racket_target/single_cycle_effective_deadline_steps: 100.0000
+Metrics/racket_target/single_cycle_selected_events: 0.0000
+Metrics/racket_target/single_cycle_completed_events: 0.0000
+Metrics/racket_target/single_cycle_safe_timeout_events: 0.0000
+Metrics/racket_target/single_cycle_deadline_timeout_events: 0.0000
+Metrics/racket_target/single_cycle_hard_failure_events: 0.0000
+Metrics/racket_target/active_ready_consecutive_steps: 0.0000
+Metrics/racket_target/active_ready_success_event: 0.0000
+Metrics/racket_target/active_ready_success_latch: 0.0000
+Metrics/racket_target/active_ready_survival_steps: 0.0000
+Metrics/racket_target/active_ready_survival_next_milestone: 0.0000
+Metrics/racket_target/active_ready_survival_milestone_event: 0.0000
+Metrics/racket_target/no_command_ready_active: 0.0625
+Metrics/racket_target/no_command_from_stand_episode: 0.0625
+Metrics/racket_target/no_command_from_default_stand_reset: 0.0625
+Metrics/racket_target/no_command_ready_upright_ok: 0.0625
+Metrics/racket_target/no_command_ready_motion_ok: 0.0000
+Metrics/racket_target/no_command_ready_score: 0.0433
+Metrics/racket_target/no_command_ready_progress: -0.0475
+Metrics/racket_target/no_command_ready_station_error: 0.0062
+Metrics/racket_target/no_command_ready_fixed_station_error: 0.0062
+Metrics/racket_target/healthy_training_stage: 3.0000
+Metrics/racket_target/healthy_stage_planted_rehearsal: 0.0000
+Metrics/racket_target/healthy_stage_station_hold_seen: 0.0000
+Metrics/racket_target/healthy_stage_station_arrived: 0.0000
+Metrics/racket_target/healthy_stage_station_settled: 0.0000
+Metrics/racket_target/healthy_stage_station_settle_steps: 0.0000
+Metrics/racket_target/station_relocation_active: 0.0000
+Metrics/racket_target/station_relocation_target_offset_y: 0.0000
+Metrics/racket_target/station_relocation_error: 0.0000
+Metrics/racket_target/station_relocation_arrival_event: 0.0000
+Metrics/racket_target/station_relocation_settle_event: 0.0000
+Metrics/racket_target/station_relocation_release_event: 0.0000
+Metrics/racket_target/station_relocation_timeout_event: 0.0000
+Metrics/racket_target/station_relocation_elapsed_steps: 0.0000
+Metrics/racket_target/station_relocation_hold_deadline_steps: 0.0000
+Metrics/racket_target/lifecycle_recovery_hold_active: 0.0000
+Metrics/racket_target/lifecycle_recovery_release_success_event: 0.0000
+Metrics/racket_target/lifecycle_recovery_release_fail_event: 0.0000
+Metrics/racket_target/station_relocation_level: 0.0000
+Metrics/racket_target/station_relocation_arrival_ema: 0.0000
+Metrics/racket_target/station_relocation_settle_ema: 0.0000
+Metrics/racket_target/station_relocation_contact_ema: 0.0000
+Metrics/racket_target/station_relocation_safety_ema: 0.0000
+Metrics/racket_target/station_relocation_resolved_events: 0.0000
+Metrics/racket_target/station_relocation_terminal_reset_events: 0.0000
+Metrics/racket_target/station_relocation_advance_streak: 0.0000
+Metrics/racket_target/station_relocation_regress_streak: 0.0000
+Metrics/racket_target/station_relocation_effective_max_lin_vel: 0.0000
+Metrics/racket_target/station_relocation_effective_max_ang_vel: 0.0000
+Metrics/racket_target/station_relocation_effective_min_settle_steps: 0.0000
+Metrics/racket_target/ability_curriculum_level: 0.0000
+Metrics/racket_target/ability_curriculum_scale: 0.3667
+Metrics/racket_target/ability_curriculum_resolved_events: 0.0000
+Metrics/racket_target/ability_curriculum_total_resolved_events: 0.0000
+Metrics/racket_target/ability_curriculum_advance_streak: 0.0000
+Metrics/racket_target/ability_curriculum_regress_streak: 0.0000
+Metrics/racket_target/ability_contact_ema: 0.0000
+Metrics/racket_target/ability_net_ema: 0.0000
+Metrics/racket_target/ability_success_ema: 0.0000
+Metrics/racket_target/ability_recovery_ema: 0.0000
+Metrics/racket_target/ability_cycle_ema: 0.0000
+Metrics/racket_target/ability_cycle_attempt_ema: 0.0000
+Metrics/racket_target/ability_cycle_resolved_ema: 0.0000
+Metrics/racket_target/ability_forehand_contact_ema: 0.0000
+Metrics/racket_target/ability_forehand_net_ema: 0.0000
+Metrics/racket_target/ability_forehand_success_ema: 0.0000
+Metrics/racket_target/ability_backhand_contact_ema: 0.0000
+Metrics/racket_target/ability_backhand_net_ema: 0.0000
+Metrics/racket_target/ability_backhand_success_ema: 0.0000
+Metrics/racket_target/ability_attempt_ema: 0.0000
+Metrics/racket_target/ability_targeted_attempt_ema: 0.0000
+Metrics/racket_target/impact_health_floor_progress: 0.0000
+Metrics/racket_target/ability_safety_ema: 1.0000
+Metrics/racket_target/ability_station_saturation_ema: 0.0000
+Metrics/racket_target/ability_healthy_normal_ema: 0.0000
+Metrics/racket_target/ability_station_arrival_ema: 0.0000
+Metrics/racket_target/ability_station_settle_ema: 0.0000
+Metrics/racket_target/planner_hit_plane_blend: 1.0000
+Metrics/racket_target/planner_hit_plane_x_delta: 0.0125
+Metrics/racket_target/true_strike_table_x: 0.1769
+Metrics/racket_target/planner_target_table_x: 0.1769
+Metrics/racket_target/workspace_level: 0.0000
+Metrics/racket_target/workspace_fringe_sample: 0.0000
+Metrics/racket_target/workspace_target_lateral_norm: 0.3867
+Metrics/racket_target/workspace_target_table_y: -0.2794
+Metrics/racket_target/workspace_playable_y_min: -0.7225
+Metrics/racket_target/workspace_playable_y_max: 0.7225
+Metrics/racket_target/workspace_active_y_lo: -0.2200
+Metrics/racket_target/workspace_active_y_hi: -0.1000
+Metrics/racket_target/workspace_motion_seed_blend: 1.0000
+Metrics/racket_target/incoming_ball_horizontal_speed: 1.0816
+Metrics/racket_target/incoming_ball_speed: 1.5261
+Metrics/racket_target/incoming_ball_speed_curriculum_level: 0.0000
+Metrics/racket_target/incoming_ball_speed_sample_low: 0.9000
+Metrics/racket_target/incoming_ball_speed_sample_high: 1.2500
+Metrics/racket_target/station_saturated: 0.0000
+Metrics/racket_target/station_raw_clip_excess: 0.0000
+Metrics/racket_target/station_saturated_x: 0.0000
+Metrics/racket_target/station_saturated_y: 0.0000
+Metrics/racket_target/station_raw_clip_excess_x: 0.0000
+Metrics/racket_target/station_raw_clip_excess_y: 0.0000
+Metrics/racket_target/current_swing_opportunity: 0.4062
+Metrics/racket_target/current_swing_attempt: 0.4062
+Metrics/racket_target/current_swing_targeted_attempt: 0.4062
+Metrics/racket_target/prev_swing_targeted_attempt: 0.0000
+Metrics/racket_target/current_swing_unsafe: 0.0000
+Metrics/racket_target/current_swing_station_saturated: 0.0000
+Metrics/racket_target/impact_health_score: 0.9543
+Metrics/racket_target/impact_health_ok: 1.0000
+Metrics/racket_target/impact_health_backlean_violation: 0.0000
+Metrics/racket_target/impact_health_waist_backfold: 0.0000
+Metrics/racket_target/impact_health_base_retreat: 0.0333
+Metrics/racket_target/impact_health_torso_gravity_x: 0.2295
+Metrics/racket_target/impact_health_torso_ang_vel: 0.3984
+Metrics/racket_target/impact_health_com_x: 0.0292
+Metrics/racket_target/impact_health_com_y: 0.0080
+Metrics/racket_target/post_contact_ready_pending: 0.0000
+Metrics/racket_target/post_contact_ready_elapsed_steps: 0.0000
+Metrics/racket_target/post_contact_ready_consecutive_steps: 0.0000
+Metrics/racket_target/post_contact_ready_diagnostic_pending: 0.0000
+Metrics/racket_target/post_contact_ready_diagnostic_elapsed_steps: 0.0000
+Metrics/racket_target/post_contact_ready_durable_pending: 0.0000
+Metrics/racket_target/post_contact_ready_durable_consecutive_steps: 0.0000
+Metrics/racket_target/post_contact_ready_durable_ready_now: 0.0000
+Metrics/racket_target/post_contact_ready_durable_success_event: 0.0000
+Metrics/racket_target/post_contact_ready_durable_fail_event: 0.0000
+Metrics/racket_target/post_contact_ready_durable_resolution_success_rate: 0.0000
+Metrics/racket_target/post_contact_ready_durable_resolution_fail_rate: 0.0000
+Metrics/racket_target/post_contact_ready_durable_resolution_success_latency_steps: 0.0000
+Metrics/racket_target/post_contact_ready_durable_resolution_fail_latency_steps: 0.0000
+Metrics/racket_target/post_contact_ready_durable_fail_backlean_rate: 0.0000
+Metrics/racket_target/post_contact_ready_durable_fail_forward_lean_rate: 0.0000
+Metrics/racket_target/post_contact_ready_durable_fail_torso_ang_vel_rate: 0.0000
+Metrics/racket_target/post_contact_ready_durable_fail_base_lin_vel_rate: 0.0000
+Metrics/racket_target/post_contact_ready_durable_fail_base_ang_vel_rate: 0.0000
+Metrics/racket_target/post_contact_ready_durable_fail_racket_speed_rate: 0.0000
+Metrics/racket_target/post_contact_ready_durable_fail_height_rate: 0.0000
+Metrics/racket_target/post_contact_ready_durable_fail_com_x_rate: 0.0000
+Metrics/racket_target/post_contact_ready_durable_fail_com_y_rate: 0.0000
+Metrics/racket_target/post_contact_ready_durable_fail_feet_rate: 0.0000
+Metrics/racket_target/post_contact_ready_durable_fail_station_rate: 0.0000
+Metrics/racket_target/post_contact_ready_durable_fail_arm_rate: 0.0000
+Metrics/racket_target/post_contact_ready_terminal_window_active: 0.0000
+Metrics/racket_target/post_contact_ready_terminal_quality: 0.0000
+Metrics/racket_target/post_contact_ready_terminal_settlement_event: 0.0000
+Metrics/racket_target/post_contact_ready_operational_ready_now: 0.0000
+Metrics/racket_target/post_contact_ready_operational_consecutive_steps: 0.0000
+Metrics/racket_target/post_contact_ready_safe_settlement_event: 0.0000
+Metrics/racket_target/post_contact_ready_unsafe_settlement_event: 0.0000
+Metrics/racket_target/post_contact_ready_incomplete_settlement_event: 0.0000
+Metrics/racket_target/post_contact_ready_safe_net_cycle_event: 0.0000
+Metrics/racket_target/post_contact_ready_terminal_quality_mean: 0.0000
+Metrics/racket_target/post_contact_ready_safe_terminal_quality_mean: 0.0000
+Metrics/racket_target/post_contact_ready_terminal_safe_rate: 0.0000
+Metrics/racket_target/post_contact_ready_terminal_unsafe_rate: 0.0000
+Metrics/racket_target/post_contact_ready_terminal_incomplete_rate: 0.0000
+Metrics/racket_target/post_contact_ready_safe_net_cycle_rate: 0.0000
+Metrics/racket_target/post_contact_ready_score: 0.0000
+Metrics/racket_target/post_contact_ready_now: 0.0000
+Metrics/racket_target/post_contact_ready_success_event: 0.0000
+Metrics/racket_target/post_contact_ready_fail_event: 0.0000
+Metrics/racket_target/post_contact_ready_outcome_tier: 0.0000
+Metrics/racket_target/post_contact_ready_face_quality: 0.0000
+Metrics/racket_target/post_contact_ready_safe_face_net_cycle_value: 0.0000
+Metrics/racket_target/post_contact_ready_planner_speed_ratio: 0.0000
+Metrics/racket_target/post_contact_ready_planner_direction_error_rad: 0.0000
+Metrics/racket_target/post_contact_ready_planner_position_error: 0.0000
+Metrics/racket_target/post_contact_ready_impact_health_score: 0.0000
+Metrics/racket_target/post_contact_ready_peak_base_ang_vel: 0.0000
+Metrics/racket_target/post_contact_ready_peak_ang_vel_excess_increment: 0.0000
+Metrics/racket_target/post_contact_ready_envelope_violation_latch: 0.0000
+Metrics/racket_target/post_contact_ready_envelope_violation_event: 0.0000
+Metrics/racket_target/post_contact_ready_envelope_first_violation_step: 0.0000
+Metrics/racket_target/post_contact_ready_envelope_attempts: 0.0000
+Metrics/racket_target/post_contact_ready_envelope_violation_rate: 0.0000
+Metrics/racket_target/post_contact_ready_envelope_tilt_violation_rate: 0.0000
+Metrics/racket_target/post_contact_ready_envelope_pitch_violation_rate: 0.0000
+Metrics/racket_target/post_contact_ready_envelope_com_violation_rate: 0.0000
+Metrics/racket_target/post_contact_ready_envelope_waist_violation_rate: 0.0000
+Metrics/racket_target/post_contact_ready_envelope_leg_violation_rate: 0.0000
+Metrics/racket_target/post_contact_ready_envelope_base_ang_vel_violation_rate: 0.0000
+Metrics/racket_target/post_contact_ready_resolution_success_rate: 0.0000
+Metrics/racket_target/post_contact_ready_resolution_fail_rate: 0.0000
+Metrics/racket_target/post_contact_ready_resolution_success_latency_steps: 0.0000
+Metrics/racket_target/post_contact_ready_resolution_fail_latency_steps: 0.0000
+Metrics/racket_target/post_contact_ready_max_tilt: 0.0000
+Metrics/racket_target/post_contact_ready_max_abs_pitch: 0.0000
+Metrics/racket_target/post_contact_ready_max_com_x: 0.0000
+Metrics/racket_target/post_contact_ready_max_com_y: 0.0000
+Metrics/racket_target/post_contact_ready_max_waist_overflow: 0.0000
+Metrics/racket_target/post_contact_ready_max_leg_overflow: 0.0000
+Metrics/racket_target/post_contact_ready_settlement_velocity_score_ema: 0.0000
+Metrics/racket_target/post_contact_ready_settlement_position_gate_ema: 0.0000
+Metrics/racket_target/post_contact_ready_settlement_health_gate_ema: 0.0000
+Metrics/racket_target/post_contact_ready_settlement_recovery_gate_ema: 0.0000
+Metrics/racket_target/post_contact_ready_settlement_total_score_ema: 0.0000
+Metrics/racket_target/post_contact_recovery_backlean_error: 0.0000
+Metrics/racket_target/post_contact_recovery_directional_progress: 0.0000
+Metrics/racket_target/post_contact_ready_torso_ok: 0.0000
+Metrics/racket_target/post_contact_ready_motion_ok: 0.0000
+Metrics/racket_target/post_contact_ready_support_ok: 0.0000
+Metrics/racket_target/post_contact_ready_arm_ok: 0.0000
+Metrics/racket_target/post_contact_ready_base_lin_vel_ok: 0.0000
+Metrics/racket_target/post_contact_ready_base_ang_vel_ok: 0.0000
+Metrics/racket_target/post_contact_ready_racket_speed_ok: 0.0000
+Metrics/racket_target/post_contact_ready_height_ok: 0.0000
+Metrics/racket_target/post_contact_ready_com_x_ok: 0.0000
+Metrics/racket_target/post_contact_ready_com_y_ok: 0.0000
+Metrics/racket_target/post_contact_ready_feet_ok: 0.0000
+Metrics/racket_target/post_contact_ready_station_ok: 0.0000
+Metrics/racket_target/post_contact_ready_fail_torso: 0.0000
+Metrics/racket_target/post_contact_ready_fail_base_lin_vel: 0.0000
+Metrics/racket_target/post_contact_ready_fail_base_ang_vel: 0.0000
+Metrics/racket_target/post_contact_ready_fail_racket_speed: 0.0000
+Metrics/racket_target/post_contact_ready_fail_support: 0.0000
+Metrics/racket_target/post_contact_ready_fail_arm: 0.0000
+Metrics/racket_target/post_contact_ready_shadow_now: 0.0000
+Metrics/racket_target/post_contact_ready_shadow_consecutive_steps: 0.0000
+Metrics/racket_target/post_contact_ready_shadow_success_latch: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_level: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_fraction: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_success_ema: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_shadow_success_ema: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_resolved_events: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_successful_events: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_targeted_attempt_ema: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_return_success_ema: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_completed_swings: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_advance_streak: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_advance_guard_ok: 0.0000
+Metrics/racket_target/post_contact_ready_effective_max_torso_ang_vel: 0.0000
+Metrics/racket_target/post_contact_ready_effective_max_base_lin_vel: 0.0000
+Metrics/racket_target/post_contact_ready_effective_max_base_ang_vel: 0.0000
+Metrics/racket_target/post_contact_ready_effective_max_racket_speed: 0.0000
+Metrics/racket_target/post_contact_ready_effective_min_feet_contact: 0.0000
+Metrics/racket_target/post_contact_ready_effective_required_consecutive_steps: 0.0000
+Metrics/racket_target/post_contact_ready_effective_deadline_steps: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_advance_threshold: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_advance_min_events: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_shadow_threshold: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_min_targeted_attempt_ema: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_min_return_success_ema: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_min_completed_swings: 0.0000
+Metrics/racket_target/post_contact_ready_curriculum_required_advance_checks: 0.0000
+Metrics/racket_target/racket_normal_error_deg: 55.4410
+Metrics/racket_target/impact_normal_error_deg: 3.6082
+Metrics/racket_target/impact_racket_vel_error_mps: 0.1122
+Metrics/racket_target/impact_racket_speed_ratio: 0.4307
+Metrics/racket_target/impact_racket_vel_angle_deg: 2.3914
+Metrics/racket_target/impact_racket_actual_vel_x: 0.7184
+Metrics/racket_target/impact_racket_actual_vel_y: -0.1688
+Metrics/racket_target/impact_racket_actual_vel_z: 0.6407
+Metrics/racket_target/impact_racket_target_vel_x: 0.6427
+Metrics/racket_target/impact_racket_target_vel_y: -0.0873
+Metrics/racket_target/impact_racket_target_vel_z: 0.6550
+Metrics/racket_target/impact_ball_out_error_mps: 0.6108
+Metrics/racket_target/impact_face_radial_error_m: 0.0082
+Metrics/racket_target/impact_face_normal_gap_m: 0.0732
+Metrics/racket_target/impact_face_quality: 0.4062
+Metrics/racket_target/impact_center_contact: 0.0000
+Metrics/racket_target/impact_center_net_cross: 0.0000
+Metrics/racket_target/impact_center_on_opponent: 0.0000
+Metrics/racket_target/impact_rim_contact: 0.0000
+Metrics/racket_target/impact_rim_net_cross: 0.0000
+Metrics/racket_target/impact_rim_on_opponent: 0.0000
+Metrics/racket_target/impact_analytic_outer_contact: 0.0000
+Metrics/racket_target/impact_analytic_outer_net_cross: 0.0000
+Metrics/racket_target/impact_analytic_outer_on_opponent: 0.0000
+Metrics/racket_target/impact_planner_pos_error_m: 0.0737
+Metrics/racket_target/impact_planner_vel_error_mps: 0.1122
+Metrics/racket_target/impact_planner_speed_ratio: 0.4307
+Metrics/racket_target/impact_planner_vel_angle_deg: 2.3914
+Metrics/racket_target/impact_healthy_normal_ok: 0.0000
+Metrics/racket_target/impact_healthy_contact: 0.0000
+Metrics/racket_target/impact_healthy_net_cross: 0.0000
+Metrics/racket_target/impact_healthy_on_opponent: 0.0000
+Metrics/racket_target/current_swing_impact_health_score: 0.0000
+Metrics/racket_target/current_swing_healthy_contact: 0.0000
+Metrics/racket_target/current_swing_healthy_net_cross: 0.0000
+Metrics/racket_target/current_swing_healthy_on_opponent: 0.0000
+Metrics/racket_target/current_swing_healthy_normal_ok: 0.4062
+Metrics/racket_target/current_swing_contact: 0.0000
+Metrics/racket_target/current_swing_net_cross: 0.0000
+Metrics/racket_target/current_swing_on_opponent: 0.0000
+Metrics/racket_target/current_swing_center_contact: 0.0000
+Metrics/racket_target/current_swing_center_net_cross: 0.0000
+Metrics/racket_target/current_swing_center_on_opponent: 0.0000
+Metrics/racket_target/current_swing_rim_contact: 0.0000
+Metrics/racket_target/current_swing_rim_net_cross: 0.0000
+Metrics/racket_target/current_swing_rim_on_opponent: 0.0000
+Metrics/racket_target/current_swing_analytic_outer_contact: 0.0000
+Metrics/racket_target/current_swing_analytic_outer_net_cross: 0.0000
+Metrics/racket_target/current_swing_analytic_outer_on_opponent: 0.0000
+Metrics/racket_target/cycle_v2_outcome_tier: -1.0000
+Metrics/racket_target/cycle_v2_streak: 0.0000
+Metrics/racket_target/closed_loop_recovery_trigger_event: 0.0000
+Metrics/racket_target/closed_loop_cycle_success_event: 0.0000
+Metrics/racket_target/closed_loop_durable_cycle_success_event: 0.0000
+Metrics/racket_target/closed_loop_phase_id: 1.7812
+Metrics/racket_target/closed_loop_phase_ready_no_command: 0.0625
+Metrics/racket_target/closed_loop_phase_command_acquire: 0.5000
+Metrics/racket_target/closed_loop_phase_pre_strike: 0.0312
+Metrics/racket_target/closed_loop_phase_strike: 0.4062
+Metrics/racket_target/closed_loop_phase_follow_through: 0.0000
+Metrics/racket_target/closed_loop_phase_recovery: 0.0000
+Metrics/racket_target/closed_loop_phase_next_ready: 0.0000
+Metrics/racket_target/post_contact_phase_impact_0_100ms_attempts: 0.0000
+Metrics/racket_target/post_contact_phase_impact_0_100ms_tilt_gt_0p1_rate: 0.0000
+Metrics/racket_target/post_contact_phase_impact_0_100ms_pitch_gt_0p1_rate: 0.0000
+Metrics/racket_target/post_contact_phase_impact_0_100ms_waist_overflow_gt_1p0_rate: 0.0000
+Metrics/racket_target/post_contact_phase_impact_0_100ms_base_ang_vel_gt_0p8_rate: 0.0000
+Metrics/racket_target/post_contact_phase_brake_100_300ms_attempts: 0.0000
+Metrics/racket_target/post_contact_phase_brake_100_300ms_tilt_gt_0p1_rate: 0.0000
+Metrics/racket_target/post_contact_phase_brake_100_300ms_pitch_gt_0p1_rate: 0.0000
+Metrics/racket_target/post_contact_phase_brake_100_300ms_waist_overflow_gt_1p0_rate: 0.0000
+Metrics/racket_target/post_contact_phase_brake_100_300ms_base_ang_vel_gt_0p8_rate: 0.0000
+Metrics/racket_target/post_contact_phase_settle_300_600ms_attempts: 0.0000
+Metrics/racket_target/post_contact_phase_settle_300_600ms_tilt_gt_0p1_rate: 0.0000
+Metrics/racket_target/post_contact_phase_settle_300_600ms_pitch_gt_0p1_rate: 0.0000
+Metrics/racket_target/post_contact_phase_settle_300_600ms_waist_overflow_gt_1p0_rate: 0.0000
+Metrics/racket_target/post_contact_phase_settle_300_600ms_base_ang_vel_gt_0p8_rate: 0.0000
+Metrics/racket_target/post_contact_phase_ready_after_600ms_attempts: 0.0000
+Metrics/racket_target/post_contact_phase_ready_after_600ms_tilt_gt_0p1_rate: 0.0000
+Metrics/racket_target/post_contact_phase_ready_after_600ms_pitch_gt_0p1_rate: 0.0000
+Metrics/racket_target/post_contact_phase_ready_after_600ms_waist_overflow_gt_1p0_rate: 0.0000
+Metrics/racket_target/post_contact_phase_ready_after_600ms_base_ang_vel_gt_0p8_rate: 0.0000
+Metrics/racket_target/physical_contact_health_score: 0.0000
+Metrics/racket_target/physical_contact_outcome_quality: 0.0000
+Metrics/racket_target/physical_recovery_pending: 0.4062
+Metrics/racket_target/physical_recovery_tier: 0.4062
+Metrics/racket_target/physical_recovery_success_event: 0.0000
+Metrics/racket_target/physical_recovery_failure_event: 0.0000
+Metrics/racket_target/physical_ability_level: 0.0000
+Metrics/racket_target/physical_ability_batch_events: 5.5938
+Metrics/racket_target/physical_ability_contact_ema: 0.0000
+Metrics/racket_target/physical_ability_net_ema: 0.0000
+Metrics/racket_target/physical_ability_bounce_ema: 0.0000
+Metrics/racket_target/physical_ability_recovery_ema: 0.0000
+Metrics/racket_target/physical_ability_safety_ema: 0.0000
+Metrics/racket_target/base_pitch_like_signed: -0.1645
+Metrics/racket_target/base_backward_velocity: 0.0393
+Metrics/racket_target/waist_action_rms: 0.5281
+Metrics/racket_target/right_arm_action_rms: 3.0837
+Metrics/racket_target/leg_action_rms: 0.4140
+Metrics/racket_target/action_abs_max: 5.1354
+Metrics/racket_target/applied_action_abs_max: 5.1354
+Metrics/racket_target/leg_action_abs_max: 0.7851
+Metrics/racket_target/effective_action_abs_max: 5.1354
+Metrics/racket_target/action_clamp_fraction: 0.0000
+Metrics/racket_target/waist_action_clamp_fraction: 0.0000
+Metrics/racket_target/right_arm_action_clamp_fraction: 0.0000
+Metrics/racket_target/leg_action_clamp_fraction: 0.0000
+Metrics/racket_target/waist_q_tracking_error_rms: 0.3917
+Metrics/racket_target/right_arm_q_tracking_error_rms: 0.0923
+Metrics/racket_target/leg_q_tracking_error_rms: 0.2112
+Metrics/racket_target/waist_torque_clip_fraction: 0.0000
+Metrics/racket_target/right_arm_torque_clip_fraction: 0.0000
+Metrics/racket_target/leg_torque_clip_fraction: 0.0000
+Metrics/racket_target/waist_action_delta_rms: 0.1212
+Metrics/racket_target/right_arm_action_delta_rms: 0.3393
+Metrics/racket_target/leg_action_delta_rms: 0.2665
+Metrics/racket_target/waist_joint_vel_rms: 0.5218
+Metrics/racket_target/right_arm_joint_vel_rms: 1.1545
+Metrics/racket_target/leg_joint_vel_rms: 0.8609
+Metrics/racket_target/recovery_leg_action_abs_max: 0.0644
+Metrics/racket_target/recovery_leg_action_delta_rms: 0.0216
+Metrics/racket_target/recovery_leg_joint_vel_rms: 0.0592
+     Metrics/physical_shadow/phase: 1.7812
+Metrics/physical_shadow/route_valid: 1.0000
+Metrics/physical_shadow/serve_event: 0.0000
+Metrics/physical_shadow/incoming_bounce_event: 0.0000
+Metrics/physical_shadow/contact_event: 0.0000
+Metrics/physical_shadow/net_cross_event: 0.0000
+Metrics/physical_shadow/outgoing_landing_event: 0.0000
+Metrics/physical_shadow/opponent_bounce_event: 0.0000
+Metrics/physical_shadow/landing_short_event: 0.0000
+Metrics/physical_shadow/landing_long_event: 0.0000
+Metrics/physical_shadow/landing_side_event: 0.0000
+Metrics/physical_shadow/landing_no_net_event: 0.0000
+Metrics/physical_shadow/abort_event: 0.0000
+Metrics/physical_shadow/timeout_event: 0.0000
+Metrics/physical_shadow/route_unalignable_event: 0.0000
+Metrics/physical_shadow/route_invalid_event: 0.0000
+Metrics/physical_shadow/incoming_net_collision_event: 0.0000
+Metrics/physical_shadow/reset_abort_event: 0.0000
+Metrics/physical_shadow/incoming_bounce_latch: 0.4375
+Metrics/physical_shadow/contact_latch: 0.4062
+Metrics/physical_shadow/net_cross_latch: 0.0000
+Metrics/physical_shadow/opponent_bounce_latch: 0.0000
+Metrics/physical_shadow/launch_timing_error_s: -0.0020
+Metrics/physical_shadow/contact_true_target_error: 0.0069
+Metrics/physical_shadow/contact_planner_position_error: 0.0258
+Metrics/physical_shadow/contact_planner_velocity_error: 0.2112
+Metrics/physical_shadow/contact_planner_velocity_direction_error_deg: 4.8240
+Metrics/physical_shadow/contact_planner_normal_error_deg: 5.0361
+Metrics/physical_shadow/contact_outgoing_velocity_error: 0.4292
+Metrics/physical_shadow/contact_outgoing_speed: 1.8197
+Metrics/physical_shadow/contact_target_outgoing_speed: 1.4784
+Metrics/physical_shadow/contact_outgoing_speed_ratio: 0.5000
+Metrics/physical_shadow/contact_outgoing_direction_error_deg: 3.6966
+Metrics/physical_shadow/contact_outgoing_velocity_x: 1.2152
+Metrics/physical_shadow/contact_outgoing_velocity_y: 0.0269
+Metrics/physical_shadow/contact_outgoing_velocity_z: 1.3542
+Metrics/physical_shadow/contact_target_outgoing_velocity_x: 1.1478
+Metrics/physical_shadow/contact_target_outgoing_velocity_y: 0.0441
+Metrics/physical_shadow/contact_target_outgoing_velocity_z: 0.9307
+Metrics/physical_shadow/contact_incoming_velocity_error: 0.1408
+Metrics/physical_shadow/contact_incoming_velocity_direction_error_deg: 3.6811
+Metrics/physical_shadow/contact_route_incoming_velocity_error: 0.0205
+Metrics/physical_shadow/contact_route_incoming_velocity_direction_error_deg: 0.6982
+Metrics/physical_shadow/contact_actual_route_incoming_velocity_error: 0.1290
+Metrics/physical_shadow/contact_command_normal_only_error: 0.5741
+Metrics/physical_shadow/contact_command_training_model_error: 0.5705
+Metrics/physical_shadow/contact_command_physics_model_error: 0.5624
+Metrics/physical_shadow/contact_actual_training_model_residual: 0.5492
+Metrics/physical_shadow/contact_actual_physics_model_residual: 0.5092
+Metrics/physical_shadow/contact_actual_normal_only_model_residual: 0.5667
+Metrics/physical_shadow/contact_actual_training_predicted_target_error: 0.9238
+Metrics/physical_shadow/contact_actual_physics_predicted_target_error: 0.8989
+Metrics/physical_shadow/contact_actual_normal_only_predicted_target_error: 0.9350
+Metrics/physical_shadow/contact_force_direction_valid: 0.0000
+Metrics/physical_shadow/contact_force_vs_racket_normal_angle_deg: 0.0000
+Metrics/physical_shadow/contact_actual_force_direction_model_residual: 0.5092
+Metrics/physical_shadow/contact_actual_force_direction_predicted_target_error: 0.8989
+Metrics/physical_shadow/contact_physx_data_valid: 0.4062
+Metrics/physical_shadow/contact_physx_force: 2.8148
+Metrics/physical_shadow/contact_physx_separation: -0.0027
+Metrics/physical_shadow/contact_physx_normal_error_deg: 6.7245
+Metrics/physical_shadow/contact_physx_point_radial_error: 0.0099
+Metrics/physical_shadow/contact_actual_physx_normal_model_residual: 0.2841
+Metrics/physical_shadow/contact_actual_physx_normal_predicted_target_error: 0.6207
+Metrics/physical_shadow/contact_physx_substep_valid: 0.4062
+Metrics/physical_shadow/contact_physx_substep_normal_error_deg: 5.7490
+Metrics/physical_shadow/contact_physx_substep_point_radial_error: 0.0106
+Metrics/physical_shadow/contact_physx_substep_point_normal_offset: 0.0031
+Metrics/physical_shadow/contact_physx_patch_substeps: 0.4062
+Metrics/physical_shadow/contact_physx_normal_impulse: 0.0070
+Metrics/physical_shadow/contact_physx_capture_lag_s: 0.0061
+Metrics/physical_shadow/contact_physx_contact_point_speed_delta: 0.1824
+Metrics/physical_shadow/contact_physx_substep_link_model_residual: 0.3473
+Metrics/physical_shadow/contact_physx_substep_point_model_residual: 0.2048
+Metrics/physical_shadow/contact_physx_substep_outgoing_target_error: 0.4896
+Metrics/physical_shadow/contact_physx_measured_restitution: 0.2653
+Metrics/physical_shadow/contact_physx_pre_ball_speed: 0.7602
+Metrics/physical_shadow/contact_physx_post_ball_speed: 1.8703
+Metrics/physical_shadow/contact_physx_point_x: -0.9617
+Metrics/physical_shadow/contact_physx_point_y: -8.5688
+Metrics/physical_shadow/contact_physx_point_z: 0.4785
+Metrics/physical_shadow/contact_physx_normal_x: 0.2949
+Metrics/physical_shadow/contact_physx_normal_y: 0.0129
+Metrics/physical_shadow/contact_physx_normal_z: 0.2791
+Metrics/physical_shadow/contact_physx_pre_ball_velocity_x: -0.4156
+Metrics/physical_shadow/contact_physx_pre_ball_velocity_y: -0.0035
+Metrics/physical_shadow/contact_physx_pre_ball_velocity_z: -0.6365
+Metrics/physical_shadow/contact_physx_post_ball_velocity_x: 1.2240
+Metrics/physical_shadow/contact_physx_post_ball_velocity_y: 0.0271
+Metrics/physical_shadow/contact_physx_post_ball_velocity_z: 1.4140
+Metrics/physical_shadow/contact_physx_pre_racket_point_velocity_x: 0.5283
+Metrics/physical_shadow/contact_physx_pre_racket_point_velocity_y: -0.0712
+Metrics/physical_shadow/contact_physx_pre_racket_point_velocity_z: 0.6782
+Metrics/physical_shadow/contact_physx_post_racket_point_velocity_x: 0.5074
+Metrics/physical_shadow/contact_physx_post_racket_point_velocity_y: -0.0587
+Metrics/physical_shadow/contact_physx_post_racket_point_velocity_z: 0.6671
+Metrics/physical_shadow/contact_physx_pre_ball_angular_velocity_x: 0.2870
+Metrics/physical_shadow/contact_physx_pre_ball_angular_velocity_y: -34.4165
+Metrics/physical_shadow/contact_physx_pre_ball_angular_velocity_z: -0.0000
+Metrics/physical_shadow/contact_physx_post_ball_angular_velocity_x: -3.4724
+Metrics/physical_shadow/contact_physx_post_ball_angular_velocity_y: -3.3484
+Metrics/physical_shadow/contact_physx_post_ball_angular_velocity_z: 2.5308
+Metrics/physical_shadow/contact_physx_pre_ball_surface_tangent_speed: 0.7787
+Metrics/physical_shadow/contact_physx_post_ball_spin_speed: 5.4474
+Metrics/physical_shadow/contact_impact_normal_error_deg: 5.0361
+Metrics/physical_shadow/contact_wire_impact_normal_gap_deg: 0.0000
+Metrics/physical_shadow/contact_face_radial_error: 0.0161
+Metrics/physical_shadow/contact_time_to_strike: -0.0244
+Metrics/physical_shadow/landing_target_error: 0.0000
+Metrics/physical_shadow/landing_target_x_error: 0.0000
+Metrics/physical_shadow/landing_target_y_error: 0.0000
+Metrics/physical_shadow/landing_position_x: 0.0000
+Metrics/physical_shadow/landing_position_y: 0.0000
+Metrics/physical_shadow/minimum_ball_racket_distance: 0.8033
+      Episode_Termination/time_out: 1.0000
+  Episode_Termination/base_too_low: 0.0000
+   Episode_Termination/base_tilted: 0.0000
+   Episode_Termination/table_touch: 0.0000
+Episode_Termination/persistent_action_overflow: 0.0000
+--------------------------------------------------------------------------------
+                   Total timesteps: 6144
+                    Iteration time: 2.44s
+                      Time elapsed: 00:00:08
+                               ETA: 00:00:02
+ [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdTransform2d.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+

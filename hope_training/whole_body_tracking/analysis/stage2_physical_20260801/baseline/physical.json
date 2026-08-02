@@ -1,0 +1,1767 @@
+{
+  "analytic_eval": {
+    "analytic_success_rate": 0.0,
+    "success_rate": 0.0,
+    "task_contact_rate": 0.0,
+    "task_net_cross_rate": 0.0,
+    "task_opponent_bounce_rate": 0.0
+  },
+  "contact_metric_buckets": {
+    "rim_or_edge": {
+      "means": {
+        "contact_actual_force_direction_model_residual": 0.5634579658508301,
+        "contact_actual_force_direction_predicted_target_error": 5.089676856994629,
+        "contact_actual_normal_only_model_residual": 1.026254415512085,
+        "contact_actual_normal_only_predicted_target_error": 5.182925224304199,
+        "contact_actual_physics_model_residual": 0.5634579658508301,
+        "contact_actual_physics_predicted_target_error": 5.089676856994629,
+        "contact_actual_physx_normal_model_residual": 0.3129980266094208,
+        "contact_actual_physx_normal_predicted_target_error": 5.0792999267578125,
+        "contact_actual_route_incoming_velocity_error": 1.8003532886505127,
+        "contact_actual_training_model_residual": 0.8761194944381714,
+        "contact_actual_training_predicted_target_error": 5.149582862854004,
+        "contact_command_normal_only_error": 0.0340917706489563,
+        "contact_command_physics_model_error": 0.1346939504146576,
+        "contact_command_training_model_error": 0.05123580992221832,
+        "contact_face_radial_error": 0.07760477066040039,
+        "contact_force_direction_valid": 0.0,
+        "contact_force_vs_racket_normal_angle_deg": 0.0,
+        "contact_impact_normal_error_deg": 46.38633346557617,
+        "contact_incoming_velocity_direction_error_deg": 82.08528137207031,
+        "contact_incoming_velocity_error": 1.7752926349639893,
+        "contact_outgoing_direction_error_deg": 157.22653198242188,
+        "contact_outgoing_speed": 1.4513368606567383,
+        "contact_outgoing_speed_ratio": 0.3938943147659302,
+        "contact_outgoing_velocity_error": 5.054110527038574,
+        "contact_outgoing_velocity_x": -0.9562796950340271,
+        "contact_outgoing_velocity_y": -0.42207443714141846,
+        "contact_outgoing_velocity_z": -0.9347853660583496,
+        "contact_physx_capture_lag_s": 0.015000000596046448,
+        "contact_physx_contact_point_speed_delta": 0.041018612682819366,
+        "contact_physx_data_valid": 1.0,
+        "contact_physx_force": 1.6660250425338745,
+        "contact_physx_measured_restitution": 0.0,
+        "contact_physx_normal_error_deg": 19.94618797302246,
+        "contact_physx_normal_impulse": 0.004165062680840492,
+        "contact_physx_normal_x": 0.252296507358551,
+        "contact_physx_normal_y": 0.3894515931606293,
+        "contact_physx_normal_z": 0.8025035858154297,
+        "contact_physx_patch_substeps": 1.0,
+        "contact_physx_point_radial_error": 0.06373531371355057,
+        "contact_physx_point_x": 7.463266372680664,
+        "contact_physx_point_y": -6.302255630493164,
+        "contact_physx_point_z": 1.1647244691848755,
+        "contact_physx_post_ball_angular_velocity_x": -33.53297805786133,
+        "contact_physx_post_ball_angular_velocity_y": 4.814517974853516,
+        "contact_physx_post_ball_angular_velocity_z": -17.582347869873047,
+        "contact_physx_post_ball_speed": 1.3828809261322021,
+        "contact_physx_post_ball_spin_speed": 48.66456604003906,
+        "contact_physx_post_ball_velocity_x": -0.9584789276123047,
+        "contact_physx_post_ball_velocity_y": -0.4231036603450775,
+        "contact_physx_post_ball_velocity_z": -0.8137528300285339,
+        "contact_physx_post_racket_point_velocity_x": -0.8136002421379089,
+        "contact_physx_post_racket_point_velocity_y": 0.04318434000015259,
+        "contact_physx_post_racket_point_velocity_z": -0.6057606339454651,
+        "contact_physx_pre_ball_angular_velocity_x": -2.00789737701416,
+        "contact_physx_pre_ball_angular_velocity_y": -46.059654235839844,
+        "contact_physx_pre_ball_angular_velocity_z": -1.8031130366580328e-06,
+        "contact_physx_pre_ball_speed": 1.2378815412521362,
+        "contact_physx_pre_ball_surface_tangent_speed": 1.5364933013916016,
+        "contact_physx_pre_ball_velocity_x": -0.9670063257217407,
+        "contact_physx_pre_ball_velocity_y": 0.04792788252234459,
+        "contact_physx_pre_ball_velocity_z": 0.7543857097625732,
+        "contact_physx_pre_racket_point_velocity_x": -0.8184617757797241,
+        "contact_physx_pre_racket_point_velocity_y": 0.039493948221206665,
+        "contact_physx_pre_racket_point_velocity_z": -0.6322410702705383,
+        "contact_physx_separation": 9.145463991444558e-05,
+        "contact_physx_substep_link_model_residual": 0.24290530383586884,
+        "contact_physx_substep_normal_error_deg": 19.968791961669922,
+        "contact_physx_substep_outgoing_target_error": 4.989394187927246,
+        "contact_physx_substep_point_model_residual": 0.23926421999931335,
+        "contact_physx_substep_point_normal_offset": -0.00026714368141256273,
+        "contact_physx_substep_point_radial_error": 0.06988449394702911,
+        "contact_physx_substep_valid": 1.0,
+        "contact_planner_normal_error_deg": 46.38633346557617,
+        "contact_planner_position_error": 0.24948441982269287,
+        "contact_planner_velocity_direction_error_deg": 161.87582397460938,
+        "contact_planner_velocity_error": 2.66349458694458,
+        "contact_route_incoming_velocity_direction_error_deg": 1.8799617290496826,
+        "contact_route_incoming_velocity_error": 0.048112597316503525,
+        "contact_target_outgoing_speed": 3.6847712993621826,
+        "contact_target_outgoing_velocity_x": 3.1233620643615723,
+        "contact_target_outgoing_velocity_y": 0.40058207511901855,
+        "contact_target_outgoing_velocity_z": 1.907218337059021,
+        "contact_time_to_strike": -0.46000000834465027,
+        "contact_true_target_error": 0.29391011595726013,
+        "contact_wire_impact_normal_gap_deg": 0.006594113539904356
+      },
+      "quantiles": {
+        "contact_actual_force_direction_model_residual": {
+          "p50": 0.3383948504924774,
+          "p90": 0.9676117897033691
+        },
+        "contact_actual_force_direction_predicted_target_error": {
+          "p50": 5.105872631072998,
+          "p90": 5.21105432510376
+        },
+        "contact_actual_normal_only_model_residual": {
+          "p50": 0.9195082783699036,
+          "p90": 1.3017688989639282
+        },
+        "contact_actual_normal_only_predicted_target_error": {
+          "p50": 5.216095447540283,
+          "p90": 5.238736629486084
+        },
+        "contact_actual_physics_model_residual": {
+          "p50": 0.3383948504924774,
+          "p90": 0.9676117897033691
+        },
+        "contact_actual_physics_predicted_target_error": {
+          "p50": 5.105872631072998,
+          "p90": 5.21105432510376
+        },
+        "contact_actual_physx_normal_model_residual": {
+          "p50": 0.32561030983924866,
+          "p90": 0.38294726610183716
+        },
+        "contact_actual_physx_normal_predicted_target_error": {
+          "p50": 5.088708877563477,
+          "p90": 5.200648307800293
+        },
+        "contact_actual_route_incoming_velocity_error": {
+          "p50": 1.8209174871444702,
+          "p90": 1.834157943725586
+        },
+        "contact_actual_training_model_residual": {
+          "p50": 0.7402691841125488,
+          "p90": 1.2018300294876099
+        },
+        "contact_actual_training_predicted_target_error": {
+          "p50": 5.195003986358643,
+          "p90": 5.215312480926514
+        },
+        "contact_command_normal_only_error": {
+          "p50": 0.028103653341531754,
+          "p90": 0.05468715727329254
+        },
+        "contact_command_physics_model_error": {
+          "p50": 0.1289338916540146,
+          "p90": 0.17770111560821533
+        },
+        "contact_command_training_model_error": {
+          "p50": 0.045906227082014084,
+          "p90": 0.07342692464590073
+        },
+        "contact_face_radial_error": {
+          "p50": 0.06990116834640503,
+          "p90": 0.09364661574363708
+        },
+        "contact_force_direction_valid": {
+          "p50": 0.0,
+          "p90": 0.0
+        },
+        "contact_force_vs_racket_normal_angle_deg": {
+          "p50": 0.0,
+          "p90": 0.0
+        },
+        "contact_impact_normal_error_deg": {
+          "p50": 45.46574401855469,
+          "p90": 48.902870178222656
+        },
+        "contact_incoming_velocity_direction_error_deg": {
+          "p50": 82.38258361816406,
+          "p90": 86.07032775878906
+        },
+        "contact_incoming_velocity_error": {
+          "p50": 1.793965458869934,
+          "p90": 1.8113393783569336
+        },
+        "contact_outgoing_direction_error_deg": {
+          "p50": 156.30865478515625,
+          "p90": 160.83383178710938
+        },
+        "contact_outgoing_speed": {
+          "p50": 1.3927758932113647,
+          "p90": 1.610206127166748
+        },
+        "contact_outgoing_speed_ratio": {
+          "p50": 0.386690616607666,
+          "p90": 0.43577009439468384
+        },
+        "contact_outgoing_velocity_error": {
+          "p50": 4.952192783355713,
+          "p90": 5.248836994171143
+        },
+        "contact_outgoing_velocity_x": {
+          "p50": -0.8535699248313904,
+          "p90": -0.7969781756401062
+        },
+        "contact_outgoing_velocity_y": {
+          "p50": -0.628129243850708,
+          "p90": -0.11023195087909698
+        },
+        "contact_outgoing_velocity_z": {
+          "p50": -0.9054147601127625,
+          "p90": -0.7788001298904419
+        },
+        "contact_physx_capture_lag_s": {
+          "p50": 0.014999999664723873,
+          "p90": 0.01899999938905239
+        },
+        "contact_physx_contact_point_speed_delta": {
+          "p50": 0.037694353610277176,
+          "p90": 0.04612387716770172
+        },
+        "contact_physx_data_valid": {
+          "p50": 1.0,
+          "p90": 1.0
+        },
+        "contact_physx_force": {
+          "p50": 1.7532955408096313,
+          "p90": 1.7863134145736694
+        },
+        "contact_physx_measured_restitution": {
+          "p50": 0.0,
+          "p90": 0.0
+        },
+        "contact_physx_normal_error_deg": {
+          "p50": 10.123798370361328,
+          "p90": 40.55200958251953
+        },
+        "contact_physx_normal_impulse": {
+          "p50": 0.004383238963782787,
+          "p90": 0.004465783480554819
+        },
+        "contact_physx_normal_x": {
+          "p50": 0.3537136912345886,
+          "p90": 0.4320518672466278
+        },
+        "contact_physx_normal_y": {
+          "p50": 0.5153018236160278,
+          "p90": 0.616520345211029
+        },
+        "contact_physx_normal_z": {
+          "p50": 0.7283465266227722,
+          "p90": 0.9446789026260376
+        },
+        "contact_physx_patch_substeps": {
+          "p50": 1.0,
+          "p90": 1.0
+        },
+        "contact_physx_point_radial_error": {
+          "p50": 0.05826935917139053,
+          "p90": 0.07557440549135208
+        },
+        "contact_physx_point_x": {
+          "p50": -2.651090621948242,
+          "p90": 26.303354263305664
+        },
+        "contact_physx_point_y": {
+          "p50": -24.266616821289062,
+          "p90": 18.881643295288086
+        },
+        "contact_physx_point_z": {
+          "p50": 1.1694562435150146,
+          "p90": 1.1881146430969238
+        },
+        "contact_physx_post_ball_angular_velocity_x": {
+          "p50": -43.08490753173828,
+          "p90": -5.233384609222412
+        },
+        "contact_physx_post_ball_angular_velocity_y": {
+          "p50": 17.840177536010742,
+          "p90": 18.209714889526367
+        },
+        "contact_physx_post_ball_angular_velocity_z": {
+          "p50": -14.231406211853027,
+          "p90": -2.7026145458221436
+        },
+        "contact_physx_post_ball_speed": {
+          "p50": 1.3343064785003662,
+          "p90": 1.5511430501937866
+        },
+        "contact_physx_post_ball_spin_speed": {
+          "p50": 48.75565719604492,
+          "p90": 69.85530853271484
+        },
+        "contact_physx_post_ball_velocity_x": {
+          "p50": -0.8559960126876831,
+          "p90": -0.7982659339904785
+        },
+        "contact_physx_post_ball_velocity_y": {
+          "p50": -0.6295515298843384,
+          "p90": -0.11049668490886688
+        },
+        "contact_physx_post_ball_velocity_z": {
+          "p50": -0.7849293351173401,
+          "p90": -0.6183426380157471
+        },
+        "contact_physx_post_racket_point_velocity_x": {
+          "p50": -0.6455796360969543,
+          "p90": -0.5711931586265564
+        },
+        "contact_physx_post_racket_point_velocity_y": {
+          "p50": 0.059309057891368866,
+          "p90": 0.11353437602519989
+        },
+        "contact_physx_post_racket_point_velocity_z": {
+          "p50": -0.589300811290741,
+          "p90": -0.47223445773124695
+        },
+        "contact_physx_pre_ball_angular_velocity_x": {
+          "p50": -1.0077416896820068,
+          "p90": -0.10269571840763092
+        },
+        "contact_physx_pre_ball_angular_velocity_y": {
+          "p50": -41.83971405029297,
+          "p90": -40.48479080200195
+        },
+        "contact_physx_pre_ball_angular_velocity_z": {
+          "p50": -3.30989450958441e-07,
+          "p90": 8.577951575716725e-07
+        },
+        "contact_physx_pre_ball_speed": {
+          "p50": 1.2153230905532837,
+          "p90": 1.2846710681915283
+        },
+        "contact_physx_pre_ball_surface_tangent_speed": {
+          "p50": 1.9099761247634888,
+          "p90": 2.032055377960205
+        },
+        "contact_physx_pre_ball_velocity_x": {
+          "p50": -0.9686642289161682,
+          "p90": -0.8986764550209045
+        },
+        "contact_physx_pre_ball_velocity_y": {
+          "p50": 0.01737160235643387,
+          "p90": 0.10677370429039001
+        },
+        "contact_physx_pre_ball_velocity_z": {
+          "p50": 0.836974024772644,
+          "p90": 0.8632627725601196
+        },
+        "contact_physx_pre_racket_point_velocity_x": {
+          "p50": -0.6475204229354858,
+          "p90": -0.5757853984832764
+        },
+        "contact_physx_pre_racket_point_velocity_y": {
+          "p50": 0.06218673288822174,
+          "p90": 0.10492581129074097
+        },
+        "contact_physx_pre_racket_point_velocity_z": {
+          "p50": -0.6081350445747375,
+          "p90": -0.5102208852767944
+        },
+        "contact_physx_separation": {
+          "p50": 4.398263990879059e-05,
+          "p90": 0.0004703599843196571
+        },
+        "contact_physx_substep_link_model_residual": {
+          "p50": 0.24364623427391052,
+          "p90": 0.3098653554916382
+        },
+        "contact_physx_substep_normal_error_deg": {
+          "p50": 9.969122886657715,
+          "p90": 40.687442779541016
+        },
+        "contact_physx_substep_outgoing_target_error": {
+          "p50": 4.857760429382324,
+          "p90": 5.184066295623779
+        },
+        "contact_physx_substep_point_model_residual": {
+          "p50": 0.24422605335712433,
+          "p90": 0.30730170011520386
+        },
+        "contact_physx_substep_point_normal_offset": {
+          "p50": -0.00014930590987205505,
+          "p90": -0.0001478485792176798
+        },
+        "contact_physx_substep_point_radial_error": {
+          "p50": 0.0678413137793541,
+          "p90": 0.07712487131357193
+        },
+        "contact_physx_substep_valid": {
+          "p50": 1.0,
+          "p90": 1.0
+        },
+        "contact_planner_normal_error_deg": {
+          "p50": 45.46574401855469,
+          "p90": 48.902870178222656
+        },
+        "contact_planner_position_error": {
+          "p50": 0.1960851550102234,
+          "p90": 0.3465479016304016
+        },
+        "contact_planner_velocity_direction_error_deg": {
+          "p50": 162.79229736328125,
+          "p90": 165.4992218017578
+        },
+        "contact_planner_velocity_error": {
+          "p50": 2.6541600227355957,
+          "p90": 2.8531148433685303
+        },
+        "contact_route_incoming_velocity_direction_error_deg": {
+          "p50": 1.8428127765655518,
+          "p90": 1.961404800415039
+        },
+        "contact_route_incoming_velocity_error": {
+          "p50": 0.04778948798775673,
+          "p90": 0.048790689557790756
+        },
+        "contact_target_outgoing_speed": {
+          "p50": 3.71521258354187,
+          "p90": 3.732896089553833
+        },
+        "contact_target_outgoing_velocity_x": {
+          "p50": 3.0991246700286865,
+          "p90": 3.194540500640869
+        },
+        "contact_target_outgoing_velocity_y": {
+          "p50": 0.3954172730445862,
+          "p90": 0.41679033637046814
+        },
+        "contact_target_outgoing_velocity_z": {
+          "p50": 1.8073581457138062,
+          "p90": 2.0572118759155273
+        },
+        "contact_time_to_strike": {
+          "p50": -0.4599999785423279,
+          "p90": -0.4440000057220459
+        },
+        "contact_true_target_error": {
+          "p50": 0.2652542293071747,
+          "p90": 0.35850492119789124
+        },
+        "contact_wire_impact_normal_gap_deg": {
+          "p50": 0.0,
+          "p90": 0.015825871378183365
+        }
+      },
+      "sample_count": 3
+    },
+    "usable_center": {
+      "means": {
+        "contact_actual_force_direction_model_residual": 0.2901648283004761,
+        "contact_actual_force_direction_predicted_target_error": 4.46290922164917,
+        "contact_actual_normal_only_model_residual": 0.6201006770133972,
+        "contact_actual_normal_only_predicted_target_error": 4.652871131896973,
+        "contact_actual_physics_model_residual": 0.2901648283004761,
+        "contact_actual_physics_predicted_target_error": 4.46290922164917,
+        "contact_actual_physx_normal_model_residual": 0.31705132126808167,
+        "contact_actual_physx_normal_predicted_target_error": 4.422367095947266,
+        "contact_actual_route_incoming_velocity_error": 1.417665719985962,
+        "contact_actual_training_model_residual": 0.48037809133529663,
+        "contact_actual_training_predicted_target_error": 4.586214065551758,
+        "contact_command_normal_only_error": 0.07588888704776764,
+        "contact_command_physics_model_error": 0.21964260935783386,
+        "contact_command_training_model_error": 0.09670528769493103,
+        "contact_face_radial_error": 0.04769138619303703,
+        "contact_force_direction_valid": 0.0,
+        "contact_force_vs_racket_normal_angle_deg": 0.011939698830246925,
+        "contact_impact_normal_error_deg": 36.985374450683594,
+        "contact_incoming_velocity_direction_error_deg": 62.32826614379883,
+        "contact_incoming_velocity_error": 1.4087963104248047,
+        "contact_outgoing_direction_error_deg": 127.63957977294922,
+        "contact_outgoing_speed": 1.917435646057129,
+        "contact_outgoing_speed_ratio": 0.49478647112846375,
+        "contact_outgoing_velocity_error": 4.518535614013672,
+        "contact_outgoing_velocity_x": -0.4012581706047058,
+        "contact_outgoing_velocity_y": -0.6708348989486694,
+        "contact_outgoing_velocity_z": 0.050503671169281006,
+        "contact_physx_capture_lag_s": 0.014374999329447746,
+        "contact_physx_contact_point_speed_delta": 0.05522681772708893,
+        "contact_physx_data_valid": 1.0,
+        "contact_physx_force": 2.533433675765991,
+        "contact_physx_measured_restitution": 0.1637336164712906,
+        "contact_physx_normal_error_deg": 1.3702123165130615,
+        "contact_physx_normal_impulse": 0.00633358396589756,
+        "contact_physx_normal_x": 0.3741231858730316,
+        "contact_physx_normal_y": 0.4075780510902405,
+        "contact_physx_normal_z": 0.747122049331665,
+        "contact_physx_patch_substeps": 1.0,
+        "contact_physx_point_radial_error": 0.04982582852244377,
+        "contact_physx_point_x": 23.04844093322754,
+        "contact_physx_point_y": 1.2438170909881592,
+        "contact_physx_point_z": 1.1802823543548584,
+        "contact_physx_post_ball_angular_velocity_x": -20.1939640045166,
+        "contact_physx_post_ball_angular_velocity_y": -9.74748420715332,
+        "contact_physx_post_ball_angular_velocity_z": -18.77005386352539,
+        "contact_physx_post_ball_speed": 1.9136416912078857,
+        "contact_physx_post_ball_spin_speed": 45.70054244995117,
+        "contact_physx_post_ball_velocity_x": -0.4005870819091797,
+        "contact_physx_post_ball_velocity_y": -0.6726787686347961,
+        "contact_physx_post_ball_velocity_z": 0.17004379630088806,
+        "contact_physx_post_racket_point_velocity_x": -0.21531546115875244,
+        "contact_physx_post_racket_point_velocity_y": 0.07515008747577667,
+        "contact_physx_post_racket_point_velocity_z": -0.26233506202697754,
+        "contact_physx_pre_ball_angular_velocity_x": -3.712874412536621,
+        "contact_physx_pre_ball_angular_velocity_y": -52.32546615600586,
+        "contact_physx_pre_ball_angular_velocity_z": -6.860539087938378e-07,
+        "contact_physx_pre_ball_speed": 1.2809611558914185,
+        "contact_physx_pre_ball_surface_tangent_speed": 1.584761381149292,
+        "contact_physx_pre_ball_velocity_x": -0.895975649356842,
+        "contact_physx_pre_ball_velocity_y": 0.059113759547472,
+        "contact_physx_pre_ball_velocity_z": 0.15444082021713257,
+        "contact_physx_pre_racket_point_velocity_x": -0.20801159739494324,
+        "contact_physx_pre_racket_point_velocity_y": 0.062416352331638336,
+        "contact_physx_pre_racket_point_velocity_z": -0.25427722930908203,
+        "contact_physx_separation": -0.001315804198384285,
+        "contact_physx_substep_link_model_residual": 0.278215229511261,
+        "contact_physx_substep_normal_error_deg": 0.8326113820075989,
+        "contact_physx_substep_outgoing_target_error": 4.493577003479004,
+        "contact_physx_substep_point_model_residual": 0.271772563457489,
+        "contact_physx_substep_point_normal_offset": -0.0006715254858136177,
+        "contact_physx_substep_point_radial_error": 0.04844842106103897,
+        "contact_physx_substep_valid": 1.0,
+        "contact_planner_normal_error_deg": 36.98537063598633,
+        "contact_planner_position_error": 0.20027285814285278,
+        "contact_planner_velocity_direction_error_deg": 120.41305541992188,
+        "contact_planner_velocity_error": 2.181863307952881,
+        "contact_route_incoming_velocity_direction_error_deg": 1.7131174802780151,
+        "contact_route_incoming_velocity_error": 0.04575991630554199,
+        "contact_target_outgoing_speed": 3.857546329498291,
+        "contact_target_outgoing_velocity_x": 3.2738702297210693,
+        "contact_target_outgoing_velocity_y": 0.5996095538139343,
+        "contact_target_outgoing_velocity_z": 1.9198756217956543,
+        "contact_time_to_strike": -0.35500001907348633,
+        "contact_true_target_error": 0.19204118847846985,
+        "contact_wire_impact_normal_gap_deg": 0.00699411379173398
+      },
+      "quantiles": {
+        "contact_actual_force_direction_model_residual": {
+          "p50": 0.3185828626155853,
+          "p90": 0.41321828961372375
+        },
+        "contact_actual_force_direction_predicted_target_error": {
+          "p50": 5.065873146057129,
+          "p90": 5.5864081382751465
+        },
+        "contact_actual_normal_only_model_residual": {
+          "p50": 0.6247477531433105,
+          "p90": 0.703938901424408
+        },
+        "contact_actual_normal_only_predicted_target_error": {
+          "p50": 5.127632141113281,
+          "p90": 5.790186882019043
+        },
+        "contact_actual_physics_model_residual": {
+          "p50": 0.3185828626155853,
+          "p90": 0.41321828961372375
+        },
+        "contact_actual_physics_predicted_target_error": {
+          "p50": 5.065873146057129,
+          "p90": 5.5864081382751465
+        },
+        "contact_actual_physx_normal_model_residual": {
+          "p50": 0.34753984212875366,
+          "p90": 0.4443497061729431
+        },
+        "contact_actual_physx_normal_predicted_target_error": {
+          "p50": 5.054183006286621,
+          "p90": 5.58535623550415
+        },
+        "contact_actual_route_incoming_velocity_error": {
+          "p50": 1.6177411079406738,
+          "p90": 2.1725666522979736
+        },
+        "contact_actual_training_model_residual": {
+          "p50": 0.47820594906806946,
+          "p90": 0.4963839650154114
+        },
+        "contact_actual_training_predicted_target_error": {
+          "p50": 5.0928754806518555,
+          "p90": 5.725193023681641
+        },
+        "contact_command_normal_only_error": {
+          "p50": 0.08782395720481873,
+          "p90": 0.09683794528245926
+        },
+        "contact_command_physics_model_error": {
+          "p50": 0.24491310119628906,
+          "p90": 0.26015570759773254
+        },
+        "contact_command_training_model_error": {
+          "p50": 0.10982915759086609,
+          "p90": 0.11929509043693542
+        },
+        "contact_face_radial_error": {
+          "p50": 0.05493589863181114,
+          "p90": 0.06097954139113426
+        },
+        "contact_force_direction_valid": {
+          "p50": 0.0,
+          "p90": 0.0
+        },
+        "contact_force_vs_racket_normal_angle_deg": {
+          "p50": 0.00989117007702589,
+          "p90": 0.02551821991801262
+        },
+        "contact_impact_normal_error_deg": {
+          "p50": 38.860572814941406,
+          "p90": 42.51891326904297
+        },
+        "contact_incoming_velocity_direction_error_deg": {
+          "p50": 71.75763702392578,
+          "p90": 94.45599365234375
+        },
+        "contact_incoming_velocity_error": {
+          "p50": 1.5990574359893799,
+          "p90": 2.1471705436706543
+        },
+        "contact_outgoing_direction_error_deg": {
+          "p50": 155.40977478027344,
+          "p90": 162.8664093017578
+        },
+        "contact_outgoing_speed": {
+          "p50": 1.7108898162841797,
+          "p90": 2.757611036300659
+        },
+        "contact_outgoing_speed_ratio": {
+          "p50": 0.43613436818122864,
+          "p90": 0.7070527076721191
+        },
+        "contact_outgoing_velocity_error": {
+          "p50": 5.0717387199401855,
+          "p90": 5.5882649421691895
+        },
+        "contact_outgoing_velocity_x": {
+          "p50": -0.9060527682304382,
+          "p90": 0.7207116484642029
+        },
+        "contact_outgoing_velocity_y": {
+          "p50": -0.5554143190383911,
+          "p90": -0.47818243503570557
+        },
+        "contact_outgoing_velocity_z": {
+          "p50": -0.7450670003890991,
+          "p90": 1.7671931982040405
+        },
+        "contact_physx_capture_lag_s": {
+          "p50": 0.014999999664723873,
+          "p90": 0.017500000074505806
+        },
+        "contact_physx_contact_point_speed_delta": {
+          "p50": 0.03121882677078247,
+          "p90": 0.11030886322259903
+        },
+        "contact_physx_data_valid": {
+          "p50": 1.0,
+          "p90": 1.0
+        },
+        "contact_physx_force": {
+          "p50": 1.8936917781829834,
+          "p90": 4.457976818084717
+        },
+        "contact_physx_measured_restitution": {
+          "p50": 0.0,
+          "p90": 0.4584540128707886
+        },
+        "contact_physx_normal_error_deg": {
+          "p50": 0.9843077659606934,
+          "p90": 2.260221004486084
+        },
+        "contact_physx_normal_impulse": {
+          "p50": 0.004734229762107134,
+          "p90": 0.011144941672682762
+        },
+        "contact_physx_normal_x": {
+          "p50": 0.32955580949783325,
+          "p90": 0.4813036322593689
+        },
+        "contact_physx_normal_y": {
+          "p50": 0.5915610790252686,
+          "p90": 0.63307785987854
+        },
+        "contact_physx_normal_z": {
+          "p50": 0.7355096340179443,
+          "p90": 0.7966565489768982
+        },
+        "contact_physx_patch_substeps": {
+          "p50": 1.0,
+          "p90": 1.0
+        },
+        "contact_physx_point_radial_error": {
+          "p50": 0.05232194811105728,
+          "p90": 0.06488959491252899
+        },
+        "contact_physx_point_x": {
+          "p50": 24.577152252197266,
+          "p90": 31.7286376953125
+        },
+        "contact_physx_point_y": {
+          "p50": -3.33575177192688,
+          "p90": 16.725358963012695
+        },
+        "contact_physx_point_z": {
+          "p50": 1.174224615097046,
+          "p90": 1.2090283632278442
+        },
+        "contact_physx_post_ball_angular_velocity_x": {
+          "p50": -33.01075744628906,
+          "p90": 8.0701904296875
+        },
+        "contact_physx_post_ball_angular_velocity_y": {
+          "p50": -9.93729019165039,
+          "p90": 14.725439071655273
+        },
+        "contact_physx_post_ball_angular_velocity_z": {
+          "p50": -17.898841857910156,
+          "p90": -12.384782791137695
+        },
+        "contact_physx_post_ball_speed": {
+          "p50": 1.6467604637145996,
+          "p90": 2.8516805171966553
+        },
+        "contact_physx_post_ball_spin_speed": {
+          "p50": 46.222442626953125,
+          "p90": 47.72720718383789
+        },
+        "contact_physx_post_ball_velocity_x": {
+          "p50": -0.907916784286499,
+          "p90": 0.7259886860847473
+        },
+        "contact_physx_post_ball_velocity_y": {
+          "p50": -0.5577787756919861,
+          "p90": -0.47956377267837524
+        },
+        "contact_physx_post_ball_velocity_z": {
+          "p50": -0.6350865364074707,
+          "p90": 1.9114257097244263
+        },
+        "contact_physx_post_racket_point_velocity_x": {
+          "p50": -0.3482849895954132,
+          "p90": 0.5329110026359558
+        },
+        "contact_physx_post_racket_point_velocity_y": {
+          "p50": 0.07303055375814438,
+          "p90": 0.2633306086063385
+        },
+        "contact_physx_post_racket_point_velocity_z": {
+          "p50": -0.6683205962181091,
+          "p90": 0.5476093292236328
+        },
+        "contact_physx_pre_ball_angular_velocity_x": {
+          "p50": -2.7237346172332764,
+          "p90": 0.7142004370689392
+        },
+        "contact_physx_pre_ball_angular_velocity_y": {
+          "p50": -50.92417907714844,
+          "p90": -35.11005783081055
+        },
+        "contact_physx_pre_ball_angular_velocity_z": {
+          "p50": 7.33989622858644e-07,
+          "p90": 8.40505617816234e-06
+        },
+        "contact_physx_pre_ball_speed": {
+          "p50": 1.3528121709823608,
+          "p90": 1.5867726802825928
+        },
+        "contact_physx_pre_ball_surface_tangent_speed": {
+          "p50": 1.5824499130249023,
+          "p90": 2.001840114593506
+        },
+        "contact_physx_pre_ball_velocity_x": {
+          "p50": -0.8959907293319702,
+          "p90": -0.800877034664154
+        },
+        "contact_physx_pre_ball_velocity_y": {
+          "p50": 0.07152634859085083,
+          "p90": 0.12683016061782837
+        },
+        "contact_physx_pre_ball_velocity_z": {
+          "p50": 0.42460837960243225,
+          "p90": 1.01100754737854
+        },
+        "contact_physx_pre_racket_point_velocity_x": {
+          "p50": -0.3562570810317993,
+          "p90": 0.5615659952163696
+        },
+        "contact_physx_pre_racket_point_velocity_y": {
+          "p50": 0.05972035229206085,
+          "p90": 0.25190499424934387
+        },
+        "contact_physx_pre_racket_point_velocity_z": {
+          "p50": -0.6862792372703552,
+          "p90": 0.5961996912956238
+        },
+        "contact_physx_separation": {
+          "p50": -0.0007129227742552757,
+          "p90": 3.9106020267354324e-05
+        },
+        "contact_physx_substep_link_model_residual": {
+          "p50": 0.2253013253211975,
+          "p90": 0.4473429024219513
+        },
+        "contact_physx_substep_normal_error_deg": {
+          "p50": 0.7807142734527588,
+          "p90": 0.9712316393852234
+        },
+        "contact_physx_substep_outgoing_target_error": {
+          "p50": 5.0086283683776855,
+          "p90": 5.542945384979248
+        },
+        "contact_physx_substep_point_model_residual": {
+          "p50": 0.22981387376785278,
+          "p90": 0.43097802996635437
+        },
+        "contact_physx_substep_point_normal_offset": {
+          "p50": -0.0007780939340591431,
+          "p90": -0.00018415044178254902
+        },
+        "contact_physx_substep_point_radial_error": {
+          "p50": 0.05443127453327179,
+          "p90": 0.057886406779289246
+        },
+        "contact_physx_substep_valid": {
+          "p50": 1.0,
+          "p90": 1.0
+        },
+        "contact_planner_normal_error_deg": {
+          "p50": 38.860572814941406,
+          "p90": 42.51891326904297
+        },
+        "contact_planner_position_error": {
+          "p50": 0.22407764196395874,
+          "p90": 0.2782699465751648
+        },
+        "contact_planner_velocity_direction_error_deg": {
+          "p50": 146.31558227539062,
+          "p90": 162.67108154296875
+        },
+        "contact_planner_velocity_error": {
+          "p50": 2.441037893295288,
+          "p90": 2.950378656387329
+        },
+        "contact_route_incoming_velocity_direction_error_deg": {
+          "p50": 1.7085843086242676,
+          "p90": 1.8649629354476929
+        },
+        "contact_route_incoming_velocity_error": {
+          "p50": 0.04499012976884842,
+          "p90": 0.05128679424524307
+        },
+        "contact_target_outgoing_speed": {
+          "p50": 3.9057364463806152,
+          "p90": 3.927401542663574
+        },
+        "contact_target_outgoing_velocity_x": {
+          "p50": 3.3583226203918457,
+          "p90": 3.4210190773010254
+        },
+        "contact_target_outgoing_velocity_y": {
+          "p50": 0.6806946992874146,
+          "p90": 0.8317049145698547
+        },
+        "contact_target_outgoing_velocity_z": {
+          "p50": 1.907199740409851,
+          "p90": 2.0436224937438965
+        },
+        "contact_time_to_strike": {
+          "p50": -0.4399999976158142,
+          "p90": -0.16000007092952728
+        },
+        "contact_true_target_error": {
+          "p50": 0.2415795624256134,
+          "p90": 0.25660863518714905
+        },
+        "contact_wire_impact_normal_gap_deg": {
+          "p50": 0.0,
+          "p90": 0.01958351396024227
+        }
+      },
+      "sample_count": 4
+    }
+  },
+  "contact_metric_means": {
+    "contact_actual_force_direction_model_residual": 0.4072904586791992,
+    "contact_actual_force_direction_predicted_target_error": 4.731523786272321,
+    "contact_actual_normal_only_model_residual": 0.7941665649414062,
+    "contact_actual_normal_only_predicted_target_error": 4.880037035260882,
+    "contact_actual_physics_model_residual": 0.4072904586791992,
+    "contact_actual_physics_predicted_target_error": 4.731523786272321,
+    "contact_actual_physx_normal_model_residual": 0.3153141907283238,
+    "contact_actual_physx_normal_predicted_target_error": 4.703909737723214,
+    "contact_actual_route_incoming_velocity_error": 1.5816747120448522,
+    "contact_actual_training_model_residual": 0.6499815668378558,
+    "contact_actual_training_predicted_target_error": 4.827657972063337,
+    "contact_command_normal_only_error": 0.05797583716256278,
+    "contact_command_physics_model_error": 0.18323603698185512,
+    "contact_command_training_model_error": 0.07721837077822004,
+    "contact_face_radial_error": 0.06051140597888401,
+    "contact_force_direction_valid": 0.0,
+    "contact_force_vs_racket_normal_angle_deg": 0.006822685045855386,
+    "contact_impact_normal_error_deg": 41.014351981026785,
+    "contact_incoming_velocity_direction_error_deg": 70.79555838448661,
+    "contact_incoming_velocity_error": 1.5658660616193498,
+    "contact_outgoing_direction_error_deg": 140.3197021484375,
+    "contact_outgoing_speed": 1.717679159981864,
+    "contact_outgoing_speed_ratio": 0.4515469755445208,
+    "contact_outgoing_velocity_error": 4.748067583356585,
+    "contact_outgoing_velocity_x": -0.6391245978219169,
+    "contact_outgoing_velocity_y": -0.564223221370152,
+    "contact_outgoing_velocity_z": -0.3717630250113351,
+    "contact_physx_capture_lag_s": 0.014642855950764247,
+    "contact_physx_contact_point_speed_delta": 0.049137583800724575,
+    "contact_physx_data_valid": 1.0,
+    "contact_physx_force": 2.1616871697562083,
+    "contact_physx_measured_restitution": 0.0935620665550232,
+    "contact_physx_normal_error_deg": 9.331344604492188,
+    "contact_physx_normal_impulse": 0.005404217434780938,
+    "contact_physx_normal_x": 0.32191174370901926,
+    "contact_physx_normal_y": 0.39980956486293245,
+    "contact_physx_normal_z": 0.7708570616585868,
+    "contact_physx_patch_substeps": 1.0,
+    "contact_physx_point_radial_error": 0.055787035397120883,
+    "contact_physx_point_x": 16.369080679757253,
+    "contact_physx_point_y": -1.9902144840785436,
+    "contact_physx_point_z": 1.1736146381923132,
+    "contact_physx_post_ball_angular_velocity_x": -25.91068376813616,
+    "contact_physx_post_ball_angular_velocity_y": -3.506625311715262,
+    "contact_physx_post_ball_angular_velocity_z": -18.26103755405971,
+    "contact_physx_post_ball_speed": 1.6861727578299386,
+    "contact_physx_post_ball_spin_speed": 46.970838274274556,
+    "contact_physx_post_ball_velocity_x": -0.639683587210519,
+    "contact_physx_post_ball_velocity_y": -0.5657180377415248,
+    "contact_physx_post_ball_velocity_z": -0.2515833718436105,
+    "contact_physx_post_racket_point_velocity_x": -0.47172324998038156,
+    "contact_physx_post_racket_point_velocity_y": 0.06145048141479492,
+    "contact_physx_post_racket_point_velocity_z": -0.40951742444719585,
+    "contact_physx_pre_ball_angular_velocity_x": -2.9821698325020924,
+    "contact_physx_pre_ball_angular_velocity_y": -49.64011492047991,
+    "contact_physx_pre_ball_angular_velocity_z": -1.1647933726115817e-06,
+    "contact_physx_pre_ball_speed": 1.262498446873256,
+    "contact_physx_pre_ball_surface_tangent_speed": 1.5640750612531389,
+    "contact_physx_pre_ball_velocity_x": -0.926417350769043,
+    "contact_physx_pre_ball_velocity_y": 0.05431981597627912,
+    "contact_physx_pre_ball_velocity_z": 0.41156005859375,
+    "contact_physx_pre_racket_point_velocity_x": -0.46963303429739817,
+    "contact_physx_pre_racket_point_velocity_y": 0.05259246485573905,
+    "contact_physx_pre_racket_point_velocity_z": -0.41626170703342985,
+    "contact_physx_separation": -0.0007126932697636741,
+    "contact_physx_substep_link_model_residual": 0.2630823850631714,
+    "contact_physx_substep_normal_error_deg": 9.033830915178571,
+    "contact_physx_substep_outgoing_target_error": 4.7060699462890625,
+    "contact_physx_substep_point_model_residual": 0.2578404290335519,
+    "contact_physx_substep_point_normal_offset": -0.0004982189940554756,
+    "contact_physx_substep_point_radial_error": 0.05763530731201172,
+    "contact_physx_substep_valid": 1.0,
+    "contact_planner_normal_error_deg": 41.014351981026785,
+    "contact_planner_position_error": 0.22136354446411133,
+    "contact_planner_velocity_direction_error_deg": 138.18280901227678,
+    "contact_planner_velocity_error": 2.3882767813546315,
+    "contact_route_incoming_velocity_direction_error_deg": 1.7846220561436243,
+    "contact_route_incoming_velocity_error": 0.046768209763935635,
+    "contact_target_outgoing_speed": 3.7834995814732144,
+    "contact_target_outgoing_velocity_x": 3.209366934640067,
+    "contact_target_outgoing_velocity_y": 0.5143120629446847,
+    "contact_target_outgoing_velocity_z": 1.9144509179251534,
+    "contact_time_to_strike": -0.3999999931880406,
+    "contact_true_target_error": 0.23569929599761963,
+    "contact_wire_impact_normal_gap_deg": 0.006822685045855386
+  },
+  "contact_metric_quantiles": {
+    "contact_actual_force_direction_model_residual": {
+      "p50": 0.3383948504924774,
+      "p90": 0.7036770582199097
+    },
+    "contact_actual_force_direction_predicted_target_error": {
+      "p50": 5.105872631072998,
+      "p90": 5.486631870269775
+    },
+    "contact_actual_normal_only_model_residual": {
+      "p50": 0.7140231132507324,
+      "p90": 1.1106383800506592
+    },
+    "contact_actual_normal_only_predicted_target_error": {
+      "p50": 5.216095447540283,
+      "p90": 5.575136661529541
+    },
+    "contact_actual_physics_model_residual": {
+      "p50": 0.3383948504924774,
+      "p90": 0.7036770582199097
+    },
+    "contact_actual_physics_predicted_target_error": {
+      "p50": 5.105872631072998,
+      "p90": 5.486631870269775
+    },
+    "contact_actual_physx_normal_model_residual": {
+      "p50": 0.32561030983924866,
+      "p90": 0.43090036511421204
+    },
+    "contact_actual_physx_normal_predicted_target_error": {
+      "p50": 5.088708877563477,
+      "p90": 5.481698036193848
+    },
+    "contact_actual_route_incoming_velocity_error": {
+      "p50": 1.8209174871444702,
+      "p90": 2.052905321121216
+    },
+    "contact_actual_training_model_residual": {
+      "p50": 0.5034984946250916,
+      "p90": 0.971049427986145
+    },
+    "contact_actual_training_predicted_target_error": {
+      "p50": 5.195003986358643,
+      "p90": 5.545506477355957
+    },
+    "contact_command_normal_only_error": {
+      "p50": 0.06133303418755531,
+      "p90": 0.09322872012853622
+    },
+    "contact_command_physics_model_error": {
+      "p50": 0.18989291787147522,
+      "p90": 0.2548007667064667
+    },
+    "contact_command_training_model_error": {
+      "p50": 0.08030710369348526,
+      "p90": 0.11564290523529053
+    },
+    "contact_face_radial_error": {
+      "p50": 0.06136257201433182,
+      "p90": 0.08177387714385986
+    },
+    "contact_force_direction_valid": {
+      "p50": 0.0,
+      "p90": 0.0
+    },
+    "contact_force_vs_racket_normal_angle_deg": {
+      "p50": 0.0,
+      "p90": 0.023059982806444168
+    },
+    "contact_impact_normal_error_deg": {
+      "p50": 43.39753341674805,
+      "p90": 47.184303283691406
+    },
+    "contact_incoming_velocity_direction_error_deg": {
+      "p50": 79.94112396240234,
+      "p90": 92.46601867675781
+    },
+    "contact_incoming_velocity_error": {
+      "p50": 1.793965458869934,
+      "p90": 2.0298802852630615
+    },
+    "contact_outgoing_direction_error_deg": {
+      "p50": 156.30865478515625,
+      "p90": 163.0286407470703
+    },
+    "contact_outgoing_speed": {
+      "p50": 1.4962481260299683,
+      "p90": 2.401005268096924
+    },
+    "contact_outgoing_speed_ratio": {
+      "p50": 0.386690616607666,
+      "p90": 0.6147986650466919
+    },
+    "contact_outgoing_velocity_error": {
+      "p50": 4.952192783355713,
+      "p90": 5.488179683685303
+    },
+    "contact_outgoing_velocity_x": {
+      "p50": -0.8945298194885254,
+      "p90": 0.09548446536064148
+    },
+    "contact_outgoing_velocity_y": {
+      "p50": -0.6037600636482239,
+      "p90": -0.27178481221199036
+    },
+    "contact_outgoing_velocity_z": {
+      "p50": -0.9054147601127625,
+      "p90": 0.8058746457099915
+    },
+    "contact_physx_capture_lag_s": {
+      "p50": 0.014999999664723873,
+      "p90": 0.01849999837577343
+    },
+    "contact_physx_contact_point_speed_delta": {
+      "p50": 0.03713022544980049,
+      "p90": 0.08651372045278549
+    },
+    "contact_physx_data_valid": {
+      "p50": 1.0,
+      "p90": 1.0
+    },
+    "contact_physx_force": {
+      "p50": 1.7532955408096313,
+      "p90": 3.6397218704223633
+    },
+    "contact_physx_measured_restitution": {
+      "p50": 0.0,
+      "p90": 0.2619735300540924
+    },
+    "contact_physx_normal_error_deg": {
+      "p50": 1.5556997060775757,
+      "p90": 25.337890625
+    },
+    "contact_physx_normal_impulse": {
+      "p50": 0.004383238963782787,
+      "p90": 0.009099304676055908
+    },
+    "contact_physx_normal_x": {
+      "p50": 0.34776943922042847,
+      "p90": 0.48639488220214844
+    },
+    "contact_physx_normal_y": {
+      "p50": 0.5876844525337219,
+      "p90": 0.6447787284851074
+    },
+    "contact_physx_normal_z": {
+      "p50": 0.7283465266227722,
+      "p90": 0.8903219103813171
+    },
+    "contact_physx_patch_substeps": {
+      "p50": 1.0,
+      "p90": 1.0
+    },
+    "contact_physx_point_radial_error": {
+      "p50": 0.05558033660054207,
+      "p90": 0.07328782975673676
+    },
+    "contact_physx_point_x": {
+      "p50": 21.679487228393555,
+      "p90": 33.54586410522461
+    },
+    "contact_physx_point_y": {
+      "p50": -6.327780723571777,
+      "p90": 26.291894912719727
+    },
+    "contact_physx_point_z": {
+      "p50": 1.1694562435150146,
+      "p90": 1.2023897171020508
+    },
+    "contact_physx_post_ball_angular_velocity_x": {
+      "p50": -37.58794403076172,
+      "p90": 12.023561477661133
+    },
+    "contact_physx_post_ball_angular_velocity_y": {
+      "p50": 9.182567596435547,
+      "p90": 18.024946212768555
+    },
+    "contact_physx_post_ball_angular_velocity_z": {
+      "p50": -14.231406211853027,
+      "p90": -7.296121597290039
+    },
+    "contact_physx_post_ball_speed": {
+      "p50": 1.4022846221923828,
+      "p90": 2.440061092376709
+    },
+    "contact_physx_post_ball_spin_speed": {
+      "p50": 47.35042190551758,
+      "p90": 59.30547332763672
+    },
+    "contact_physx_post_ball_velocity_x": {
+      "p50": -0.896971583366394,
+      "p90": 0.09831661731004715
+    },
+    "contact_physx_post_ball_velocity_y": {
+      "p50": -0.6054080724716187,
+      "p90": -0.27216672897338867
+    },
+    "contact_physx_post_ball_velocity_z": {
+      "p50": -0.7849293351173401,
+      "p90": 0.9300867319107056
+    },
+    "contact_physx_post_racket_point_velocity_x": {
+      "p50": -0.5525965094566345,
+      "p90": 0.17723402380943298
+    },
+    "contact_physx_post_racket_point_velocity_y": {
+      "p50": 0.059309057891368866,
+      "p90": 0.21515153348445892
+    },
+    "contact_physx_post_racket_point_velocity_z": {
+      "p50": -0.6228229999542236,
+      "p90": 0.15390819311141968
+    },
+    "contact_physx_pre_ball_angular_velocity_x": {
+      "p50": -1.198890209197998,
+      "p90": 0.6877778768539429
+    },
+    "contact_physx_pre_ball_angular_velocity_y": {
+      "p50": -47.025970458984375,
+      "p90": -36.088932037353516
+    },
+    "contact_physx_pre_ball_angular_velocity_z": {
+      "p50": -3.30989450958441e-07,
+      "p90": 5.754442554462003e-06
+    },
+    "contact_physx_pre_ball_speed": {
+      "p50": 1.2529149055480957,
+      "p90": 1.529317021369934
+    },
+    "contact_physx_pre_ball_surface_tangent_speed": {
+      "p50": 1.7314362525939941,
+      "p90": 2.0846359729766846
+    },
+    "contact_physx_pre_ball_velocity_x": {
+      "p50": -0.8993625640869141,
+      "p90": -0.8333314061164856
+    },
+    "contact_physx_pre_ball_velocity_y": {
+      "p50": 0.01737160235643387,
+      "p90": 0.12785880267620087
+    },
+    "contact_physx_pre_ball_velocity_z": {
+      "p50": 0.7120531797409058,
+      "p90": 0.9775532484054565
+    },
+    "contact_physx_pre_racket_point_velocity_x": {
+      "p50": -0.5578516125679016,
+      "p90": 0.1888784021139145
+    },
+    "contact_physx_pre_racket_point_velocity_y": {
+      "p50": 0.06218673288822174,
+      "p90": 0.20285604894161224
+    },
+    "contact_physx_pre_racket_point_velocity_z": {
+      "p50": -0.6391599178314209,
+      "p90": 0.15881000459194183
+    },
+    "contact_physx_separation": {
+      "p50": -6.0752034187316895e-05,
+      "p90": 0.0002799229696393013
+    },
+    "contact_physx_substep_link_model_residual": {
+      "p50": 0.24364623427391052,
+      "p90": 0.4064313769340515
+    },
+    "contact_physx_substep_normal_error_deg": {
+      "p50": 1.0516467094421387,
+      "p90": 25.32826805114746
+    },
+    "contact_physx_substep_outgoing_target_error": {
+      "p50": 4.857760429382324,
+      "p90": 5.429861068725586
+    },
+    "contact_physx_substep_point_model_residual": {
+      "p50": 0.24422605335712433,
+      "p90": 0.3936992883682251
+    },
+    "contact_physx_substep_point_normal_offset": {
+      "p50": -0.0005046408623456955,
+      "p90": -0.00010306803596904501
+    },
+    "contact_physx_substep_point_radial_error": {
+      "p50": 0.05791684612631798,
+      "p90": 0.07248308509588242
+    },
+    "contact_physx_substep_valid": {
+      "p50": 1.0,
+      "p90": 1.0
+    },
+    "contact_planner_normal_error_deg": {
+      "p50": 43.39753341674805,
+      "p90": 47.184303283691406
+    },
+    "contact_planner_position_error": {
+      "p50": 0.2146403193473816,
+      "p90": 0.3321358263492584
+    },
+    "contact_planner_velocity_direction_error_deg": {
+      "p50": 156.65921020507812,
+      "p90": 167.15756225585938
+    },
+    "contact_planner_velocity_error": {
+      "p50": 2.6541600227355957,
+      "p90": 2.9681010246276855
+    },
+    "contact_route_incoming_velocity_direction_error_deg": {
+      "p50": 1.8060191869735718,
+      "p90": 1.9329023361206055
+    },
+    "contact_route_incoming_velocity_error": {
+      "p50": 0.047507304698228836,
+      "p90": 0.05074933543801308
+    },
+    "contact_target_outgoing_speed": {
+      "p50": 3.7373170852661133,
+      "p90": 3.9222259521484375
+    },
+    "contact_target_outgoing_velocity_x": {
+      "p50": 3.2183945178985596,
+      "p90": 3.4093916416168213
+    },
+    "contact_target_outgoing_velocity_y": {
+      "p50": 0.42213359475135803,
+      "p90": 0.7751666307449341
+    },
+    "contact_target_outgoing_velocity_z": {
+      "p50": 1.9066920280456543,
+      "p90": 2.1089932918548584
+    },
+    "contact_time_to_strike": {
+      "p50": -0.4399999976158142,
+      "p90": -0.28000015020370483
+    },
+    "contact_true_target_error": {
+      "p50": 0.24828001856803894,
+      "p90": 0.31187954545021057
+    },
+    "contact_wire_impact_normal_gap_deg": {
+      "p50": 0.0,
+      "p90": 0.023059982806444168
+    }
+  },
+  "contact_metric_samples": {
+    "contact_physx_normal_x": [
+      0.3537136912345886,
+      0.2988485097885132,
+      0.31134217977523804,
+      -0.048460621386766434,
+      0.5385326147079468,
+      0.34776943922042847,
+      0.4516364336013794
+    ],
+    "contact_physx_normal_y": [
+      0.6418249607086182,
+      0.6492093801498413,
+      0.5876844525337219,
+      0.011227977462112904,
+      -0.20201927423477173,
+      0.59543776512146,
+      0.5153018236160278
+    ],
+    "contact_physx_normal_z": [
+      0.680402398109436,
+      0.6994403600692749,
+      0.7467884421348572,
+      0.9987620115280151,
+      0.8180286288261414,
+      0.7242308259010315,
+      0.7283465266227722
+    ],
+    "contact_physx_point_x": [
+      -8.501080513000488,
+      27.474817276000977,
+      33.55170440673828,
+      -2.651090621948242,
+      21.679487228393555,
+      9.487754821777344,
+      33.541969299316406
+    ],
+    "contact_physx_point_y": [
+      29.668712615966797,
+      -6.327780723571777,
+      -0.34372276067733765,
+      -24.266616821289062,
+      24.040685653686523,
+      -12.393915176391602,
+      -24.308862686157227
+    ],
+    "contact_physx_point_z": [
+      1.131937861442566,
+      1.1908817291259766,
+      1.1558747291564941,
+      1.192779302597046,
+      1.2168054580688477,
+      1.1575676202774048,
+      1.1694562435150146
+    ],
+    "contact_physx_post_ball_angular_velocity_x": [
+      -61.743526458740234,
+      -28.433570861816406,
+      -37.58794403076172,
+      4.229499340057373,
+      23.71467399597168,
+      -38.46902084350586,
+      -43.08490753173828
+    ],
+    "contact_physx_post_ball_angular_velocity_y": [
+      18.302099227905273,
+      -29.05714988708496,
+      17.1009578704834,
+      -21.69872283935547,
+      -36.21630859375,
+      9.182567596435547,
+      17.840177536010742
+    ],
+    "contact_physx_post_ball_angular_velocity_z": [
+      -38.695220947265625,
+      -12.27991771697998,
+      -23.168212890625,
+      0.17958426475524902,
+      -12.62946891784668,
+      -27.002613067626953,
+      -14.231406211853027
+    ],
+    "contact_physx_post_ball_spin_speed": [
+      75.13021850585938,
+      42.468605041503906,
+      47.35042190551758,
+      22.10781478881836,
+      45.094459533691406,
+      47.88868713378906,
+      48.75565719604492
+    ],
+    "contact_physx_post_ball_velocity_x": [
+      -0.8559960126876831,
+      -0.896971583366394,
+      -1.208058476448059,
+      -0.783833384513855,
+      1.4215437173843384,
+      -0.9188619256019592,
+      -1.235607385635376
+    ],
+    "contact_physx_post_ball_velocity_y": [
+      -0.6295515298843384,
+      -0.6054080724716187,
+      -1.1087019443511963,
+      0.019267065450549126,
+      -0.5101494789123535,
+      -0.4664556086063385,
+      -0.6590265035629272
+    ],
+    "contact_physx_post_ball_velocity_z": [
+      -0.57669597864151,
+      -0.8918100595474243,
+      -0.9424164295196533,
+      -1.079633116722107,
+      2.8927645683288574,
+      -0.3783629834651947,
+      -0.7849293351173401
+    ],
+    "contact_physx_post_racket_point_velocity_x": [
+      -0.5525965094566345,
+      -1.0532798767089844,
+      -0.39956873655319214,
+      -1.2426244020462036,
+      0.888588011264801,
+      -0.2970012426376343,
+      -0.6455796360969543
+    ],
+    "contact_physx_post_racket_point_velocity_y": [
+      0.059309057891368866,
+      -0.004851772449910641,
+      -0.15697042644023895,
+      -0.0568467453122139,
+      0.3115096688270569,
+      0.15091288089752197,
+      0.1270907074213028
+    ],
+    "contact_physx_post_racket_point_velocity_z": [
+      -0.589300811290741,
+      -0.7138181924819946,
+      -0.7619227170944214,
+      -0.44296786189079285,
+      1.0492236614227295,
+      -0.6228229999542236,
+      -0.7850131392478943
+    ],
+    "contact_physx_pre_ball_angular_velocity_x": [
+      -1.0077416896820068,
+      -1.198890209197998,
+      -4.248579025268555,
+      -5.1395158767700195,
+      -10.938126564025879,
+      1.5340971946716309,
+      0.12356583029031754
+    ],
+    "contact_physx_pre_ball_angular_velocity_y": [
+      -56.19318771362305,
+      -54.822391510009766,
+      -30.003231048583984,
+      -41.83971405029297,
+      -77.45026397705078,
+      -47.025970458984375,
+      -40.146060943603516
+    ],
+    "contact_physx_pre_ball_angular_velocity_z": [
+      1.1549914233910386e-06,
+      -7.523178169321909e-07,
+      -1.526786400063429e-05,
+      -6.233341082406696e-06,
+      1.1055669347115327e-05,
+      2.2202971194928978e-06,
+      -3.30989450958441e-07
+    ],
+    "contact_physx_pre_ball_surface_tangent_speed": [
+      2.062575101852417,
+      1.0564179420471191,
+      1.7314362525939941,
+      0.636928379535675,
+      1.4334636926651,
+      2.117727518081665,
+      1.9099761247634888
+    ],
+    "contact_physx_pre_ball_velocity_x": [
+      -0.9686642289161682,
+      -0.7615590691566467,
+      -0.8926189541816711,
+      -1.0511751174926758,
+      -0.8993625640869141,
+      -1.0303621292114258,
+      -0.8811795115470886
+    ],
+    "contact_physx_pre_ball_velocity_y": [
+      0.01737160235643387,
+      0.016654258593916893,
+      0.12639844417572021,
+      0.1291242390871048,
+      0.12701517343521118,
+      -0.03361283242702484,
+      -0.002712191315367818
+    ],
+    "contact_physx_pre_ball_velocity_z": [
+      0.8698349595069885,
+      0.13716356456279755,
+      1.13913094997406,
+      0.5563481450080872,
+      -1.3705843687057495,
+      0.7120531797409058,
+      0.836974024772644
+    ],
+    "contact_physx_pre_racket_point_velocity_x": [
+      -0.5578516125679016,
+      -1.053785800933838,
+      -0.4044765532016754,
+      -1.2500132322311401,
+      0.9342535734176636,
+      -0.3080376088619232,
+      -0.6475204229354858
+    ],
+    "contact_physx_pre_racket_point_velocity_y": [
+      0.06218673288822174,
+      -0.01801685243844986,
+      -0.17072924971580505,
+      -0.059315476566553116,
+      0.3009539544582367,
+      0.13745754957199097,
+      0.11561058461666107
+    ],
+    "contact_physx_pre_racket_point_velocity_z": [
+      -0.6081350445747375,
+      -0.7333985567092896,
+      -0.7701904773712158,
+      -0.48574233055114746,
+      1.1256400346755981,
+      -0.6391599178314209,
+      -0.8028457760810852
+    ],
+    "contact_physx_substep_link_model_residual": [
+      0.24364623427391052,
+      0.26276353001594543,
+      0.18783913552761078,
+      0.3264201581478119,
+      0.5264484286308289,
+      0.1358097940683365,
+      0.1586494743824005
+    ],
+    "contact_physx_substep_normal_error_deg": [
+      1.5702236890792847,
+      0.7835965752601624,
+      0.717370331287384,
+      48.36702346801758,
+      1.0516467094421387,
+      0.7778319120407104,
+      9.969122886657715
+    ],
+    "contact_physx_substep_point_model_residual": [
+      0.24422605335712433,
+      0.270761102437973,
+      0.18886664509773254,
+      0.32307061553001404,
+      0.4996424913406372,
+      0.1278199851512909,
+      0.1504960060119629
+    ],
+    "contact_physx_substep_point_radial_error": [
+      0.06236639991402626,
+      0.05791684612631798,
+      0.027014287188649178,
+      0.07944575697183609,
+      0.05781538039445877,
+      0.05104716494679451,
+      0.0678413137793541
+    ],
+    "contact_physx_substep_valid": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ]
+  },
+  "contact_sample_count": 7,
+  "duplicate_event_counts": {
+    "contact": 0,
+    "incoming_bounce": 0,
+    "net_cross": 0,
+    "opponent_bounce": 0,
+    "outgoing_landing": 0
+  },
+  "evaluation_seed": 20260731,
+  "event_counts": {
+    "abort": 0,
+    "contact": 7,
+    "incoming_bounce": 1400,
+    "incoming_net_collision": 0,
+    "landing_long": 0,
+    "landing_no_net": 7,
+    "landing_short": 7,
+    "landing_side": 0,
+    "net_cross": 0,
+    "opponent_bounce": 0,
+    "outgoing_landing": 7,
+    "reset_abort": 0,
+    "route_invalid": 0,
+    "route_unalignable": 0,
+    "serve": 1438,
+    "timeout": 183
+  },
+  "event_order_violations": {
+    "bounce_without_serve": 0,
+    "contact_without_bounce": 0,
+    "landing_without_contact": 0,
+    "net_without_contact": 0,
+    "opponent_bounce_without_net": 0
+  },
+  "event_rates_per_serve": {
+    "abort": 0.0,
+    "contact": 0.004867872044506259,
+    "incoming_bounce": 0.9735744089012517,
+    "incoming_net_collision": 0.0,
+    "landing_long": 0.0,
+    "landing_no_net": 0.004867872044506259,
+    "landing_short": 0.004867872044506259,
+    "landing_side": 0.0,
+    "net_cross": 0.0,
+    "opponent_bounce": 0.0,
+    "outgoing_landing": 0.004867872044506259,
+    "reset_abort": 0.0,
+    "timeout": 0.12726008344923506
+  },
+  "landing_metric_means": {
+    "landing_target_error": 2.113477979387556,
+    "landing_target_x_error": -2.0620005471365794,
+    "landing_target_y_error": -0.43144549642290386
+  },
+  "landing_metric_quantiles": {
+    "landing_target_error": {
+      "p10": 1.7766541242599487,
+      "p50": 2.2415287494659424,
+      "p90": 2.365431547164917
+    },
+    "landing_target_x_error": {
+      "p10": -2.2908012866973877,
+      "p50": -2.223994493484497,
+      "p90": -1.7127211093902588
+    },
+    "landing_target_y_error": {
+      "p10": -0.5816486477851868,
+      "p50": -0.41436195373535156,
+      "p90": -0.2833172678947449
+    }
+  },
+  "landing_sample_count": 7,
+  "mean_abs_launch_timing_error_s": 0.005121044389727384,
+  "num_envs": 128,
+  "num_steps": 1200,
+  "physical_contact_recovery": {
+    "counts": {
+      "attempts": 7,
+      "failure": 2,
+      "interrupted_by_next_contact": 0,
+      "reset_failure": 4,
+      "resolved": 7,
+      "success": 1,
+      "success_with_net_cross": 0,
+      "success_with_opponent_bounce": 0
+    },
+    "deadline_s": 1.1,
+    "pending_at_eval_end": 0,
+    "rates_per_resolved": {
+      "failure": 0.2857142857142857,
+      "reset_failure": 0.5714285714285714,
+      "success": 0.14285714285714285,
+      "success_with_net_cross": 0.0,
+      "success_with_opponent_bounce": 0.0
+    },
+    "required_consecutive_steps": 15,
+    "resolved_metric_summary": {
+      "minimum_feet_contact": {
+        "mean": 0.785714328289032,
+        "p50": 1.0,
+        "p90": 1.0
+      },
+      "peak_base_ang_vel": {
+        "mean": 1.5308501720428467,
+        "p50": 1.4938666820526123,
+        "p90": 2.62528920173645
+      },
+      "peak_base_tilt": {
+        "mean": 0.4717632830142975,
+        "p50": 0.4762984812259674,
+        "p90": 0.6909024119377136
+      },
+      "peak_com_x": {
+        "mean": 0.344711035490036,
+        "p50": 0.3914101719856262,
+        "p90": 0.5055114030838013
+      },
+      "peak_com_y": {
+        "mean": 0.20523197948932648,
+        "p50": 0.13787682354450226,
+        "p90": 0.39357608556747437
+      },
+      "peak_height_error": {
+        "mean": 0.15245220065116882,
+        "p50": 0.08143019676208496,
+        "p90": 0.27916419506073
+      },
+      "peak_station_error": {
+        "mean": 0.5257189273834229,
+        "p50": 0.5237292051315308,
+        "p90": 0.703850269317627
+      },
+      "peak_torso_ang_vel": {
+        "mean": 1.4209851026535034,
+        "p50": 1.524170160293579,
+        "p90": 2.129210948944092
+      }
+    }
+  },
+  "physx_substep_capture": {
+    "capture_error": null,
+    "contact_view_error": null,
+    "disabled": false,
+    "physics_dt_s": 0.0025,
+    "registered": true
+  },
+  "policy_reset_count": 1395,
+  "resolved_cycles": {
+    "active_at_eval_end": 117,
+    "counts": {
+      "contact": 7,
+      "contact_no_net": 7,
+      "landing_long": 0,
+      "landing_no_net": 7,
+      "landing_short": 7,
+      "landing_side": 0,
+      "net_cross": 0,
+      "net_no_opponent_bounce": 0,
+      "no_contact": 183,
+      "opponent_bounce": 0,
+      "total": 190
+    },
+    "rates": {
+      "contact": 0.03684210526315789,
+      "contact_no_net": 0.03684210526315789,
+      "landing_long": 0.0,
+      "landing_no_net": 0.03684210526315789,
+      "landing_short": 0.03684210526315789,
+      "landing_side": 0.0,
+      "net_cross": 0.0,
+      "net_no_opponent_bounce": 0.0,
+      "no_contact": 0.9631578947368421,
+      "opponent_bounce": 0.0
+    }
+  },
+  "route_generation": {
+    "attempts": 1438,
+    "invalid": 0,
+    "served": 1438,
+    "served_rate": 1.0,
+    "unalignable": 0
+  }
+}

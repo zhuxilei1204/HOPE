@@ -1,0 +1,41 @@
+# Conservative continuation from model_19495.
+#
+# Preserve the validated no-command active-balance task exactly. Increase only
+# backhand exposure and side-gated contact shaping, with a small contact-conditioned
+# net-margin term. No strike balance, arm rate, normal, or termination changes.
+
+defaults:
+  - HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionNormal114B17996ReadyBalancePerturbedV1
+  - _self_
+
+name: HOPEPingPongM19495ReadyBalanceBackhandV2
+
+overrides:
+  # Motion order: FH raised, BH raised, FH translate, BH translate.
+  commands.motion.clip_sampling_weights: [0.20, 0.30, 0.20, 0.30]
+  commands.motion.core_clip_count: 4
+
+  # The baseline already has strong all-side contact shaping. This is only a
+  # modest backhand residual, not a replacement objective.
+  rewards.backhand_soft_ball_contact.weight: 0.90
+
+  # Address contact-without-net while keeping the signal contact-conditioned.
+  rewards.contact_net_margin.weight: 0.35
+  rewards.contact_net_margin.params:
+    command_name: racket_target
+    pos_std: 0.17
+    approach_speed: 0.08
+    approach_std: 0.80
+    normal_speed: -0.05
+    normal_std: 0.85
+    window_s: 0.20
+    min_forward_speed: 2.05
+    forward_std: 0.38
+    min_upward_speed: 0.95
+    upward_std: 0.38
+    min_clearance: 0.03
+    clearance_std: 0.07
+    swing_side: 0.0
+    start_step: 0
+    warmup_steps: 1200
+    start_scale: 0.15

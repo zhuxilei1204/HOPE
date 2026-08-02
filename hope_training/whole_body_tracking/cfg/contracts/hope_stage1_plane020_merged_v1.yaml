@@ -1,0 +1,85 @@
+version: hope_stage1_plane020_merged_v3
+actor_observation: hope_pingpong_normal114
+action_dimension: 31
+control_hz: 50
+episode_seconds: 10.0
+motion_count: 2
+continuous_wrap: true
+simulator_ball: false
+analytic_outcome_events: true
+planner_hit_plane_table_x_m: 0.20
+
+required_nonzero_rewards:
+  - alive
+  - upright
+  - imitation
+  - planner_racket_task_space_crossfade
+  - prestrike_racket_progress
+  - near_impact_planner_velocity_progress
+  - racket_position
+  - backhand_racket_position
+  - racket_velocity
+  - blade_direction
+  - exact_impact_planner_task_space_alignment
+  - prestrike_station_progress
+  - pre_strike_station
+  - health_gated_soft_ball_contact
+  - health_gated_backhand_soft_ball_contact
+  - targeted_strike_attempt
+  - strike_inactivity
+  - health_gated_ball_contact
+  - health_gated_net_cross
+  - health_gated_opponent_bounce
+  - healthy_trunk_support
+  - lower_body_support
+  - strike_balance
+  - post_strike_base_ang_vel
+  - recovery_health
+  - no_command_ready_stability
+  - operational_joint_margin
+  - joint_target_slew
+  - actuator_waist_feasibility
+  - actuator_right_arm_feasibility
+  - actuator_leg_feasibility
+  - phase_action_overflow
+  - phase_action_rate_waist
+  - phase_action_rate_upper
+  - phase_action_rate_legs
+  - joint_limit
+  - undesired_contacts
+  - feet_contact_slip
+  - table_no_touch
+  - termination_penalty
+
+forbidden_reward_terms:
+  - ball_contact
+  - net_cross
+  - opponent_bounce
+  - impact_outgoing_velocity
+  - physical_outcome
+  - cycle_success_bonus
+  - cycle_v2_ready_success_bonus
+  - deferred_recovery_outcome_bonus
+  - phase_lower_body_motion_prior
+
+reward_budget:
+  # Approximate unscaled return over one 3.02 s clip at perfect scores.  This
+  # guards ratios, not an exact Isaac reward-manager integration.
+  task_window_steps: 31
+  prestrike_progress_steps: 45
+  recovery_steps: 75
+  task_window_weight: 5.70
+  progress_weight: 2.80
+  event_weight: 18.70
+  persistent_ready_weight: 0.12
+  strike_balance_weight: 0.65
+  required_active_over_idle_ratio: 3.0
+
+curriculum:
+  source: resolved_analytic_swing_events
+  initial_forehand_y: [-0.53, -0.38]
+  initial_backhand_y: [-0.12, 0.00]
+  motion_seed_blend: 0.0
+  min_resolved_events: 4096
+  required_good_checks: 2
+  advance_step: 0.10

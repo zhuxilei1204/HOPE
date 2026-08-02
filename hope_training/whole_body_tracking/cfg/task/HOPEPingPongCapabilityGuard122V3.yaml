@@ -1,0 +1,87 @@
+# Capability-preserving recovery fine-tune from the validated model_22750.
+#
+# The V2 routes treated a 20 cm near miss as a successful attempt and let the
+# appended stability columns bypass the actor anchor. This task keeps generic
+# recovery shaping small; the existing contact/net/return-conditioned cycle
+# rewards remain the dominant way to earn additional recovery return.
+
+defaults:
+  - HOPEPingPongM22750StabilityFeedback122HealthImpactH1
+  - _self_
+
+name: HOPEPingPongCapabilityGuard122V3
+actor_obs_contract: hope_pingpong_stability122
+
+overrides:
+  commands.racket_target.table_workspace_motion_seed_blend_start: 0.0
+  commands.racket_target.table_workspace_motion_seed_end_level: 0.0
+  commands.racket_target.healthy_three_stage_enabled: false
+  commands.racket_target.targeted_attempt_radius: 0.12
+  commands.racket_target.targeted_attempt_min_approach_speed: 0.08
+  commands.racket_target.ability_curriculum_use_targeted_attempt: true
+
+  # A near-target swing remains a small exploration signal, not a substitute
+  # for rigid contact or a successful return.
+  rewards.targeted_strike_attempt.weight: 0.60
+  rewards.targeted_strike_attempt.params:
+    command_name: racket_target
+    minimum_health_multiplier: 0.40
+  rewards.strike_inactivity.weight: -1.0
+
+  # Preserve a bounded recovery floor after a real attempt. The much larger
+  # post_contact/post_net/post_return and cycle rewards inherited from the
+  # source task still require physical outcome events.
+  rewards.follow_through_recovery.weight: 0.25
+  rewards.follow_through_recovery.params:
+    command_name: racket_target
+    std: 0.46
+    station_std: 0.25
+    use_dynamic_station: true
+    require_targeted_attempt: true
+  rewards.recovery_health.weight: 0.35
+  rewards.recovery_health.params:
+    command_name: racket_target
+    height_std: 0.095
+    upright_std: 0.26
+    lin_vel_std: 0.24
+    ang_vel_std: 0.70
+    station_std: 0.21
+    use_dynamic_station: true
+    require_targeted_attempt: true
+  rewards.next_ball_readiness.weight: 0.45
+  rewards.next_ball_readiness.params:
+    command_name: racket_target
+    height_std: 0.10
+    upright_std: 0.28
+    lin_vel_std: 0.25
+    ang_vel_std: 0.75
+    station_std: 0.22
+    racket_vel_std: 0.75
+    arm_pos_std: 0.35
+    arm_ori_std: 0.80
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    early_prestrike_window_steps: 18
+    require_targeted_attempt: true
+  rewards.next_swing_ready_bonus.weight: 0.45
+  rewards.next_swing_ready_bonus.params:
+    command_name: racket_target
+    window_steps: 18
+    height_std: 0.09
+    upright_std: 0.24
+    lin_vel_std: 0.22
+    ang_vel_std: 0.64
+    station_std: 0.19
+    racket_vel_std: 0.62
+    arm_pos_std: 0.32
+    arm_ori_std: 0.72
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    require_targeted_attempt: true
+
+  commands.racket_target.ability_curriculum_require_healthy_impact: true
+  commands.racket_target.cycle_v2_require_healthy_impact: true

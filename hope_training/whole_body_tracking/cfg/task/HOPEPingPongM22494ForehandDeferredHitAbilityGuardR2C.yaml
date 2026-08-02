@@ -1,0 +1,47 @@
+# R2C keeps the R2 deferred collision objective but prevents abrupt READY
+# transitions and refuses advancement when hitting ability degrades.
+
+defaults:
+  - HOPEPingPongM22494ForehandDeferredHitR2
+  - _self_
+
+name: HOPEPingPongM22494ForehandDeferredHitAbilityGuardR2C
+
+overrides:
+  commands.racket_target.post_contact_ready_curriculum_enabled: true
+  commands.racket_target.post_contact_ready_curriculum_start_level: 0
+
+  # Intermediate stages change the dynamic envelope gradually. The signed
+  # torso range, COM bounds, station bound, and arm READY region stay strict.
+  commands.racket_target.post_contact_ready_curriculum_max_torso_ang_vel:
+    [0.90, 0.84, 0.78, 0.72, 0.68, 0.64, 0.60]
+  commands.racket_target.post_contact_ready_curriculum_max_base_lin_vel:
+    [0.22, 0.21, 0.20, 0.195, 0.19, 0.185, 0.18]
+  commands.racket_target.post_contact_ready_curriculum_max_base_ang_vel:
+    [1.00, 0.90, 0.82, 0.75, 0.68, 0.61, 0.55]
+  commands.racket_target.post_contact_ready_curriculum_max_racket_speed:
+    [1.20, 1.12, 1.05, 1.00, 0.95, 0.925, 0.90]
+  commands.racket_target.post_contact_ready_curriculum_min_feet_contact:
+    [0.90, 0.93, 0.95, 0.965, 0.98, 0.985, 0.99]
+  commands.racket_target.post_contact_ready_curriculum_required_consecutive_steps:
+    [3, 4, 5, 6, 7, 8, 10]
+  commands.racket_target.post_contact_ready_curriculum_deadline_steps:
+    [90, 88, 85, 82, 80, 75, 70]
+
+  # Advancement is event-driven. The next-stage physical envelope must already
+  # be reachable under a shadow gate before the active reward becomes harder.
+  commands.racket_target.post_contact_ready_curriculum_advance_success_thresholds:
+    [0.45, 0.45, 0.48, 0.50, 0.52, 0.55]
+  commands.racket_target.post_contact_ready_curriculum_min_resolved_events:
+    [16384, 24576, 32768, 40960, 49152, 65536]
+  commands.racket_target.post_contact_ready_curriculum_shadow_success_thresholds:
+    [0.12, 0.12, 0.10, 0.10, 0.08, 0.08]
+  commands.racket_target.post_contact_ready_curriculum_required_advance_checks: 8
+
+  # Every valid completed strike command contributes to these guards, including
+  # misses. A policy cannot unlock an easier-to-exploit stable stage by idling.
+  commands.racket_target.post_contact_ready_curriculum_min_targeted_attempt_ema: 0.50
+  commands.racket_target.post_contact_ready_curriculum_min_return_success_ema: 0.40
+  commands.racket_target.post_contact_ready_curriculum_min_completed_swings: 8192
+  commands.racket_target.post_contact_ready_curriculum_ema_rate: 0.05
+  commands.racket_target.post_contact_ready_curriculum_hit_ema_rate: 0.05

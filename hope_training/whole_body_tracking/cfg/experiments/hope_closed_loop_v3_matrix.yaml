@@ -1,0 +1,300 @@
+schema_version: 1
+matrix_id: hope_closed_loop_v3_matrix
+status: blocked_preflight_only
+created: "2026-07-31"
+long_training_authorized: false
+
+contracts:
+  contact: hope_observable_contact_v1
+  action: bounded_effective_v2
+  migration: hope_policy_migration_v1
+  task: hope_training_task_v1
+  validation_report: analysis/closed_loop_v2_20260731/contracts_validation.json
+  require_train_ready_exit_code_zero: true
+
+blocking_gates:
+  - id: G_N1_OPERATIONAL_LIMITS
+    pass_when:
+      - calibrated_operational_limit_file_exists
+      - default_and_all_accepted_motion_inside
+      - forehand_and_backhand_full_chain_ik_inside
+      - zero_offset_delay_braking_measurements_present
+  - id: G_N2_CONTACT_DISTRIBUTION
+    pass_when:
+      - weak_physical_contacts_at_least_30
+      - independent_real_sessions_at_least_3
+      - session_group_holdout_at_least_10
+      - holdout_90pct_coverage_between_0p85_and_0p95
+      - tangent_mean_bias_mps_at_most_0p20
+  - id: G_N3_POLICY_INTEGRATION
+    pass_when:
+      - squashed_ppo_log_probability_tested
+      - operational_decoder_train_eval_deploy_hash_equal
+      - effective_feedback_round_trip_tested
+      - onnx_metadata_contains_contract_hashes
+  - id: G_DEPLOY_TRANSFORM
+    pass_when:
+      - table_transform_hash_frozen
+      - racket_tcp_and_normal_transform_verified
+      - planner_timestamp_contract_verified
+
+frozen_reference:
+  id: REF_B19495_LEGACY
+  training_updates: false
+  role:
+    - capability_floor
+    - distillation_teacher
+    - frozen_common_manifest_replay
+  onnx_sha256: 87ed3b2bab4d828d0f2661757784719f2d108bb83a031636d071f47e01198b38
+  checkpoint_sha256: 9af375eee169da3777c20b03c4a60687bf8f75fae5b4d0bd1b7f5f7ad6600072
+
+common_training_contract:
+  task_contract: hope_training_task_v1
+  observation_contract: hope_pingpong_normal114
+  action_contract: bounded_effective_v2
+  policy_hz: 50
+  num_envs_main: 1536
+  rollout_steps: 64
+  rollout_samples_per_iteration: 98304
+  episode_duration_s_range: [30.0, 60.0]
+  curriculum_driver: capability_ema
+  curriculum_iteration_schedule: forbidden
+  optimizer:
+    learning_rate: 0.0001
+    desired_kl: 0.005
+    clip_param: 0.12
+    entropy_coef: 0.004
+    gamma: 0.995
+    lambda: 0.97
+    max_grad_norm: 1.0
+  seeds: [17, 31, 47]
+  checkpoint_metadata_required:
+    - git_commit
+    - dirty_diff_hash
+    - contact_contract_sha256
+    - action_contract_sha256
+    - migration_contract_sha256
+    - task_contract_sha256
+    - experiment_matrix_sha256
+    - operational_limits_sha256
+    - decoder_sha256
+    - joint_order_sha256
+    - motion_manifest_sha256
+    - command_manifest_sha256
+
+initialization_ab:
+  causal_variable: initialization
+  all_other_task_action_reward_motion_and_optimizer_settings_equal: true
+  branches:
+    - id: CLV3_INIT_A_B19495_DISTILLED
+      initialization: bounded_student_distilled_from_b19495_q_des_final
+      actor:
+        source: migration_stage_M2_passed_student
+      critic: reinitialized
+      optimizer: reset
+      forbidden:
+        - load_teacher_optimizer
+        - raw_action_distillation
+        - runtime_raw_to_effective_switch
+    - id: CLV3_INIT_B_SCRATCH_SAFE
+      initialization: scratch_bounded_student
+      actor:
+        hidden_layers: default_framework_initialization
+        output_weight: zero
+        output_bias: atanh_default_q_in_operational_coordinates
+        first_deterministic_q_des: default_q
+      critic: reinitialized
+      optimizer: reset
+      forbidden:
+        - generic_zero_output_bias
+        - legacy_checkpoint_weights
+
+migration_preflight:
+  - id: M0_CAPTURE
+    branch: CLV3_INIT_A_B19495_DISTILLED
+    policy_updates: false
+    output: frozen_teacher_replay_dataset
+    gates:
+      - required_dataset_fields_complete
+      - canonical_joint_order_verified
+      - teacher_q_des_reconstruction_error_rad_max_1e-6
+  - id: M1_SUPERVISED
+    branch: CLV3_INIT_A_B19495_DISTILLED
+    environment: replay_only
+    maximum_epochs: 100
+    gates:
+      - feasible_teacher_frame_fraction_reported
+      - q_des_holdout_p95_rad_at_most_0p05
+      - no_silent_projection
+  - id: M2_SHADOW
+    branch: CLV3_INIT_A_B19495_DISTILLED
+    policy_updates: false
+    simulators:
+      - isaac_physical
+      - mujoco
+    gates:
+      - teacher_contact_relative_drop_at_most_0p10
+      - no_fall
+      - no_persistent_saturation
+
+training_budgets:
+  note: >-
+    Iterations are ceilings for diagnosis, never curriculum transitions.
+    A stage stops immediately on a rollback condition.
+  stages:
+    - id: T0_STATIC_AND_REPLAY
+      iterations: 0
+      required_before:
+        - all_blocking_gates_pass
+      gates:
+        - unit_tests_pass
+        - lifecycle_replay_pass
+        - fixed_teacher_replay_metrics_reproduced
+        - no_training_process_running
+    - id: T1_SMOKE
+      num_envs: 256
+      rollout_steps: 64
+      max_iterations: 100
+      seeds: [17]
+      gates:
+        - no_nan_or_inf
+        - mechanical_emergency_clip_zero
+        - lifecycle_phase_occupancy_nonzero
+        - attempt_contact_recovery_events_nonzero
+        - reward_event_counts_match_diagnostics
+    - id: T2_FORGETTING_CHECK
+      num_envs: 1536
+      rollout_steps: 64
+      max_iterations: 300
+      seeds: [17, 31, 47]
+      gates:
+        - no_fall_rate_at_least_0p99
+        - valid_command_attempt_rate_not_collapsed
+        - contact_not_decreasing_two_evaluations
+        - operational_saturation_within_gate
+    - id: T3_CAUSAL_PILOT
+      num_envs: 1536
+      rollout_steps: 64
+      max_iterations: 1500
+      seeds: [17, 31, 47]
+      gates:
+        - both_initialization_branches_evaluated
+        - healthy_contact_and_recovery_both_nonregressing
+        - isaac_physical_and_mujoco_directionally_agree
+    - id: T4_CHECKPOINT
+      num_envs: 1536
+      rollout_steps: 64
+      max_iterations: 3000
+      continuation_requires:
+        - at_least_one_branch_passes_joint_hit_recovery_gate
+        - no_hard_safety_regression
+        - no_planner_execution_regression
+    - id: T5_LONG
+      num_envs: 1536
+      rollout_steps: 64
+      max_iterations: 6000
+      enabled: false
+      enable_only_after:
+        - T4_CHECKPOINT_passed
+        - user_reviewed_fixed_eval_video
+        - long_training_authorized_true
+
+fixed_evaluation:
+  common_command_and_seed_manifest_required: true
+  suites:
+    - id: E_READY_NO_COMMAND
+      duration_s: 60.0
+      command_present: false
+      metrics:
+        - fall
+        - base_pitch_roll
+        - base_and_torso_angular_velocity
+        - waist_leg_5_20hz_power
+        - operational_saturation
+    - id: E_ISAAC_PHYSICAL_CORE
+      serves: 40
+      lifecycle: realistic_command_gaps
+      first_bounce_ordering: required
+    - id: E_MUJOCO_FIXED_COMMAND
+      serves: 40
+      planner: disabled
+      command_manifest: same_as_isaac
+    - id: E_MUJOCO_PLANNER_REPLAY
+      serves: 40
+      planner_lifecycle: V4_replay
+      missing_target_fallback: deploy_semantics
+    - id: E_PLANNER_EXECUTION
+      contact_window_only: true
+      metrics:
+        - racket_position_error_m
+        - contact_speed_error_mps
+        - velocity_direction_error_deg
+        - normal_error_deg
+        - timing_error_ms
+        - outgoing_ball_residual_mps
+    - id: E_CONTINUOUS
+      serve_counts: [5, 40]
+      state_reset_between_serves: false
+      metrics:
+        - no_fall_completion
+        - cycle_streak
+        - recovery_resolved
+        - posture_drift
+        - saturation_accumulation
+
+promotion_thresholds_forehand_core:
+  mujoco_contact_rate_min: 0.85
+  mujoco_net_cross_rate_min: 0.65
+  fall_rate_max: 0.01
+  healthy_impact_rate_min: 0.80
+  recovery_resolved_rate_min: 0.70
+  five_ball_no_fall_completion_min: 0.80
+  racket_position_error_m_max: 0.04
+  normal_error_deg_max: 12.0
+  timing_error_ms_max: 20.0
+  contact_speed_error_mps_max: 0.50
+  isaac_physical_mujoco_success_gap_percentage_points_max: 15.0
+  mechanical_emergency_clip_rate_max: 0.0
+
+automatic_stop_and_rollback:
+  compare_to:
+    - frozen_reference
+    - previous_promoted_checkpoint
+  conditions:
+    - fall_rate_increase_percentage_points_gt_2
+    - net_cross_drop_percentage_points_gt_10
+    - operational_saturation_increase_percentage_points_gt_10
+    - ready_improves_while_attempt_or_contact_drops
+    - isaac_improves_while_mujoco_continuous_degrades
+    - planner_execution_error_regresses_two_evaluations
+    - reward_event_count_does_not_match_diagnostic_event_count
+  response:
+    - stop_training
+    - preserve_checkpoint_and_logs
+    - mark_branch_not_promoted
+    - do_not_change_multiple_reward_weights
+
+post_forehand_extensions:
+  order:
+    - id: X1_FOREHAND_LATERAL
+      single_new_variable: wider_y_and_shared_active_station_solver
+      motion_change_same_experiment: forbidden
+    - id: X2_VALIDATED_FOOTWORK_PRIOR
+      single_new_variable: accepted_lower_body_motion_prior
+      workspace_change_same_experiment: forbidden
+    - id: X3_BACKHAND_CORE
+      single_new_variable: side_and_validated_backhand_prior
+    - id: X4_SIDE_TRANSITION
+      single_new_variable: forehand_backhand_transition_lifecycle
+    - id: X5_PLANNER_ROBUSTNESS
+      single_new_variable: lifecycle_noise_capability_level
+    - id: X6_FULL_TABLE
+      single_new_variable: full_width_workspace
+
+execution:
+  tmux_session: zxl
+  launcher_created: false
+  reason_launcher_not_created: >-
+    The matrix is blocked by calibrated operational limits, real contact
+    holdout data, bounded PPO integration, and deployment transform hashes.
+  no_gpu_job_started: true

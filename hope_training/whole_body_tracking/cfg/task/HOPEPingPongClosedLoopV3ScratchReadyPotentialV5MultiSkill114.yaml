@@ -1,0 +1,23 @@
+defaults:
+  - HOPEPingPongClosedLoopV3ScratchMultiSkill114
+  - _self_
+
+name: HOPEPingPongClosedLoopV3ScratchReadyPotentialV5MultiSkill114
+
+# V5 changes only READY credit assignment. The actor contract, five motions,
+# independent one-bounce routes, planner command, strike rewards, resets, and
+# hard safety terms remain inherited from the audited V4 task.
+overrides:
+  # With no planner command there is no future hit station to expose. Hold the
+  # deploy station until command acquisition reveals the dynamic station.
+  commands.racket_target.healthy_stage_use_dynamic_station_during_ready: false
+  commands.racket_target.no_command_ready_progress_clip: 0.05
+
+  # Signed potential shaping: entering READY pays zero, improvement is
+  # positive, deterioration is negative, and a stable hold pays zero.
+  rewards.no_command_ready_progress.weight: 1.5
+  rewards.no_command_ready_progress.params:
+    command_name: racket_target
+    start_step: 0
+    warmup_steps: 0
+    start_scale: 1.0

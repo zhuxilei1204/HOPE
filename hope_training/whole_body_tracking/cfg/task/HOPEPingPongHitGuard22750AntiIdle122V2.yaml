@@ -1,0 +1,31 @@
+defaults:
+  - HOPEPingPongStrikeRecoveryAntiIdleCommon122V2
+  - _self_
+
+name: HOPEPingPongHitGuard22750AntiIdle122V2
+actor_obs_contract: hope_pingpong_stability122
+
+overrides:
+  # Keep the validated model-22750 command/reset distribution. This route
+  # differs from Protected22750 only in how the fixed strike-reward budget is
+  # divided between exploration and impact-health conditioning.
+  commands.racket_target.table_workspace_motion_seed_blend_start: 0.0
+  commands.racket_target.table_workspace_motion_seed_end_level: 0.0
+  commands.racket_target.healthy_three_stage_enabled: false
+
+  # H1 uses a 40/60 raw/health-conditioned split. A random or temporarily
+  # imperfect impact can then lose most of its strike gradient. Use 60/40 here
+  # while preserving every combined maximum and keeping healthy impact as the
+  # curriculum/cycle success requirement.
+  rewards.soft_ball_contact.weight: 3.0
+  rewards.health_gated_soft_ball_contact.weight: 2.0
+  rewards.ball_contact.weight: 0.90
+  rewards.health_gated_ball_contact.weight: 0.60
+  rewards.net_cross.weight: 1.08
+  rewards.health_gated_net_cross.weight: 0.72
+  rewards.opponent_bounce.weight: 1.32
+  rewards.health_gated_opponent_bounce.weight: 0.88
+
+  # Strengthen only the one-shot target-directed attempt signal. Generic
+  # recovery remains unavailable after an idle/no-strike cycle.
+  rewards.targeted_strike_attempt.weight: 2.5

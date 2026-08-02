@@ -58,13 +58,33 @@ def _resolve_motion_path(value: str) -> str:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--checkpoint", required=True, help="Local checkpoint (.pt) to evaluate.")
-    parser.add_argument("--task", default="HOPE-PingPong-AgibotA3-v0", help="Gym task id.")
+    parser.add_argument(
+        "--task",
+        default=None,
+        help="Gym task id. Defaults to task-yaml.gym_task.",
+    )
     parser.add_argument("--num-envs", type=int, default=256, help="Parallel environments.")
     parser.add_argument("--num-steps", type=int, default=4000, help="Policy steps to roll out.")
     parser.add_argument("--device", default="cuda:0", help="Compute device.")
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=20260731,
+        help="Deterministic environment/randomization seed.",
+    )
     parser.add_argument("--contact-radius", type=float, default=0.10, help="Racket-to-target contact gate (m).")
     parser.add_argument("--json-out", default=None, help="Also write {'success_rate': ...} to this file.")
+    parser.add_argument(
+        "--safety-envelope-json-out",
+        default=None,
+        help="Write cumulative targeted-recovery safety-envelope diagnostics.",
+    )
     parser.add_argument("--trace-csv", default=None, help="Write one Isaac environment's per-step diagnostics.")
+    parser.add_argument(
+        "--physical-shadow-json-out",
+        default=None,
+        help="Write rigid-ball shadow lifecycle/event diagnostics when that command term is active.",
+    )
     parser.add_argument("--trace-env", type=int, default=0, help="Environment index for --trace-csv.")
     parser.add_argument(
         "--joint-action-diag-csv",
@@ -83,6 +103,21 @@ def parse_args() -> argparse.Namespace:
         "--motion-manifest",
         default=None,
         help="TSV manifest with motion clips and optional strike/racket-target metadata.",
+    )
+    parser.add_argument(
+        "--fixed-workspace-level",
+        type=float,
+        default=None,
+        help="Diagnostic override in [0, 1] for table-workspace sampling.",
+    )
+    parser.add_argument(
+        "--fixed-ability-level",
+        type=float,
+        default=None,
+        help=(
+            "Diagnostic override in [0, 1] for command difficulty. Disables "
+            "the physical capability updater during evaluation."
+        ),
     )
     return parser.parse_args()
 
@@ -156,6 +191,20 @@ def main() -> int:
     if not os.path.isfile(checkpoint):
         raise FileNotFoundError(f"checkpoint not found: {checkpoint}")
 
+    task_cfg = _load_task_yaml_with_defaults(_resolve_task_yaml(args.task_yaml))
+    configured_task = OmegaConf.select(task_cfg, "gym_task")
+    task_id = str(args.task or configured_task or "")
+    if not task_id:
+        raise ValueError(
+            "no Gym task was provided and task YAML has no gym_task field"
+        )
+    if args.task is not None and configured_task is not None:
+        if str(args.task) != str(configured_task):
+            raise ValueError(
+                "--task conflicts with task-yaml.gym_task: "
+                f"{args.task!r} != {configured_task!r}"
+            )
+
     sys.argv = sys.argv[:1]
     from isaaclab.app import AppLauncher
 
@@ -181,19 +230,32 @@ def main() -> int:
         )
         from train import _apply_motion_metadata, _resolve_motion_plan
 
-        env_cfg = parse_env_cfg(args.task, device=args.device, num_envs=args.num_envs)
-        task_cfg = _load_task_yaml_with_defaults(_resolve_task_yaml(args.task_yaml))
+        env_cfg = parse_env_cfg(task_id, device=args.device, num_envs=args.num_envs)
+        env_cfg.seed = int(args.seed)
         applied = _apply_training_task_overrides(env_cfg, args.task_yaml)
         motion_args = argparse.Namespace(**vars(args))
         motion_args.task = task_cfg
         clips, motion_metadata = _resolve_motion_plan(motion_args)
         env_cfg.commands.motion.motion_file = clips if len(clips) > 1 else clips[0]
         _apply_motion_metadata(env_cfg, clips, motion_metadata, applied)
+        if args.fixed_workspace_level is not None:
+            workspace_level = float(args.fixed_workspace_level)
+            if not 0.0 <= workspace_level <= 1.0:
+                raise ValueError("--fixed-workspace-level must be in [0, 1]")
+            env_cfg.commands.racket_target.table_workspace_fixed_level = (
+                workspace_level
+            )
+        if args.fixed_ability_level is not None:
+            ability_level = float(args.fixed_ability_level)
+            if not 0.0 <= ability_level <= 1.0:
+                raise ValueError("--fixed-ability-level must be in [0, 1]")
+            if hasattr(env_cfg.rewards, "physical_capability_curriculum"):
+                env_cfg.rewards.physical_capability_curriculum = None
         print(f"[evaluate.py] applied {len(applied)} task override(s):", file=sys.stderr, flush=True)
         for line in applied:
             print(f"[evaluate.py]     {line}", file=sys.stderr, flush=True)
 
-        env = gym.make(args.task, cfg=env_cfg, render_mode=None)
+        env = gym.make(task_id, cfg=env_cfg, render_mode=None)
         base_env = env.unwrapped
         env = RslRlVecEnvWrapper(env)
 
@@ -212,7 +274,19 @@ def main() -> int:
         # target position (world), the achieved racket position AND velocity (world), the
         # time-to-strike, and the swing side.
         cmd = base_env.command_manager.get_term("racket_target")
+        if args.fixed_ability_level is not None:
+            cmd._ability_curriculum_level.fill_(float(args.fixed_ability_level))
         motion_cmd = base_env.command_manager.get_term("motion")
+        physical_shadow = None
+        if "physical_shadow" in base_env.command_manager.active_terms:
+            physical_shadow = base_env.command_manager.get_term(
+                "physical_shadow"
+            )
+        if args.physical_shadow_json_out and physical_shadow is None:
+            raise ValueError(
+                "--physical-shadow-json-out requires a task with the "
+                "'physical_shadow' command term"
+            )
         robot = base_env.scene["robot"]
         env_origins = base_env.scene.env_origins  # (N, 3)
         action_term = base_env.action_manager.get_term("joint_pos")
@@ -367,15 +441,602 @@ def main() -> int:
         prev_tts = read_state()[3].clone()
         task_counts = {"contact": 0, "net_cross": 0, "opponent_bounce": 0}
         analytic_accumulator = SuccessRate()
+        shadow_event_names = (
+            "serve",
+            "incoming_bounce",
+            "contact",
+            "net_cross",
+            "outgoing_landing",
+            "opponent_bounce",
+            "landing_short",
+            "landing_long",
+            "landing_side",
+            "landing_no_net",
+            "abort",
+            "timeout",
+            "route_unalignable",
+            "route_invalid",
+            "incoming_net_collision",
+            "reset_abort",
+            "command_refresh",
+        )
+        def scalar_counter():
+            return torch.zeros(
+                (), dtype=torch.long, device=base_env.device
+            )
+
+        shadow_event_counts = {
+            name: scalar_counter() for name in shadow_event_names
+        }
+        shadow_duplicate_counts = {
+            name: scalar_counter()
+            for name in (
+                "incoming_bounce",
+                "contact",
+                "net_cross",
+                "outgoing_landing",
+                "opponent_bounce",
+            )
+        }
+        shadow_order_violations = {
+            "bounce_without_serve": scalar_counter(),
+            "contact_without_bounce": scalar_counter(),
+            "net_without_contact": scalar_counter(),
+            "opponent_bounce_without_net": scalar_counter(),
+            "landing_without_contact": scalar_counter(),
+        }
+        shadow_contact_metric_names = (
+            "contact_true_target_error",
+            "contact_planner_position_error",
+            "contact_planner_velocity_error",
+            "contact_planner_velocity_direction_error_deg",
+            "contact_planner_normal_error_deg",
+            "contact_outgoing_velocity_error",
+            "contact_outgoing_speed",
+            "contact_target_outgoing_speed",
+            "contact_outgoing_speed_ratio",
+            "contact_outgoing_direction_error_deg",
+            "contact_outgoing_velocity_x",
+            "contact_outgoing_velocity_y",
+            "contact_outgoing_velocity_z",
+            "contact_target_outgoing_velocity_x",
+            "contact_target_outgoing_velocity_y",
+            "contact_target_outgoing_velocity_z",
+            "contact_incoming_velocity_error",
+            "contact_incoming_velocity_direction_error_deg",
+            "contact_route_incoming_velocity_error",
+            "contact_route_incoming_velocity_direction_error_deg",
+            "contact_actual_route_incoming_velocity_error",
+            "contact_command_normal_only_error",
+            "contact_command_training_model_error",
+            "contact_command_physics_model_error",
+            "contact_actual_training_model_residual",
+            "contact_actual_physics_model_residual",
+            "contact_actual_normal_only_model_residual",
+            "contact_actual_training_predicted_target_error",
+            "contact_actual_physics_predicted_target_error",
+            "contact_actual_normal_only_predicted_target_error",
+            "contact_force_direction_valid",
+            "contact_force_vs_racket_normal_angle_deg",
+            "contact_actual_force_direction_model_residual",
+            "contact_actual_force_direction_predicted_target_error",
+            "contact_physx_data_valid",
+            "contact_physx_force",
+            "contact_physx_separation",
+            "contact_physx_normal_error_deg",
+            "contact_physx_point_radial_error",
+            "contact_actual_physx_normal_model_residual",
+            "contact_actual_physx_normal_predicted_target_error",
+            "contact_physx_substep_valid",
+            "contact_physx_substep_normal_error_deg",
+            "contact_physx_substep_point_radial_error",
+            "contact_physx_substep_point_normal_offset",
+            "contact_physx_patch_substeps",
+            "contact_physx_normal_impulse",
+            "contact_physx_capture_lag_s",
+            "contact_physx_contact_point_speed_delta",
+            "contact_physx_substep_link_model_residual",
+            "contact_physx_substep_point_model_residual",
+            "contact_physx_substep_outgoing_target_error",
+            "contact_physx_measured_restitution",
+            "contact_physx_pre_ball_speed",
+            "contact_physx_post_ball_speed",
+            "contact_physx_point_x",
+            "contact_physx_point_y",
+            "contact_physx_point_z",
+            "contact_physx_normal_x",
+            "contact_physx_normal_y",
+            "contact_physx_normal_z",
+            "contact_physx_pre_ball_velocity_x",
+            "contact_physx_pre_ball_velocity_y",
+            "contact_physx_pre_ball_velocity_z",
+            "contact_physx_post_ball_velocity_x",
+            "contact_physx_post_ball_velocity_y",
+            "contact_physx_post_ball_velocity_z",
+            "contact_physx_pre_racket_point_velocity_x",
+            "contact_physx_pre_racket_point_velocity_y",
+            "contact_physx_pre_racket_point_velocity_z",
+            "contact_physx_post_racket_point_velocity_x",
+            "contact_physx_post_racket_point_velocity_y",
+            "contact_physx_post_racket_point_velocity_z",
+            "contact_physx_pre_ball_angular_velocity_x",
+            "contact_physx_pre_ball_angular_velocity_y",
+            "contact_physx_pre_ball_angular_velocity_z",
+            "contact_physx_post_ball_angular_velocity_x",
+            "contact_physx_post_ball_angular_velocity_y",
+            "contact_physx_post_ball_angular_velocity_z",
+            "contact_physx_pre_ball_surface_tangent_speed",
+            "contact_physx_post_ball_spin_speed",
+            "contact_impact_normal_error_deg",
+            "contact_wire_impact_normal_gap_deg",
+            "contact_face_radial_error",
+            "contact_time_to_strike",
+        )
+        shadow_contact_metric_sums = {
+            name: torch.zeros((), device=base_env.device)
+            for name in shadow_contact_metric_names
+        }
+        shadow_contact_metric_values = {
+            name: [] for name in shadow_contact_metric_names
+        }
+        shadow_contact_bucket_values = {
+            bucket: {
+                name: [] for name in shadow_contact_metric_names
+            }
+            for bucket in ("usable_center", "rim_or_edge")
+        }
+        shadow_landing_metric_names = (
+            "landing_target_error",
+            "landing_target_x_error",
+            "landing_target_y_error",
+        )
+        shadow_landing_metric_sums = {
+            name: torch.zeros((), device=base_env.device)
+            for name in shadow_landing_metric_names
+        }
+        shadow_landing_metric_values = {
+            name: [] for name in shadow_landing_metric_names
+        }
+        shadow_refresh_metric_names = (
+            "command_refresh_tts_s",
+            "command_refresh_position_delta",
+            "command_refresh_incoming_velocity_delta",
+            "command_refresh_timing_delta_s",
+            "command_refresh_racket_velocity_delta",
+            "command_refresh_normal_delta_deg",
+        )
+        shadow_refresh_metric_values = {
+            name: [] for name in shadow_refresh_metric_names
+        }
+        shadow_contact_sample_count = scalar_counter()
+        shadow_landing_sample_count = scalar_counter()
+        shadow_launch_timing_abs_sum = torch.zeros(
+            (), device=base_env.device
+        )
+        shadow_launch_sample_count = scalar_counter()
+        shadow_policy_reset_count = scalar_counter()
+        shadow_resolved_counts = {
+            "total": scalar_counter(),
+            "contact": scalar_counter(),
+            "net_cross": scalar_counter(),
+            "opponent_bounce": scalar_counter(),
+            "no_contact": scalar_counter(),
+            "contact_no_net": scalar_counter(),
+            "net_no_opponent_bounce": scalar_counter(),
+            "landing_short": scalar_counter(),
+            "landing_long": scalar_counter(),
+            "landing_side": scalar_counter(),
+            "landing_no_net": scalar_counter(),
+        }
+        shadow_cycle_active = torch.zeros(
+            args.num_envs, dtype=torch.bool, device=base_env.device
+        )
+        shadow_seen = {
+            name: torch.zeros(
+                args.num_envs, dtype=torch.bool, device=base_env.device
+            )
+            for name in shadow_duplicate_counts
+        }
+        shadow_recovery_pending = torch.zeros(
+            args.num_envs, dtype=torch.bool, device=base_env.device
+        )
+        shadow_recovery_elapsed = torch.zeros(
+            args.num_envs, dtype=torch.long, device=base_env.device
+        )
+        shadow_recovery_consecutive = torch.zeros(
+            args.num_envs, dtype=torch.long, device=base_env.device
+        )
+        shadow_recovery_net_latch = torch.zeros(
+            args.num_envs, dtype=torch.bool, device=base_env.device
+        )
+        shadow_recovery_opponent_latch = torch.zeros(
+            args.num_envs, dtype=torch.bool, device=base_env.device
+        )
+        shadow_recovery_deadline_steps = max(
+            1,
+            int(
+                round(
+                    float(
+                        cmd.cfg.post_contact_ready_durable_deadline_s
+                    )
+                    / float(base_env.step_dt)
+                )
+            ),
+        )
+        shadow_recovery_required_steps = int(
+            cmd.cfg.post_contact_ready_durable_required_consecutive_steps
+        )
+        shadow_recovery_counts = {
+            "attempts": scalar_counter(),
+            "resolved": scalar_counter(),
+            "success": scalar_counter(),
+            "failure": scalar_counter(),
+            "reset_failure": scalar_counter(),
+            "interrupted_by_next_contact": scalar_counter(),
+            "success_with_net_cross": scalar_counter(),
+            "success_with_opponent_bounce": scalar_counter(),
+        }
+        shadow_recovery_metric_names = (
+            "peak_base_tilt",
+            "peak_torso_ang_vel",
+            "peak_base_ang_vel",
+            "peak_height_error",
+            "peak_com_x",
+            "peak_com_y",
+            "peak_station_error",
+            "minimum_feet_contact",
+        )
+        shadow_recovery_current = {
+            name: torch.zeros(args.num_envs, device=base_env.device)
+            for name in shadow_recovery_metric_names
+        }
+        shadow_recovery_current["minimum_feet_contact"].fill_(1.0)
+        shadow_recovery_resolved_values = {
+            name: [] for name in shadow_recovery_metric_names
+        }
         for step in range(args.num_steps):
             with torch.inference_mode():
                 actions = policy(obs)
                 obs, _, dones, _ = env.step(actions)
             target_pos, racket_pos, racket_vel, tts, swing = read_state()
+            reset_now = dones.reshape(-1).to(
+                dtype=torch.bool, device=tts.device
+            )
+            shadow_policy_reset_count += reset_now.sum()
+            if physical_shadow is not None:
+                events = {
+                    name: getattr(physical_shadow, f"{name}_event")
+                    for name in shadow_event_names
+                }
+                serve_event = events["serve"]
+                shadow_cycle_active[serve_event] = True
+                for seen in shadow_seen.values():
+                    seen[serve_event] = False
+                shadow_launch_timing_abs_sum += (
+                    physical_shadow.launch_timing_error_s[
+                        serve_event
+                    ].abs().sum()
+                )
+                shadow_launch_sample_count += serve_event.sum()
+
+                for name, event in events.items():
+                    shadow_event_counts[name] += event.sum()
+                refresh_event = events["command_refresh"]
+                for name in shadow_refresh_metric_names:
+                    shadow_refresh_metric_values[name].append(
+                        getattr(physical_shadow, name)[refresh_event]
+                    )
+                for name, seen in shadow_seen.items():
+                    event = events[name]
+                    shadow_duplicate_counts[name] += (event & seen).sum()
+                    seen |= event
+
+                shadow_order_violations["bounce_without_serve"] += (
+                    events["incoming_bounce"] & (~shadow_cycle_active)
+                ).sum()
+                shadow_order_violations["contact_without_bounce"] += (
+                    events["contact"] & (~shadow_seen["incoming_bounce"])
+                ).sum()
+                shadow_order_violations["net_without_contact"] += (
+                    events["net_cross"] & (~shadow_seen["contact"])
+                ).sum()
+                shadow_order_violations[
+                    "opponent_bounce_without_net"
+                ] += (
+                    events["opponent_bounce"]
+                    & (~shadow_seen["net_cross"])
+                ).sum()
+                shadow_order_violations["landing_without_contact"] += (
+                    events["outgoing_landing"]
+                    & (~shadow_seen["contact"])
+                ).sum()
+                contact_event = events["contact"]
+                contact_count = contact_event.sum()
+                shadow_contact_sample_count += contact_count
+                exact_contact = (
+                    physical_shadow.contact_physx_substep_valid > 0.5
+                )
+                center_radial_error = torch.where(
+                    exact_contact,
+                    physical_shadow.contact_physx_substep_point_radial_error,
+                    physical_shadow.contact_face_radial_error,
+                )
+                center_contact_event = contact_event & (
+                    center_radial_error <= 0.061
+                )
+                for name in shadow_contact_metric_names:
+                    samples = getattr(physical_shadow, name)[contact_event]
+                    shadow_contact_metric_sums[name] += samples.sum()
+                    shadow_contact_metric_values[name].append(samples)
+                    shadow_contact_bucket_values["usable_center"][
+                        name
+                    ].append(
+                        getattr(physical_shadow, name)[
+                            center_contact_event
+                        ]
+                    )
+                    shadow_contact_bucket_values["rim_or_edge"][
+                        name
+                    ].append(
+                        getattr(physical_shadow, name)[
+                            contact_event & (~center_contact_event)
+                        ]
+                    )
+                landing_event = events["outgoing_landing"]
+                shadow_landing_sample_count += landing_event.sum()
+                for name in shadow_landing_metric_names:
+                    samples = getattr(physical_shadow, name)[landing_event]
+                    shadow_landing_metric_sums[name] += samples.sum()
+                    shadow_landing_metric_values[name].append(samples)
+                base_tilt = torch.linalg.norm(
+                    robot.data.projected_gravity_b[:, :2], dim=-1
+                )
+                torso_ang_vel = cmd.metrics[
+                    "impact_health_torso_ang_vel"
+                ]
+                base_ang_vel = cmd.metrics["recovery_base_ang_vel"]
+                height_error = cmd.metrics["recovery_height_error"]
+                com_x = cmd.metrics["impact_health_com_x"]
+                com_y = cmd.metrics["impact_health_com_y"]
+                feet_contact = cmd.metrics["recovery_feet_contact_frac"]
+                station_error = cmd.metrics["recovery_station_error"]
+
+                interrupted = contact_event & shadow_recovery_pending
+                shadow_recovery_counts[
+                    "interrupted_by_next_contact"
+                ] += interrupted.sum()
+                shadow_recovery_pending[interrupted] = False
+
+                shadow_recovery_pending[contact_event] = True
+                shadow_recovery_elapsed[contact_event] = 0
+                shadow_recovery_consecutive[contact_event] = 0
+                shadow_recovery_net_latch[contact_event] = False
+                shadow_recovery_opponent_latch[contact_event] = False
+                shadow_recovery_counts["attempts"] += contact_count
+
+                recovery_samples = {
+                    "peak_base_tilt": base_tilt,
+                    "peak_torso_ang_vel": torso_ang_vel,
+                    "peak_base_ang_vel": base_ang_vel,
+                    "peak_height_error": height_error,
+                    "peak_com_x": com_x,
+                    "peak_com_y": com_y,
+                    "peak_station_error": station_error,
+                    "minimum_feet_contact": feet_contact,
+                }
+                for name, values in recovery_samples.items():
+                    if name == "minimum_feet_contact":
+                        shadow_recovery_current[name][contact_event] = (
+                            values[contact_event]
+                        )
+                    else:
+                        shadow_recovery_current[name][contact_event] = (
+                            values[contact_event]
+                        )
+
+                shadow_recovery_net_latch |= (
+                    events["net_cross"] & shadow_recovery_pending
+                )
+                shadow_recovery_opponent_latch |= (
+                    events["opponent_bounce"]
+                    & shadow_recovery_pending
+                )
+                recovery_active = (
+                    shadow_recovery_pending & (~contact_event)
+                )
+                shadow_recovery_elapsed[recovery_active] += 1
+                for name, values in recovery_samples.items():
+                    if name == "minimum_feet_contact":
+                        shadow_recovery_current[name][recovery_active] = (
+                            torch.minimum(
+                                shadow_recovery_current[name][recovery_active],
+                                values[recovery_active],
+                            )
+                        )
+                    else:
+                        shadow_recovery_current[name][recovery_active] = (
+                            torch.maximum(
+                                shadow_recovery_current[name][recovery_active],
+                                values[recovery_active],
+                            )
+                        )
+
+                first_terminal_window_step = (
+                    shadow_recovery_deadline_steps
+                    - shadow_recovery_required_steps
+                    + 1
+                )
+                in_terminal_window = (
+                    recovery_active
+                    & (
+                        shadow_recovery_elapsed
+                        >= first_terminal_window_step
+                    )
+                    & (
+                        shadow_recovery_elapsed
+                        <= shadow_recovery_deadline_steps
+                    )
+                )
+                operational_ready = (
+                    in_terminal_window
+                    & (
+                        base_tilt
+                        <= float(
+                            cmd.cfg
+                            .post_contact_ready_operational_max_tilt
+                        )
+                    )
+                    & (
+                        torso_ang_vel
+                        <= float(
+                            cmd.cfg
+                            .post_contact_ready_operational_max_torso_ang_vel
+                        )
+                    )
+                    & (
+                        base_ang_vel
+                        <= float(
+                            cmd.cfg
+                            .post_contact_ready_operational_max_base_ang_vel
+                        )
+                    )
+                    & (
+                        height_error
+                        <= float(
+                            cmd.cfg
+                            .post_contact_ready_operational_max_height_error
+                        )
+                    )
+                    & (
+                        com_x
+                        <= float(
+                            cmd.cfg.post_contact_ready_operational_max_com_x
+                        )
+                    )
+                    & (
+                        com_y
+                        <= float(
+                            cmd.cfg.post_contact_ready_operational_max_com_y
+                        )
+                    )
+                    & (
+                        feet_contact
+                        >= float(
+                            cmd.cfg
+                            .post_contact_ready_operational_min_feet_contact
+                        )
+                    )
+                    & (
+                        station_error
+                        <= float(
+                            cmd.cfg
+                            .post_contact_ready_operational_max_station_error
+                        )
+                    )
+                )
+                shadow_recovery_consecutive = torch.where(
+                    recovery_active,
+                    torch.where(
+                        operational_ready,
+                        shadow_recovery_consecutive + 1,
+                        torch.zeros_like(shadow_recovery_consecutive),
+                    ),
+                    shadow_recovery_consecutive,
+                )
+                reset_failure = shadow_recovery_pending & reset_now
+                deadline_reached = (
+                    shadow_recovery_pending
+                    & (~reset_failure)
+                    & (
+                        shadow_recovery_elapsed
+                        >= shadow_recovery_deadline_steps
+                    )
+                )
+                recovery_success = deadline_reached & (
+                    shadow_recovery_consecutive
+                    >= shadow_recovery_required_steps
+                )
+                recovery_failure = deadline_reached & (~recovery_success)
+                recovery_resolved = (
+                    reset_failure | recovery_success | recovery_failure
+                )
+                resolved_count = recovery_resolved.sum()
+                shadow_recovery_counts["resolved"] += resolved_count
+                shadow_recovery_counts["success"] += recovery_success.sum()
+                shadow_recovery_counts["failure"] += recovery_failure.sum()
+                shadow_recovery_counts["reset_failure"] += (
+                    reset_failure.sum()
+                )
+                shadow_recovery_counts[
+                    "success_with_net_cross"
+                ] += (
+                    (
+                        recovery_success
+                        & shadow_recovery_net_latch
+                    ).sum()
+                )
+                shadow_recovery_counts[
+                    "success_with_opponent_bounce"
+                ] += (
+                    (
+                        recovery_success
+                        & shadow_recovery_opponent_latch
+                    ).sum()
+                )
+                for name in shadow_recovery_metric_names:
+                    shadow_recovery_resolved_values[name].append(
+                        shadow_recovery_current[name][recovery_resolved]
+                    )
+                shadow_recovery_pending[recovery_resolved] = False
+                terminal_event = (
+                    events["outgoing_landing"]
+                    | events["abort"]
+                    | events["timeout"]
+                    | events["incoming_net_collision"]
+                    | events["reset_abort"]
+                )
+                resolved = terminal_event & shadow_cycle_active
+                resolved_contact = resolved & shadow_seen["contact"]
+                resolved_net = resolved & shadow_seen["net_cross"]
+                resolved_opponent = (
+                    resolved & shadow_seen["opponent_bounce"]
+                )
+                shadow_resolved_counts["total"] += resolved.sum()
+                shadow_resolved_counts["contact"] += resolved_contact.sum()
+                shadow_resolved_counts["net_cross"] += resolved_net.sum()
+                shadow_resolved_counts[
+                    "opponent_bounce"
+                ] += resolved_opponent.sum()
+                shadow_resolved_counts["no_contact"] += (
+                    resolved & (~shadow_seen["contact"])
+                ).sum()
+                shadow_resolved_counts["contact_no_net"] += (
+                    resolved
+                    & shadow_seen["contact"]
+                    & (~shadow_seen["net_cross"])
+                ).sum()
+                shadow_resolved_counts[
+                    "net_no_opponent_bounce"
+                ] += (
+                    (
+                        resolved
+                        & shadow_seen["net_cross"]
+                        & (~shadow_seen["opponent_bounce"])
+                    ).sum()
+                )
+                for name in (
+                    "landing_short",
+                    "landing_long",
+                    "landing_side",
+                    "landing_no_net",
+                ):
+                    shadow_resolved_counts[name] += (
+                        resolved & events[name]
+                    ).sum()
+                shadow_cycle_active[terminal_event] = False
             # A strike happens when the reference clock crosses the strike frame (tts: >0 -> <=0).
             # Environments that RESET this step are excluded: a time-out/fall reset re-seeds the
             # clock, and counting it would contaminate the denominator with non-swings.
-            reset_now = dones.reshape(-1).to(dtype=torch.bool, device=tts.device)
             struck = (prev_tts > 0.0) & (tts <= 0.0) & (~reset_now)
             if trace_writer is not None:
                 e = trace_env
@@ -504,9 +1165,672 @@ def main() -> int:
             )
         print(json.dumps(result))
         if args.json_out:
-            with open(args.json_out, "w", encoding="utf-8") as f:
+            result_path = pathlib.Path(args.json_out)
+            result_path.parent.mkdir(parents=True, exist_ok=True)
+            with result_path.open("w", encoding="utf-8") as f:
                 json.dump(result, f)
                 f.write("\n")
+        if args.physical_shadow_json_out:
+            shadow_event_counts = {
+                name: int(value.item())
+                for name, value in shadow_event_counts.items()
+            }
+            shadow_duplicate_counts = {
+                name: int(value.item())
+                for name, value in shadow_duplicate_counts.items()
+            }
+            shadow_order_violations = {
+                name: int(value.item())
+                for name, value in shadow_order_violations.items()
+            }
+            shadow_resolved_counts = {
+                name: int(value.item())
+                for name, value in shadow_resolved_counts.items()
+            }
+            shadow_recovery_counts = {
+                name: int(value.item())
+                for name, value in shadow_recovery_counts.items()
+            }
+            shadow_contact_sample_count = int(
+                shadow_contact_sample_count.item()
+            )
+            shadow_landing_sample_count = int(
+                shadow_landing_sample_count.item()
+            )
+            shadow_launch_sample_count = int(
+                shadow_launch_sample_count.item()
+            )
+            shadow_policy_reset_count = int(
+                shadow_policy_reset_count.item()
+            )
+            shadow_launch_timing_abs_sum = float(
+                shadow_launch_timing_abs_sum.item()
+            )
+            shadow_contact_metric_sums = {
+                name: float(value.item())
+                for name, value in shadow_contact_metric_sums.items()
+            }
+            shadow_landing_metric_sums = {
+                name: float(value.item())
+                for name, value in shadow_landing_metric_sums.items()
+            }
+            serve_denominator = max(shadow_event_counts["serve"], 1)
+            contact_denominator = max(shadow_contact_sample_count, 1)
+            landing_denominator = max(shadow_landing_sample_count, 1)
+            route_generation_count = (
+                shadow_event_counts["serve"]
+                + shadow_event_counts["route_invalid"]
+                + shadow_event_counts["route_unalignable"]
+            )
+            resolved_denominator = max(
+                shadow_resolved_counts["total"], 1
+            )
+            contact_metric_quantiles = {}
+            for name, values in shadow_contact_metric_values.items():
+                samples = torch.cat(values) if values else None
+                if samples is not None and samples.numel() > 0:
+                    contact_metric_quantiles[name] = {
+                        "p50": float(torch.quantile(samples, 0.50).item()),
+                        "p90": float(torch.quantile(samples, 0.90).item()),
+                    }
+                else:
+                    contact_metric_quantiles[name] = {
+                        "p50": 0.0,
+                        "p90": 0.0,
+                    }
+            contact_metric_buckets = {}
+            for bucket, metric_values in shadow_contact_bucket_values.items():
+                concatenated = {
+                    name: torch.cat(values) if values else None
+                    for name, values in metric_values.items()
+                }
+                first_samples = concatenated[
+                    shadow_contact_metric_names[0]
+                ]
+                sample_count = (
+                    int(first_samples.numel())
+                    if first_samples is not None
+                    else 0
+                )
+                contact_metric_buckets[bucket] = {
+                    "sample_count": sample_count,
+                    "means": {
+                        name: (
+                            float(samples.mean().item())
+                            if samples is not None
+                            and samples.numel() > 0
+                            else 0.0
+                        )
+                        for name, samples in concatenated.items()
+                    },
+                    "quantiles": {
+                        name: {
+                            "p50": (
+                                float(
+                                    torch.quantile(
+                                        samples, 0.50
+                                    ).item()
+                                )
+                                if samples is not None
+                                and samples.numel() > 0
+                                else 0.0
+                            ),
+                            "p90": (
+                                float(
+                                    torch.quantile(
+                                        samples, 0.90
+                                    ).item()
+                                )
+                                if samples is not None
+                                and samples.numel() > 0
+                                else 0.0
+                            ),
+                        }
+                        for name, samples in concatenated.items()
+                    },
+                }
+            contact_metric_sample_names = (
+                "contact_physx_substep_valid",
+                "contact_physx_substep_point_radial_error",
+                "contact_physx_point_x",
+                "contact_physx_point_y",
+                "contact_physx_point_z",
+                "contact_physx_normal_x",
+                "contact_physx_normal_y",
+                "contact_physx_normal_z",
+                "contact_physx_pre_ball_velocity_x",
+                "contact_physx_pre_ball_velocity_y",
+                "contact_physx_pre_ball_velocity_z",
+                "contact_physx_post_ball_velocity_x",
+                "contact_physx_post_ball_velocity_y",
+                "contact_physx_post_ball_velocity_z",
+                "contact_physx_pre_racket_point_velocity_x",
+                "contact_physx_pre_racket_point_velocity_y",
+                "contact_physx_pre_racket_point_velocity_z",
+                "contact_physx_post_racket_point_velocity_x",
+                "contact_physx_post_racket_point_velocity_y",
+                "contact_physx_post_racket_point_velocity_z",
+                "contact_physx_pre_ball_angular_velocity_x",
+                "contact_physx_pre_ball_angular_velocity_y",
+                "contact_physx_pre_ball_angular_velocity_z",
+                "contact_physx_post_ball_angular_velocity_x",
+                "contact_physx_post_ball_angular_velocity_y",
+                "contact_physx_post_ball_angular_velocity_z",
+                "contact_physx_pre_ball_surface_tangent_speed",
+                "contact_physx_post_ball_spin_speed",
+                "contact_physx_substep_normal_error_deg",
+                "contact_physx_substep_point_model_residual",
+                "contact_physx_substep_link_model_residual",
+            )
+            contact_metric_samples = {
+                name: (
+                    torch.cat(shadow_contact_metric_values[name])
+                    .detach()
+                    .cpu()
+                    .tolist()
+                    if shadow_contact_metric_values[name]
+                    else []
+                )
+                for name in contact_metric_sample_names
+            }
+            landing_metric_quantiles = {}
+            for name, values in shadow_landing_metric_values.items():
+                samples = torch.cat(values) if values else None
+                if samples is not None and samples.numel() > 0:
+                    landing_metric_quantiles[name] = {
+                        "p10": float(torch.quantile(samples, 0.10).item()),
+                        "p50": float(torch.quantile(samples, 0.50).item()),
+                        "p90": float(torch.quantile(samples, 0.90).item()),
+                    }
+                else:
+                    landing_metric_quantiles[name] = {
+                        "p10": 0.0,
+                        "p50": 0.0,
+                        "p90": 0.0,
+                    }
+            refresh_metric_summary = {}
+            for name, values in shadow_refresh_metric_values.items():
+                samples = torch.cat(values) if values else None
+                if samples is not None and samples.numel() > 0:
+                    refresh_metric_summary[name] = {
+                        "mean": float(samples.mean().item()),
+                        "p50": float(torch.quantile(samples, 0.50).item()),
+                        "p90": float(torch.quantile(samples, 0.90).item()),
+                    }
+                else:
+                    refresh_metric_summary[name] = {
+                        "mean": 0.0,
+                        "p50": 0.0,
+                        "p90": 0.0,
+                    }
+            recovery_metric_summary = {}
+            for name, values in shadow_recovery_resolved_values.items():
+                samples = torch.cat(values) if values else None
+                if samples is not None and samples.numel() > 0:
+                    recovery_metric_summary[name] = {
+                        "mean": float(samples.mean().item()),
+                        "p50": float(torch.quantile(samples, 0.50).item()),
+                        "p90": float(torch.quantile(samples, 0.90).item()),
+                    }
+                else:
+                    recovery_metric_summary[name] = {
+                        "mean": 0.0,
+                        "p50": 0.0,
+                        "p90": 0.0,
+                    }
+            recovery_resolved_denominator = max(
+                shadow_recovery_counts["resolved"], 1
+            )
+            shadow_result = {
+                "evaluation_seed": int(args.seed),
+                "num_envs": int(args.num_envs),
+                "num_steps": int(args.num_steps),
+                "physx_substep_capture": {
+                    "registered": bool(
+                        physical_shadow.physics_substep_capture_registered
+                    ),
+                    "disabled": bool(
+                        physical_shadow._substep_capture_disabled
+                    ),
+                    "capture_error": physical_shadow._substep_capture_error,
+                    "contact_view_error": (
+                        physical_shadow._detailed_contact_init_error
+                    ),
+                    "physics_dt_s": float(base_env.scene.physics_dt),
+                },
+                "event_counts": shadow_event_counts,
+                "event_rates_per_serve": {
+                    name: count / serve_denominator
+                    for name, count in shadow_event_counts.items()
+                    if name
+                    not in (
+                        "serve",
+                        "route_invalid",
+                        "route_unalignable",
+                    )
+                },
+                "route_generation": {
+                    "attempts": route_generation_count,
+                    "served": shadow_event_counts["serve"],
+                    "invalid": shadow_event_counts["route_invalid"],
+                    "unalignable": shadow_event_counts[
+                        "route_unalignable"
+                    ],
+                    "served_rate": (
+                        shadow_event_counts["serve"]
+                        / max(route_generation_count, 1)
+                    ),
+                },
+                "resolved_cycles": {
+                    "counts": shadow_resolved_counts,
+                    "rates": {
+                        name: count / resolved_denominator
+                        for name, count in shadow_resolved_counts.items()
+                        if name != "total"
+                    },
+                    "active_at_eval_end": int(
+                        shadow_cycle_active.sum().item()
+                    ),
+                },
+                "duplicate_event_counts": shadow_duplicate_counts,
+                "event_order_violations": shadow_order_violations,
+                "policy_reset_count": shadow_policy_reset_count,
+                "mean_abs_launch_timing_error_s": (
+                    shadow_launch_timing_abs_sum
+                    / max(shadow_launch_sample_count, 1)
+                ),
+                "contact_sample_count": shadow_contact_sample_count,
+                "contact_metric_means": {
+                    name: value / contact_denominator
+                    for name, value in shadow_contact_metric_sums.items()
+                },
+                "contact_metric_quantiles": contact_metric_quantiles,
+                "contact_metric_buckets": contact_metric_buckets,
+                "contact_metric_samples": contact_metric_samples,
+                "landing_sample_count": shadow_landing_sample_count,
+                "landing_metric_means": {
+                    name: value / landing_denominator
+                    for name, value in shadow_landing_metric_sums.items()
+                },
+                "landing_metric_quantiles": landing_metric_quantiles,
+                "command_refresh": {
+                    "count": shadow_event_counts["command_refresh"],
+                    "metrics": refresh_metric_summary,
+                },
+                "physical_contact_recovery": {
+                    "deadline_s": (
+                        shadow_recovery_deadline_steps
+                        * float(base_env.step_dt)
+                    ),
+                    "required_consecutive_steps": (
+                        shadow_recovery_required_steps
+                    ),
+                    "counts": shadow_recovery_counts,
+                    "rates_per_resolved": {
+                        name: count / recovery_resolved_denominator
+                        for name, count in shadow_recovery_counts.items()
+                        if name
+                        in (
+                            "success",
+                            "failure",
+                            "reset_failure",
+                            "success_with_net_cross",
+                            "success_with_opponent_bounce",
+                        )
+                    },
+                    "pending_at_eval_end": int(
+                        shadow_recovery_pending.sum().item()
+                    ),
+                    "resolved_metric_summary": recovery_metric_summary,
+                },
+                "analytic_eval": result,
+            }
+            shadow_path = pathlib.Path(args.physical_shadow_json_out)
+            shadow_path.parent.mkdir(parents=True, exist_ok=True)
+            with shadow_path.open("w", encoding="utf-8") as f:
+                json.dump(shadow_result, f, indent=2, sort_keys=True)
+                f.write("\n")
+        if args.safety_envelope_json_out:
+            attempts = int(
+                cmd._post_contact_ready_envelope_attempts.item()
+            )
+            component_names = (
+                "tilt",
+                "abs_pitch",
+                "com_x",
+                "com_y",
+                "waist_overflow",
+                "leg_overflow",
+                "base_ang_vel",
+            )
+            summary_counts = (
+                cmd._post_contact_ready_envelope_violations.detach()
+                .cpu()
+                .tolist()
+            )
+            histogram_thresholds = (
+                cmd._post_contact_ready_envelope_histogram_thresholds.detach()
+                .cpu()
+                .tolist()
+            )
+            histogram_counts = (
+                cmd._post_contact_ready_envelope_histogram_counts.detach()
+                .cpu()
+                .tolist()
+            )
+            phase_attempt_counts = (
+                cmd._post_contact_ready_phase_attempt_counts.detach()
+                .cpu()
+                .tolist()
+            )
+            phase_histogram_counts = (
+                cmd._post_contact_ready_phase_histogram_counts.detach()
+                .cpu()
+                .tolist()
+            )
+            outcome_resolution_counts = (
+                cmd._post_contact_ready_outcome_resolution_counts.detach()
+                .cpu()
+                .tolist()
+            )
+            resolution_latency_steps = (
+                cmd._post_contact_ready_resolution_latency_steps.detach()
+                .cpu()
+                .tolist()
+            )
+            resolution_counts = (
+                cmd._post_contact_ready_resolution_counts.detach()
+                .cpu()
+                .tolist()
+            )
+            durable_outcome_resolution_counts = (
+                cmd._post_contact_ready_durable_outcome_resolution_counts.detach()
+                .cpu()
+                .tolist()
+            )
+            durable_resolution_latency_steps = (
+                cmd._post_contact_ready_durable_resolution_latency_steps.detach()
+                .cpu()
+                .tolist()
+            )
+            durable_resolution_counts = (
+                cmd._post_contact_ready_durable_resolution_counts.detach()
+                .cpu()
+                .tolist()
+            )
+            durable_failure_component_counts = (
+                cmd._post_contact_ready_durable_failure_component_counts.detach()
+                .cpu()
+                .tolist()
+            )
+            terminal_settlement_counts = (
+                cmd._post_contact_ready_terminal_settlement_counts.detach()
+                .cpu()
+                .tolist()
+            )
+            terminal_quality_sums = (
+                cmd._post_contact_ready_terminal_quality_sums.detach()
+                .cpu()
+                .tolist()
+            )
+            safe_net_cycle_count = int(
+                cmd._post_contact_ready_safe_net_cycle_count.detach()
+                .cpu()
+                .item()
+            )
+            denominator = max(attempts, 1)
+            phase_names = (
+                "impact_0_100ms",
+                "brake_100_300ms",
+                "settle_300_600ms",
+                "ready_after_600ms",
+            )
+            safety_result = {
+                "evaluation_seed": int(args.seed),
+                "attempts": attempts,
+                "violation_count": int(summary_counts[0]),
+                "violation_rate": summary_counts[0] / denominator,
+                "component_violation_counts": {
+                    name: int(summary_counts[index + 1])
+                    for index, name in enumerate(
+                        (
+                            "tilt",
+                            "abs_pitch",
+                            "com",
+                            "waist_overflow",
+                            "leg_overflow",
+                            "base_ang_vel",
+                        )
+                    )
+                },
+                "histograms": {
+                    name: [
+                        {
+                            "threshold": float(threshold),
+                            "count": int(count),
+                            "rate": int(count) / denominator,
+                        }
+                        for threshold, count in zip(
+                            histogram_thresholds[index],
+                            histogram_counts[index],
+                        )
+                    ]
+                    for index, name in enumerate(component_names)
+                },
+                "phase_boundaries_s": (
+                    cmd._post_contact_ready_phase_boundaries_s.detach()
+                    .cpu()
+                    .tolist()
+                ),
+                "phase_histograms": {
+                    phase_name: {
+                        "attempts_reaching_phase": int(
+                            phase_attempt_counts[phase_index]
+                        ),
+                        "histograms": {
+                            component_name: [
+                                {
+                                    "threshold": float(threshold),
+                                    "count": int(count),
+                                    "rate": int(count)
+                                    / max(
+                                        int(
+                                            phase_attempt_counts[
+                                                phase_index
+                                            ]
+                                        ),
+                                        1,
+                                    ),
+                                }
+                                for threshold, count in zip(
+                                    histogram_thresholds[component_index],
+                                    phase_histogram_counts[phase_index][
+                                        component_index
+                                    ],
+                                )
+                            ]
+                            for component_index, component_name in enumerate(
+                                component_names
+                            )
+                        },
+                    }
+                    for phase_index, phase_name in enumerate(phase_names)
+                },
+                "outcome_resolution": {
+                    outcome_name: {
+                        "attempts": int(values[0]),
+                        "ready_success": int(values[1]),
+                        "ready_fail": int(values[2]),
+                        "unresolved": max(
+                            int(values[0])
+                            - int(values[1])
+                            - int(values[2]),
+                            0,
+                        ),
+                        "ready_success_rate": int(values[1])
+                        / max(int(values[0]), 1),
+                    }
+                    for outcome_name, values in zip(
+                        (
+                            "targeted_miss",
+                            "contact",
+                            "net_cross",
+                            "opponent_bounce",
+                        ),
+                        outcome_resolution_counts,
+                    )
+                },
+                "resolution_latency": {
+                    name: {
+                        "count": int(resolution_counts[index]),
+                        "mean_steps": int(resolution_latency_steps[index])
+                        / max(int(resolution_counts[index]), 1),
+                        "mean_seconds": (
+                            int(resolution_latency_steps[index])
+                            / max(int(resolution_counts[index]), 1)
+                            * float(base_env.step_dt)
+                        ),
+                    }
+                    for index, name in enumerate(
+                        ("ready_success", "ready_fail")
+                    )
+                },
+                "durable_ready_shadow": {
+                    "definition": {
+                        "minimum_delay_s": float(
+                            cmd.cfg.post_contact_ready_durable_min_delay_s
+                        ),
+                        "fixed_deadline_s": float(
+                            cmd.cfg.post_contact_ready_durable_deadline_s
+                        ),
+                        "required_consecutive_steps": int(
+                            cmd.cfg.post_contact_ready_durable_required_consecutive_steps
+                        ),
+                        "step_dt_s": float(base_env.step_dt),
+                        "affects_reward_or_termination": False,
+                    },
+                    "outcome_resolution": {
+                        outcome_name: {
+                            "attempts": int(values[0]),
+                            "ready_success": int(values[1]),
+                            "ready_fail": int(values[2]),
+                            "unresolved": max(
+                                int(values[0])
+                                - int(values[1])
+                                - int(values[2]),
+                                0,
+                            ),
+                            "ready_success_rate": int(values[1])
+                            / max(int(values[0]), 1),
+                        }
+                        for outcome_name, values in zip(
+                            (
+                                "targeted_miss",
+                                "contact",
+                                "net_cross",
+                                "opponent_bounce",
+                            ),
+                            durable_outcome_resolution_counts,
+                        )
+                    },
+                    "resolution_latency": {
+                        name: {
+                            "count": int(
+                                durable_resolution_counts[index]
+                            ),
+                            "mean_steps": int(
+                                durable_resolution_latency_steps[index]
+                            )
+                            / max(
+                                int(durable_resolution_counts[index]),
+                                1,
+                            ),
+                            "mean_seconds": (
+                                int(
+                                    durable_resolution_latency_steps[
+                                        index
+                                    ]
+                                )
+                                / max(
+                                    int(
+                                        durable_resolution_counts[
+                                            index
+                                        ]
+                                    ),
+                                    1,
+                                )
+                                * float(base_env.step_dt)
+                            ),
+                        }
+                        for index, name in enumerate(
+                            ("ready_success", "ready_fail")
+                        )
+                    },
+                    "failure_components": {
+                        name: {
+                            "count": int(
+                                durable_failure_component_counts[index]
+                            ),
+                            "rate_per_failure": int(
+                                durable_failure_component_counts[index]
+                            )
+                            / max(
+                                int(durable_resolution_counts[1]),
+                                1,
+                            ),
+                        }
+                        for index, name in enumerate(
+                            (
+                                "backlean_limit",
+                                "forward_lean_limit",
+                                "torso_ang_vel",
+                                "base_lin_vel",
+                                "base_ang_vel",
+                                "racket_speed",
+                                "height",
+                                "com_x",
+                                "com_y",
+                                "feet_contact",
+                                "station",
+                                "arm_ready",
+                            )
+                        )
+                    },
+                },
+                "safe_quality_terminal": {
+                    "settlements": int(terminal_settlement_counts[0]),
+                    "safe_settlements": int(terminal_settlement_counts[1]),
+                    "unsafe_settlements": int(
+                        terminal_settlement_counts[2]
+                    ),
+                    "incomplete_settlements": int(
+                        terminal_settlement_counts[3]
+                    ),
+                    "safe_rate": int(terminal_settlement_counts[1])
+                    / max(int(terminal_settlement_counts[0]), 1),
+                    "unsafe_rate": int(terminal_settlement_counts[2])
+                    / max(int(terminal_settlement_counts[0]), 1),
+                    "incomplete_rate": int(terminal_settlement_counts[3])
+                    / max(int(terminal_settlement_counts[0]), 1),
+                    "mean_terminal_quality": float(
+                        terminal_quality_sums[0]
+                    )
+                    / max(int(terminal_settlement_counts[0]), 1),
+                    "mean_safe_terminal_quality": float(
+                        terminal_quality_sums[1]
+                    )
+                    / max(int(terminal_settlement_counts[1]), 1),
+                    "safe_net_cycles": safe_net_cycle_count,
+                    "safe_net_cycle_rate": safe_net_cycle_count
+                    / max(int(terminal_settlement_counts[0]), 1),
+                },
+            }
+            target = pathlib.Path(args.safety_envelope_json_out)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(
+                json.dumps(safety_result, indent=2) + "\n",
+                encoding="utf-8",
+            )
         if trace_fh is not None:
             trace_fh.close()
         if joint_diag_fh is not None:

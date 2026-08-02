@@ -1,0 +1,53 @@
+version: hope_stage1_command_tracking_v1
+actor_observation: hope_pingpong_normal114
+action_dimension: 31
+control_hz: 50
+episode_seconds: 10.0
+motion_count: 2
+continuous_wrap: true
+
+required_nonzero_rewards:
+  - alive
+  - upright
+  - imitation
+  - undesired_contacts
+  - feet_contact_slip
+  - table_no_touch
+  - planner_racket_task_space_crossfade
+  - prestrike_racket_progress
+  - near_impact_planner_velocity_progress
+  - racket_position
+  - racket_velocity
+  - blade_direction
+  - prestrike_station_progress
+  - pre_strike_station
+  - healthy_trunk_support
+  - lower_body_support
+  - recovery_health
+  - no_command_ready_stability
+  - phase_action_overflow
+  - phase_action_rate_waist
+  - phase_action_rate_upper
+  - phase_action_rate_legs
+  - joint_limit
+  - termination_penalty
+
+forbidden_reward_terms:
+  - ball_contact
+  - soft_ball_contact
+  - net_cross
+  - opponent_bounce
+  - impact_outgoing_velocity
+  - physical_outcome
+  - cycle_success_bonus
+  - cycle_v2_ready_success_bonus
+  - deferred_recovery_outcome_bonus
+
+synthetic_replay:
+  # Normalized contract scores, not replacements for runtime reward functions.
+  command_weight: 8.4
+  motion_weight: 1.2
+  health_weight: 1.8
+  ready_weight: 0.55
+  command_health_floor: 0.35
+  required_healthy_track_over_idle_ratio: 2.0

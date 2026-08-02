@@ -112,6 +112,10 @@ class StepResult:
     contact_ball_vel_pre_w: np.ndarray | None = None
     contact_ball_pos_post_w: np.ndarray | None = None
     contact_ball_vel_post_w: np.ndarray | None = None
+    contact_racket_site_pos_pre_w: np.ndarray | None = None
+    contact_racket_site_vel_pre_w: np.ndarray | None = None
+    contact_racket_ang_vel_pre_w: np.ndarray | None = None
+    contact_racket_point_vel_pre_w: np.ndarray | None = None
     # Each net-plane (x = net_x) crossing during the step: (z_table_at_crossing, x_sign)
     # where x_sign = +1 if the ball moved in +x (outgoing toward the opponent).
     net_crossings: list = field(default_factory=list)
@@ -248,6 +252,27 @@ class PingPongRealPhysicsScene:
             from mujoco import viewer as mj_viewer
 
             self._viewer = mj_viewer.launch_passive(self.model, self.data)
+
+    def set_ground_contact_friction(
+        self,
+        sliding: float,
+        torsional: float = 0.005,
+        rolling: float = 0.0001,
+    ) -> dict[str, list[float]]:
+        """Set matching friction on the floor and both foot collision geoms."""
+        values = np.asarray([sliding, torsional, rolling], dtype=np.float64)
+        if np.any(values < 0.0):
+            raise ValueError(f"ground friction must be non-negative, got {values.tolist()}")
+        applied: dict[str, list[float]] = {}
+        for name in (
+            "floor",
+            "left_ankle_roll_collision",
+            "right_ankle_roll_collision",
+        ):
+            geom_id = self._geom_id(name)
+            self.model.geom_friction[geom_id, :] = values
+            applied[name] = self.model.geom_friction[geom_id, :].astype(float).tolist()
+        return applied
 
     # -- model construction -----------------------------------------------------
     def _build_model(self, mujoco, robot_xml_path, ball_cfg) -> None:
@@ -426,6 +451,17 @@ class PingPongRealPhysicsScene:
         d.qpos[self._ball_qadr + 3:self._ball_qadr + 7] = [1.0, 0.0, 0.0, 0.0]
         d.qvel[self._ball_vadr:self._ball_vadr + 6] = 0.0
         self._mj.mj_forward(m, d)
+
+    def set_robot_joint_state(self, q, qd=None) -> None:
+        """Set canonical robot joints without changing the floating-base pose."""
+        q = np.asarray(q, dtype=np.float64).reshape(self.num_joints)
+        if qd is None:
+            qd = np.zeros(self.num_joints, dtype=np.float64)
+        else:
+            qd = np.asarray(qd, dtype=np.float64).reshape(self.num_joints)
+        self.data.qpos[self._q_adr] = q
+        self.data.qvel[self._v_adr] = qd
+        self._mj.mj_forward(self.model, self.data)
 
     def set_ball(self, pos_w, vel_w) -> None:
         """Place the ball at ``pos_w`` (MuJoCo world) with world linear velocity ``vel_w``."""
@@ -607,7 +643,10 @@ class PingPongRealPhysicsScene:
         d = self.data
         q = d.qpos[self._q_adr].copy()
         qd = d.qvel[self._v_adr].copy()
-        torque_requested = self._kp * (self._q_des - q) - self._kd * qd
+        tracking_error = self._q_des - q
+        torque_p = self._kp * tracking_error
+        torque_d = -self._kd * qd
+        torque_requested = torque_p + torque_d
         torque_applied = np.where(
             self._ctrl_limited,
             np.clip(torque_requested, self._ctrl_lo, self._ctrl_hi),
@@ -618,10 +657,16 @@ class PingPongRealPhysicsScene:
             "q": q,
             "qd": qd,
             "q_des": self._q_des.copy(),
-            "tracking_error": self._q_des - q,
+            "tracking_error": tracking_error,
+            "kp": self._kp.copy(),
+            "kd": self._kd.copy(),
+            "torque_p": torque_p,
+            "torque_d": torque_d,
             "torque_requested": torque_requested,
             "torque_applied": torque_applied,
             "torque_clipped": torque_clipped,
+            "torque_lower_limit": self._ctrl_lo.copy(),
+            "torque_upper_limit": self._ctrl_hi.copy(),
         }
 
     def _apply_pd(self) -> None:
@@ -652,26 +697,78 @@ class PingPongRealPhysicsScene:
             self._apply_ball_drag()
             p_before = d.qpos[self._ball_qadr:self._ball_qadr + 3].copy()
             v_before = d.qvel[self._ball_vadr:self._ball_vadr + 3].copy()
-            mj.mj_step(m, d)
-            p_after = d.qpos[self._ball_qadr:self._ball_qadr + 3].copy()
-            v_after = d.qvel[self._ball_vadr:self._ball_vadr + 3].copy()
-
-            # real ball<->racket contact this sub-step
+            # Split Euler stepping exposes contacts after collision detection
+            # but before constraint impulses are applied. This makes the
+            # recorded "pre" velocity a genuine pre-impact state; checking
+            # d.contact only after mj_step can observe a velocity that has
+            # already been reflected by the racket impulse.
+            mj.mj_step1(m, d)
+            contact_this_substep = False
             if not result.ball_racket_contact:
                 for c in range(d.ncon):
                     con = d.contact[c]
-                    if {con.geom1, con.geom2} == {self._ball_gid, self._racket_gid}:
+                    if {con.geom1, con.geom2} == {
+                        self._ball_gid,
+                        self._racket_gid,
+                    }:
                         result.ball_racket_contact = True
+                        contact_this_substep = True
                         result.contact_substep = int(substep)
-                        result.contact_time_offset_s = float((substep + 1) * m.opt.timestep)
-                        result.contact_pos_w = np.asarray(con.pos, dtype=np.float64).copy()
-                        result.contact_normal_w = np.asarray(con.frame[:3], dtype=np.float64).copy()
+                        result.contact_time_offset_s = float(
+                            (substep + 1) * m.opt.timestep
+                        )
+                        result.contact_pos_w = np.asarray(
+                            con.pos, dtype=np.float64
+                        ).copy()
+                        result.contact_normal_w = np.asarray(
+                            con.frame[:3], dtype=np.float64
+                        ).copy()
                         result.contact_dist = float(con.dist)
                         result.contact_ball_pos_pre_w = p_before.copy()
                         result.contact_ball_vel_pre_w = v_before.copy()
-                        result.contact_ball_pos_post_w = p_after.copy()
-                        result.contact_ball_vel_post_w = v_after.copy()
+                        site_velocity = np.zeros(6, dtype=np.float64)
+                        mj.mj_objectVelocity(
+                            m,
+                            d,
+                            mj.mjtObj.mjOBJ_SITE,
+                            self._racket_sid,
+                            site_velocity,
+                            0,
+                        )
+                        geom_velocity = np.zeros(6, dtype=np.float64)
+                        mj.mj_objectVelocity(
+                            m,
+                            d,
+                            mj.mjtObj.mjOBJ_GEOM,
+                            self._racket_gid,
+                            geom_velocity,
+                            0,
+                        )
+                        angular_velocity = geom_velocity[:3].copy()
+                        geom_linear_velocity = geom_velocity[3:6].copy()
+                        contact_offset = (
+                            result.contact_pos_w
+                            - d.geom_xpos[self._racket_gid]
+                        )
+                        result.contact_racket_site_vel_pre_w = (
+                            site_velocity[3:6].copy()
+                        )
+                        result.contact_racket_site_pos_pre_w = (
+                            d.site_xpos[self._racket_sid].copy()
+                        )
+                        result.contact_racket_ang_vel_pre_w = angular_velocity
+                        result.contact_racket_point_vel_pre_w = (
+                            geom_linear_velocity
+                            + np.cross(angular_velocity, contact_offset)
+                        )
                         break
+            mj.mj_step2(m, d)
+            p_after = d.qpos[self._ball_qadr:self._ball_qadr + 3].copy()
+            v_after = d.qvel[self._ball_vadr:self._ball_vadr + 3].copy()
+
+            if contact_this_substep:
+                result.contact_ball_pos_post_w = p_after.copy()
+                result.contact_ball_vel_post_w = v_after.copy()
 
             # net-plane (x = net_x) crossing, evaluated in the table frame
             xb = p_before[0] - self.offset[0]

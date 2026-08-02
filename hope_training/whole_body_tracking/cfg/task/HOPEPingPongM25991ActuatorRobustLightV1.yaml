@@ -1,0 +1,21 @@
+# Isolated single-forehand sim-to-real actuator diagnostic from model_25991.
+#
+# Planner, motion clips, lifecycle, observation contract, and all historical
+# rewards are inherited unchanged from DeployStationStepV1.  The only changes
+# are physical actuator-envelope penalties and armature randomization supplied
+# by the ActuatorRobust gym task.
+# This is a causal gate, not the final forehand/backhand/full-table task.
+
+defaults:
+  - HOPEPingPongM25991ReplayControlV1
+  - _self_
+
+name: HOPEPingPongM25991ActuatorRobustLightV1
+gym_task: HOPE-PingPong-ActuatorRobust-AgibotA3-v0
+
+overrides:
+  # Low weights by design: preserve contact/return behavior while removing the
+  # sustained-limit shortcut observed in the real trace.
+  rewards.actuator_waist_feasibility.weight: -0.010
+  rewards.actuator_right_arm_feasibility.weight: -0.006
+  rewards.actuator_leg_feasibility.weight: -0.008

@@ -181,6 +181,11 @@ def run(args) -> dict:
         near_edge_x=args.near_edge_x,
         launch_viewer=args.view,
     )
+    ground_contact_friction = scene.set_ground_contact_friction(
+        getattr(args, "ground_sliding_friction", 0.9),
+        getattr(args, "ground_torsional_friction", 0.005),
+        getattr(args, "ground_rolling_friction", 0.0001),
+    )
     recorder = (
         _MujocoVideoRecorder(
             scene,
@@ -226,6 +231,29 @@ def run(args) -> dict:
         if args.trace_joints:
             for name in JOINT_NAMES:
                 joint_trace_fields.extend([f"q_{name}", f"qd_{name}", f"qdes_{name}", f"raw_{name}"])
+            for prefix in (
+                "raw_policy",
+                "raw",
+                "command",
+                "effective",
+                "feedback",
+                "overflow",
+                "position_clamped",
+                "policy_q_des",
+                "q_des_unclipped",
+                "q",
+                "qd",
+                "q_des",
+                "tracking_error",
+                "kp",
+                "kd",
+                "torque_requested",
+                "torque_applied",
+                "torque_clipped",
+            ):
+                joint_trace_fields.extend(
+                    f"{prefix}__{name}" for name in JOINT_NAMES
+                )
         fields = [
             "tick",
             "time_s",
@@ -303,24 +331,39 @@ def run(args) -> dict:
             raw_action = policy.infer(obs)
         else:
             raw_action = np.zeros(31, dtype=np.float32)
-        applied_action = np.asarray(raw_action, dtype=np.float64).reshape(31).copy()
+        raw_policy_action = np.asarray(
+            raw_action, dtype=np.float64
+        ).reshape(31)
+        applied_action = raw_policy_action.copy()
         if runtime_cfg.passive_neck:
             applied_action[head_idx] = 0.0
+        policy_q_des = runtime_cfg.action_adapter.decode(raw_policy_action)
+        q_des_unclipped = (
+            default_q
+            + applied_action * runtime_cfg.action_adapter.action_scale
+        )
         q_des = runtime_cfg.action_adapter.decode(applied_action)
         if runtime_cfg.passive_neck:
+            policy_q_des[head_idx] = default_q[head_idx]
+            q_des_unclipped[head_idx] = default_q[head_idx]
             q_des[head_idx] = default_q[head_idx]
+        effective_action = runtime_cfg.action_adapter.encode_effective(q_des)
+        if runtime_cfg.passive_neck:
+            effective_action[head_idx] = 0.0
+        overflow_action = applied_action - effective_action
+        position_clamped = np.abs(overflow_action) > 1.0e-9
         scene.write_targets(q_des, kp, kd)
         scene.step()
         if feedback_mode == "effective":
-            last_action = runtime_cfg.action_adapter.encode_effective(q_des)
-            if runtime_cfg.passive_neck:
-                last_action[head_idx] = 0.0
+            feedback_action = effective_action.copy()
         else:
-            last_action = applied_action
+            feedback_action = applied_action.copy()
+        last_action = feedback_action
         if recorder is not None:
             recorder.capture(scene)
 
         state_post = scene.read_robot_state()
+        control_diag = scene.joint_control_diagnostics()
         base_q = np.asarray(state_post.base_quat_w, dtype=np.float64)
         roll, pitch, yaw = _quat_to_euler_wxyz(base_q)
         proj = _rotation_projected_gravity_body(base_q)
@@ -376,7 +419,34 @@ def run(args) -> dict:
                 final_row[f"q_{name}"] = float(state_post.q[i])
                 final_row[f"qd_{name}"] = float(state_post.qd[i])
                 final_row[f"qdes_{name}"] = float(q_des[i])
-                final_row[f"raw_{name}"] = float(np.asarray(raw_action).reshape(31)[i])
+                final_row[f"raw_{name}"] = float(raw_policy_action[i])
+            values_by_prefix = {
+                "raw_policy": raw_policy_action,
+                "raw": applied_action,
+                "command": applied_action,
+                "effective": effective_action,
+                "feedback": feedback_action,
+                "overflow": overflow_action,
+                "position_clamped": position_clamped.astype(np.int8),
+                "policy_q_des": policy_q_des,
+                "q_des_unclipped": q_des_unclipped,
+                "q": control_diag["q"],
+                "qd": control_diag["qd"],
+                "q_des": control_diag["q_des"],
+                "tracking_error": control_diag["tracking_error"],
+                "kp": control_diag["kp"],
+                "kd": control_diag["kd"],
+                "torque_requested": control_diag["torque_requested"],
+                "torque_applied": control_diag["torque_applied"],
+                "torque_clipped": control_diag["torque_clipped"].astype(
+                    np.int8
+                ),
+            }
+            for prefix, values in values_by_prefix.items():
+                for name, value in zip(
+                    JOINT_NAMES, np.asarray(values).reshape(-1)
+                ):
+                    final_row[f"{prefix}__{name}"] = float(value)
         if writer is not None:
             writer.writerow(final_row)
         if args.stop_on_fall and (low or tilt):
@@ -394,6 +464,7 @@ def run(args) -> dict:
         "controller": args.controller,
         "last_action_feedback_mode": feedback_mode,
         "table_frame_origin_world_xyz": [float(value) for value in scene.offset],
+        "ground_contact_friction": ground_contact_friction,
         "seconds_requested": float(args.seconds),
         "seconds_simulated": elapsed_s,
         "fell_low": first_low_tick is not None,
@@ -435,6 +506,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--tilt-threshold", type=float, default=0.85)
     parser.add_argument("--kp-scale", type=float, default=1.0)
     parser.add_argument("--kd-scale", type=float, default=1.0)
+    parser.add_argument(
+        "--ground-sliding-friction",
+        type=float,
+        default=0.9,
+        help="Sliding friction applied to the floor and both foot collision geoms.",
+    )
+    parser.add_argument("--ground-torsional-friction", type=float, default=0.005)
+    parser.add_argument("--ground-rolling-friction", type=float, default=0.0001)
     parser.add_argument(
         "--last-action-feedback-mode",
         choices=["auto", "raw", "effective"],

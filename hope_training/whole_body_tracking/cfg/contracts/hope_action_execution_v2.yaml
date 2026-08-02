@@ -1,0 +1,159 @@
+schema_version: 1
+contract_id: hope_action_execution_v2
+status: frozen_semantics_pending_operational_limit_calibration
+description: >-
+  Target action contract for future training and deployment. The policy output
+  must be smoothly bounded inside a calibrated operational joint range, and the
+  previous-action observation must represent the command actually executed.
+
+canonical_joint_order_path: hope_training/config/joint_order_agibot_a3.yaml
+shared_legacy_adapter_path: a3_deploy/a3_deploy_example/config/action_adapter.yaml
+control_hz: 50.0
+
+legacy_contract:
+  id: legacy_raw_hard_clip_v1
+  compatibility_only: true
+  decoder: q_des = clip(default_q + raw_action * action_scale, mechanical_limits)
+  last_action_feedback: raw_action
+  existing_policy_examples:
+    - B17996_model_19495_normal114.onnx
+  runtime_switch_to_target_contract_allowed: false
+  reason: >-
+    A frozen raw-feedback policy is out of distribution when effective feedback
+    is substituted at runtime. Migration requires distillation or retraining.
+
+target_contract:
+  id: bounded_effective_v2
+  implementation_status: codec_implemented_policy_integration_pending
+  policy_distribution:
+    type: tanh_squashed_gaussian
+    log_probability_correction_required: true
+  decoder:
+    q_mid: 0.5 * (operational_lower + operational_upper)
+    q_half: 0.5 * (operational_upper - operational_lower)
+    q_des_operational: q_mid + q_half * tanh(policy_latent)
+    q_des_final: clip(q_des_operational, mechanical_lower, mechanical_upper)
+  previous_action_observation:
+    mode: effective
+    formula: (q_des_final - default_q) / action_scale
+    applied_after_all_command_shaping: true
+    round_trip_q_des_error_rad_max: 1.0e-6
+  mechanical_clamp:
+    role: emergency_only
+    allowed_as_normal_policy_nonlinearity: false
+  command_filters:
+    hidden_deploy_only_filter: forbidden
+    train_eval_deploy_parity_required: true
+
+operational_limits:
+  status: pending_calibration
+  data_file: null
+  provisional_data_file: analysis/closed_loop_v2_20260731/n1_operational_limits_20260731/operational_limits_provisional.yaml
+  training_enabled: false
+  must_be_strictly_inside_mechanical_limits: true
+  per_joint_margin_formula:
+    lower: >-
+      zero_offset_uncertainty_lower
+      + actual_below_command_overshoot_p99_while_moving_negative
+      + negative_velocity_p99 * total_command_delay
+      + negative_braking_distance
+      + fixed_safety_margin
+    upper: >-
+      zero_offset_uncertainty_upper
+      + actual_above_command_overshoot_p99_while_moving_positive
+      + positive_velocity_p99 * total_command_delay
+      + positive_braking_distance
+      + fixed_safety_margin
+  diagnostic_only_not_a_limit_margin:
+    - absolute_dynamic_tracking_error
+    - raw_action_overflow
+  required_measurements:
+    - encoder_zero_offset_uncertainty_lower_rad
+    - encoder_zero_offset_uncertainty_upper_rad
+    - directional_command_overshoot_p99_rad
+    - positive_and_negative_velocity_p99_radps
+    - total_command_delay_s
+    - positive_and_negative_braking_distance_rad
+    - fixed_safety_margin_rad
+  feasibility_checks:
+    - default_ready_inside_range
+    - all_accepted_motion_frames_inside_range
+    - forehand_target_ik_inside_range
+    - backhand_target_ik_inside_range
+    - full_table_workspace_ik_has_joint_margin
+    - table_collision_free
+  infeasible_target_resolution:
+    - reject_or_revise_planner_command
+    - move_station
+    - reduce_workspace_curriculum
+  forbidden_resolution:
+    - relax_to_mechanical_limit
+    - depend_on_persistent_hard_clamp
+
+training_rules:
+  action_rate_signal: q_des_final_or_effective_action
+  saturation_cost_signal: distance_to_operational_limit
+  raw_latent_growth_audited: true
+  hard_clamp_termination_is_last_resort: true
+  hit_reward_requires_action_feasibility: true
+  stability_reward_cannot_be_earned_by_never_attempting: true
+
+migration:
+  teacher_contract: legacy_raw_hard_clip_v1
+  student_contract: bounded_effective_v2
+  teacher_artifact: B17996_model_19495_normal114.onnx
+  distillation_target: q_des_final
+  prohibited_distillation_target: raw_action
+  required_rollout_fields:
+    - observation
+    - raw_action
+    - q_des_unclipped
+    - q_des_final
+    - effective_action
+    - joint_position
+    - joint_velocity
+    - applied_torque
+    - position_clamp
+    - torque_clip
+    - phase
+    - contact
+    - net_cross
+    - fall
+  direct_runtime_feedback_switch: forbidden
+
+validation_gates:
+  ready_duration_s: 60.0
+  fake_cycle_duration_s: 30.0
+  continuous_serves: 40
+  no_fall_required: true
+  ready_any_mechanical_clamp_frame_rate_max: 0.01
+  all_task_mechanical_clamp_element_rate_max: 0.005
+  per_joint_mechanical_clamp_rate_max: 0.05
+  persistent_mechanical_clamp_events_max: 0
+  ready_torque_clip_rate_max: 0.01
+  strike_torque_clip_longest_run_ticks_max: 3
+  teacher_contact_relative_drop_max: 0.10
+  base_angular_velocity_p95_must_not_regress: true
+  waist_leg_5_20hz_power_must_not_regress: true
+  isaac_and_mujoco_directional_agreement_required: true
+
+promotion_requirements:
+  - operational_limits_calibrated
+  - bounded_actor_implemented
+  - effective_feedback_parity_tested
+  - onnx_metadata_contains_contract_id
+  - isaac_mujoco_deploy_decoder_hash_equal
+  - frozen_p1_gates_pass
+
+evidence:
+  p1_report: analysis/closed_loop_v2_20260731/P0_P1_VALIDATION_RESULT_20260731_ZH.md
+  p1_analysis_dir: analysis/closed_loop_v2_20260731/p1_b19495_action_gate
+  b19495_ready_ankle_roll_clamp_rate_approx: 0.999
+  b19495_continuous_raw_clamp_element_rate: 0.0957
+  b19495_continuous_effective_clamp_element_rate: 0.0827
+  migration_contract: >-
+    hope_training/whole_body_tracking/cfg/contracts/hope_policy_migration_v1.yaml
+  bounded_codec: >-
+    hope_training/whole_body_tracking/source/whole_body_tracking/whole_body_tracking/utils/bounded_action_contract.py
+  bounded_codec_tests: >-
+    hope_training/whole_body_tracking/tests/test_bounded_action_contract.py

@@ -1,0 +1,38 @@
+# Corrected R2: keep deferred collision settlement, but unlock the final strict
+# READY gate through measured recovery ability rather than iteration.
+
+defaults:
+  - HOPEPingPongM22494ForehandDeferredHitR2
+  - _self_
+
+name: HOPEPingPongM22494ForehandDeferredHitAbilityGateR2B
+
+overrides:
+  commands.racket_target.post_contact_ready_curriculum_enabled: true
+  commands.racket_target.post_contact_ready_curriculum_start_level: 0
+
+  # Stage 0 makes the event reachable without accepting backward torso lean.
+  # Each later stage monotonically tightens motion and sustained-settle limits.
+  commands.racket_target.post_contact_ready_curriculum_max_torso_ang_vel:
+    [0.90, 0.78, 0.68, 0.60]
+  commands.racket_target.post_contact_ready_curriculum_max_base_lin_vel:
+    [0.22, 0.20, 0.19, 0.18]
+  commands.racket_target.post_contact_ready_curriculum_max_base_ang_vel:
+    [1.00, 0.82, 0.68, 0.55]
+  commands.racket_target.post_contact_ready_curriculum_max_racket_speed:
+    [1.20, 1.05, 0.95, 0.90]
+  commands.racket_target.post_contact_ready_curriculum_min_feet_contact:
+    [0.90, 0.95, 0.98, 0.99]
+  commands.racket_target.post_contact_ready_curriculum_required_consecutive_steps:
+    [3, 5, 7, 10]
+  commands.racket_target.post_contact_ready_curriculum_deadline_steps:
+    [90, 85, 80, 70]
+
+  # A stage advances only after enough resolved post-contact attempts and a
+  # sustained success EMA. There is no iteration-based transition.
+  commands.racket_target.post_contact_ready_curriculum_advance_success_thresholds:
+    [0.30, 0.40, 0.50]
+  commands.racket_target.post_contact_ready_curriculum_min_resolved_events:
+    [1024, 2048, 4096]
+  commands.racket_target.post_contact_ready_curriculum_ema_rate: 0.05
+

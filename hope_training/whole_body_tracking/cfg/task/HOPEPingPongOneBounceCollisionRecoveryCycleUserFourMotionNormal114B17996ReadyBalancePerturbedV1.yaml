@@ -1,0 +1,95 @@
+# =============================================================================
+# B17996 deploy-ready active-balance fine-tune.
+#
+# Keeps the exact 114-D actor/action contract and hitting objective from B17996.
+# During no-command READY it starts from small signed roll/pitch and velocity
+# perturbations, then rewards returning to an upright, quiet, two-foot-supported
+# stance. Strike rewards are preserved so "standing still" is not a solution.
+# =============================================================================
+
+defaults:
+  - HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionNormal114DeployReadyNoCommand
+  - _self_
+
+name: HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionNormal114B17996ReadyBalancePerturbedV1
+
+overrides:
+  commands.motion.hold_steps_range: [120, 180]
+  commands.motion.stand_start_prob: 0.55
+  commands.motion.stand_start_min_hold: 120
+  commands.motion.stand_start_pose_range:
+    x: [-0.025, 0.025]
+    y: [-0.025, 0.025]
+    z: [-0.005, 0.005]
+    roll: [-0.08, 0.08]
+    pitch: [-0.14, 0.14]
+    yaw: [-0.04, 0.04]
+  commands.motion.stand_start_velocity_range:
+    x: [-0.16, 0.16]
+    y: [-0.10, 0.10]
+    z: [-0.04, 0.04]
+    roll: [-0.32, 0.32]
+    pitch: [-0.52, 0.52]
+    yaw: [-0.16, 0.16]
+  commands.motion.stand_start_joint_position_range: [-0.025, 0.025]
+
+  # Every frozen hold exposes the same lifecycle command used by deployment.
+  commands.racket_target.deploy_ready_hold_prob: 1.0
+
+  rewards.no_command_ready_balance.weight: 2.20
+  rewards.no_command_ready_balance.params:
+    command_name: racket_target
+    pitch_std: 0.10
+    roll_std: 0.12
+    lin_vel_std: 0.16
+    ang_vel_std: 0.44
+    height_std: 0.085
+    station_std: 0.17
+    min_feet_contact: 0.50
+    start_step: 0
+    warmup_steps: 1200
+    start_scale: 0.45
+
+  # Let waist/legs react during READY instead of penalizing every correction.
+  rewards.post_strike_lower_body_action_rate.weight: -0.012
+  rewards.post_strike_lower_body_action_rate.params:
+    command_name: racket_target
+    joint_names:
+      - waist_yaw_joint
+      - waist_roll_joint
+      - waist_pitch_joint
+      - left_hip_pitch_joint
+      - left_hip_roll_joint
+      - left_hip_yaw_joint
+      - left_knee_joint
+      - left_ankle_pitch_joint
+      - left_ankle_roll_joint
+      - right_hip_pitch_joint
+      - right_hip_roll_joint
+      - right_hip_yaw_joint
+      - right_knee_joint
+      - right_ankle_pitch_joint
+      - right_ankle_roll_joint
+    include_hold: true
+    early_prestrike_window_steps: 0
+    start_step: 0
+    warmup_steps: 1200
+    start_scale: 0.20
+
+  rewards.post_strike_base_ang_vel.weight: 0.90
+  rewards.post_strike_base_ang_vel.params:
+    command_name: racket_target
+    std: 1.25
+    include_hold: true
+    early_prestrike_window_steps: 0
+    start_step: 0
+    warmup_steps: 1600
+    start_scale: 0.35
+
+  rewards.phase_action_rate.weight: -0.46
+  rewards.phase_action_rate.params:
+    command_name: racket_target
+    pre_strike_scale: 0.024
+    strike_scale: 0.004
+    recovery_scale: 0.10
+    hold_scale: 0.075

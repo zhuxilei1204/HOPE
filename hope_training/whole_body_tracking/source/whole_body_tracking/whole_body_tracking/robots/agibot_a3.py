@@ -25,6 +25,12 @@ from whole_body_tracking.assets import ASSET_DIR
 ##
 AGIBOT_A3_ASSET_ROOT = f"{ASSET_DIR}/agibot_a3"
 AGIBOT_A3_URDF_PATH = f"{AGIBOT_A3_ASSET_ROOT}/urdf/model.urdf"
+AGIBOT_A3_PHYSICAL_URDF_PATH = (
+    f"{AGIBOT_A3_ASSET_ROOT}/urdf/model_physical.urdf"
+)
+AGIBOT_A3_PHYSICAL_USD_PATH = (
+    f"{AGIBOT_A3_ASSET_ROOT}/usd/model_physical_merged/model_physical.usd"
+)
 
 ##
 # Canonical joint order (index 0..30). Training, ONNX export, the reference runner and the planner

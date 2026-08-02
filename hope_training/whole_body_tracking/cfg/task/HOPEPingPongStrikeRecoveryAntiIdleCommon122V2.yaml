@@ -1,0 +1,84 @@
+# Common anti-idle objective for the protected and scratch-seeded routes.
+#
+# A stable no-strike policy cannot collect post-strike recovery/next-ready
+# rewards. Those rewards become available only after a target-directed swing.
+# No-command READY stability remains unconditional and physical falls/table
+# contact remain hard terminations.
+
+defaults:
+  - HOPEPingPongM22750StabilityFeedback122HealthImpactH1
+  - _self_
+
+name: HOPEPingPongStrikeRecoveryAntiIdleCommon122V2
+actor_obs_contract: hope_pingpong_stability122
+
+overrides:
+  commands.racket_target.targeted_attempt_radius: 0.20
+  commands.racket_target.targeted_attempt_min_approach_speed: 0.05
+  commands.racket_target.ability_curriculum_use_targeted_attempt: true
+
+  # A useful attempt must be directed toward the physical strike point. It
+  # receives a health-scaled event reward; doing nothing at the strike frame is
+  # a bounded one-shot penalty rather than an episode reset.
+  rewards.targeted_strike_attempt.weight: 2.0
+  rewards.targeted_strike_attempt.params:
+    command_name: racket_target
+    minimum_health_multiplier: 0.40
+  rewards.strike_inactivity.weight: -2.5
+
+  # Generic recovery is no longer free. Current-swing recovery requires a
+  # targeted attempt; early readiness for the next command uses the previous
+  # swing's targeted-attempt latch.
+  rewards.follow_through_recovery.params:
+    command_name: racket_target
+    std: 0.46
+    station_std: 0.25
+    use_dynamic_station: true
+    require_targeted_attempt: true
+  rewards.recovery_health.params:
+    command_name: racket_target
+    height_std: 0.095
+    upright_std: 0.26
+    lin_vel_std: 0.24
+    ang_vel_std: 0.70
+    station_std: 0.21
+    use_dynamic_station: true
+    require_targeted_attempt: true
+  rewards.next_ball_readiness.params:
+    command_name: racket_target
+    height_std: 0.10
+    upright_std: 0.28
+    lin_vel_std: 0.25
+    ang_vel_std: 0.75
+    station_std: 0.22
+    racket_vel_std: 0.75
+    arm_pos_std: 0.35
+    arm_ori_std: 0.80
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    early_prestrike_window_steps: 18
+    require_targeted_attempt: true
+  rewards.next_swing_ready_bonus.params:
+    command_name: racket_target
+    window_steps: 18
+    height_std: 0.09
+    upright_std: 0.24
+    lin_vel_std: 0.22
+    ang_vel_std: 0.64
+    station_std: 0.19
+    racket_vel_std: 0.62
+    arm_pos_std: 0.32
+    arm_ori_std: 0.72
+    arm_body_names:
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+      - right_wrist_yaw_Link
+    require_targeted_attempt: true
+
+  # Preserve the H1 40/60 exploration/health split. The arm stays outside the
+  # health gate and legs retain the source task's phase-local freedom.
+  commands.racket_target.ability_curriculum_require_healthy_impact: true
+  commands.racket_target.cycle_v2_require_healthy_impact: true
+

@@ -1,0 +1,11 @@
+defaults:
+  - HOPEPingPongClosedLoopV3ScratchPhaseImmediateC7AMultiSkill114
+  - _self_
+
+name: HOPEPingPongClosedLoopV3ScratchPhaseImmediateC7APrunedRuntimeMultiSkill114
+
+# Runtime-only benchmark variant. Reward values, observations, actions, physics,
+# and lifecycle configuration are unchanged; only stateless zero-weight reward
+# configs are omitted before RewardManager construction.
+runtime:
+  prune_zero_weight_rewards: true

@@ -1,0 +1,29 @@
+# V8A changes only the strike-credit path. Route, command, motion, actor input,
+# dynamics, lifecycle, and the physical outcome contract remain V7B-identical.
+defaults:
+  - HOPEPingPongStage2CommandPrecisionOutcome114V7B
+  - _self_
+
+name: HOPEPingPongStage2SafetyCreditSoft114V8A
+experiment_name: hope_pingpong_stage2_safety_credit114_v8
+
+overrides:
+  # Preserve early exploration, then require dense command execution to be
+  # increasingly compatible with the measured impact-health state.
+  rewards.planner_racket_task_space_crossfade.params.minimum_health_multiplier: 0.30
+  rewards.planner_racket_task_space_crossfade.params.final_minimum_health_multiplier: 0.05
+  rewards.prestrike_racket_progress.params.minimum_health_multiplier: 0.30
+  rewards.prestrike_racket_progress.params.final_minimum_health_multiplier: 0.05
+  rewards.near_impact_planner_velocity_progress.params.minimum_health_multiplier: 0.25
+  rewards.near_impact_planner_velocity_progress.params.final_minimum_health_multiplier: 0.05
+  rewards.blade_direction.params.minimum_health_multiplier: 0.30
+  rewards.blade_direction.params.final_minimum_health_multiplier: 0.05
+
+  # A real contact remains exploratory credit, but unhealthy impacts no longer
+  # receive an artificial positive floor.
+  rewards.physical_outcome_events.params.minimum_health_multiplier: 0.0
+  rewards.physical_contact_planner_alignment.params.minimum_health_multiplier: 0.0
+
+  # Regress difficulty before safety reaches the old catastrophic 0.65 floor.
+  rewards.physical_capability_curriculum.params.safety_floor: 0.74
+

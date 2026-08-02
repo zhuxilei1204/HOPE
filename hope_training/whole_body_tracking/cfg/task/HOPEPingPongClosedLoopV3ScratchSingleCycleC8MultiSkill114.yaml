@@ -1,0 +1,36 @@
+defaults:
+  - HOPEPingPongClosedLoopV3ScratchPhaseImmediateC7AMultiSkill114
+  - _self_
+
+name: HOPEPingPongClosedLoopV3ScratchSingleCycleC8MultiSkill114
+
+# C8 changes only the episode bootstrap lifecycle. At least 40% of envs remain
+# fully continuous; their measured ability alone lowers the one-swing reset
+# fraction and unlocks route/speed difficulty.
+overrides:
+  # Runtime-only: same-seed 4096-env benchmark produced an exactly identical
+  # 22,052-line metric stream and 3.1% higher throughput.
+  commands.motion.batched_metric_reset_logging: true
+  commands.racket_target.batched_metric_reset_logging: true
+  commands.motion.single_cycle_poststrike_steps: 40
+  commands.racket_target.single_cycle_curriculum_enabled: true
+  commands.racket_target.single_cycle_probabilities: [0.65, 0.45, 0.25, 0.10, 0.0]
+  commands.racket_target.single_cycle_targeted_attempt_thresholds: [0.01, 0.03, 0.06, 0.10]
+  commands.racket_target.single_cycle_contact_thresholds: [0.005, 0.015, 0.03, 0.05]
+  commands.racket_target.single_cycle_recovery_thresholds: [0.35, 0.48, 0.60, 0.68]
+  commands.racket_target.single_cycle_safety_thresholds: [0.90, 0.94, 0.96, 0.98]
+  commands.racket_target.single_cycle_cycle_ready_thresholds: [0.0, 0.01, 0.03, 0.08]
+  commands.racket_target.single_cycle_min_resolved_events: 4096
+  commands.racket_target.single_cycle_min_continuous_fraction: 0.40
+  commands.racket_target.single_cycle_required_ready_steps: 5
+  commands.racket_target.single_cycle_min_recovery_steps: 4
+  # The motion segment already includes 40 post-strike steps (0.8 s). Start
+  # with six additional no-command steps, then lengthen only after continuous
+  # ability improves. Attempted returns remain blocked on cycle-v2 settlement,
+  # so their delayed outcome is never cut off by these short no-attempt windows.
+  commands.racket_target.single_cycle_deadline_steps: 100
+  commands.racket_target.single_cycle_deadline_steps_by_level: [6, 15, 30, 60, 100]
+  commands.racket_target.single_cycle_continuous_only_curriculum: true
+  terminations.single_cycle_curriculum_timeout.params:
+    command_name: racket_target
+    enabled: true

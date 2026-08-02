@@ -80,3 +80,89 @@ def test_actor_anchor_can_exempt_appended_input_columns() -> None:
     assert metrics["actor_anchor_rms"] > 0.0
     assert metrics["actor_anchor_exempt_rms"] > 0.0
     anchor.close()
+
+
+def test_actor_anchor_can_weakly_anchor_appended_input_columns() -> None:
+    actor = nn.Sequential(nn.Linear(4, 2, bias=False), nn.Tanh(), nn.Linear(2, 1))
+    reference = {
+        name: torch.zeros_like(parameter)
+        for name, parameter in actor.named_parameters()
+    }
+    with torch.no_grad():
+        actor[0].weight.fill_(1.0)
+
+    anchor = ActorParameterAnchor(
+        actor,
+        reference,
+        coefficient=0.5,
+        first_layer_input_exempt_start=2,
+        exempt_coefficient=0.1,
+    )
+    sum(parameter.sum() for parameter in actor.parameters()).backward()
+
+    assert torch.allclose(actor[0].weight.grad[:, :2], torch.full((2, 2), 1.5))
+    assert torch.allclose(actor[0].weight.grad[:, 2:], torch.full((2, 2), 1.1))
+    anchor.close()
+
+
+def test_actor_anchor_can_exempt_bounded_input_slice() -> None:
+    actor = nn.Sequential(nn.Linear(6, 2, bias=False), nn.Tanh(), nn.Linear(2, 1))
+    reference = {
+        name: torch.zeros_like(parameter)
+        for name, parameter in actor.named_parameters()
+    }
+    with torch.no_grad():
+        actor[0].weight.fill_(1.0)
+
+    anchor = ActorParameterAnchor(
+        actor,
+        reference,
+        coefficient=0.5,
+        first_layer_input_exempt_start=2,
+        first_layer_input_exempt_end=4,
+        exempt_coefficient=0.1,
+    )
+    sum(parameter.sum() for parameter in actor.parameters()).backward()
+
+    assert torch.allclose(actor[0].weight.grad[:, :2], torch.full((2, 2), 1.5))
+    assert torch.allclose(actor[0].weight.grad[:, 2:4], torch.full((2, 2), 1.1))
+    assert torch.allclose(actor[0].weight.grad[:, 4:], torch.full((2, 2), 1.5))
+    anchor.close()
+
+
+def test_actor_anchor_rejects_exemption_end_without_start() -> None:
+    actor = nn.Linear(4, 1)
+    reference = {
+        name: torch.zeros_like(parameter)
+        for name, parameter in actor.named_parameters()
+    }
+    try:
+        ActorParameterAnchor(
+            actor,
+            reference,
+            coefficient=1.0,
+            first_layer_input_exempt_end=3,
+        )
+    except ValueError as exc:
+        assert "end requires an exemption start" in str(exc)
+    else:
+        raise AssertionError("an exemption end without start should fail")
+
+
+def test_actor_anchor_rejects_negative_exempt_coefficient() -> None:
+    actor = nn.Linear(2, 1)
+    reference = {
+        name: torch.zeros_like(parameter)
+        for name, parameter in actor.named_parameters()
+    }
+    try:
+        ActorParameterAnchor(
+            actor,
+            reference,
+            coefficient=1.0,
+            exempt_coefficient=-0.1,
+        )
+    except ValueError as exc:
+        assert "exempt coefficient" in str(exc)
+    else:
+        raise AssertionError("negative exempt coefficient should fail")

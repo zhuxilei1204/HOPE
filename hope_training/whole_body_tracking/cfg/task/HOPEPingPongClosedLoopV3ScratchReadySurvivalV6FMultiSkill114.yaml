@@ -1,0 +1,20 @@
+defaults:
+  - HOPEPingPongClosedLoopV3ScratchAdaptiveMotionV6CMultiSkill114
+  - _self_
+
+name: HOPEPingPongClosedLoopV3ScratchReadySurvivalV6FMultiSkill114
+
+# V6F keeps V6C's hitting and motion curriculum unchanged. It replaces the
+# failed dense READY-balance experiment with one-shot hard-safe survival milestones.
+# At 50 Hz these are 1.0, 1.5, 2.0, 3.0, 5.0, and 8.0 seconds.
+overrides:
+  commands.racket_target.active_ready_survival_milestones_enabled: true
+  commands.racket_target.active_ready_survival_require_soft_envelope: false
+  commands.racket_target.active_ready_survival_milestone_steps: [50, 75, 100, 150, 250, 400]
+  commands.racket_target.active_ready_survival_milestone_values: [0.10, 0.15, 0.25, 0.45, 0.80, 1.25]
+  commands.racket_target.active_ready_survival_max_height_error: 0.20
+  commands.racket_target.active_ready_survival_max_upright_error: 0.55
+  commands.racket_target.active_ready_survival_max_base_lin_vel: 1.00
+  commands.racket_target.active_ready_survival_max_base_ang_vel: 1.80
+  commands.racket_target.active_ready_survival_min_feet_contact: 0.50
+  rewards.active_ready_survival_milestone_bonus.weight: 2.0

@@ -52,13 +52,23 @@ reference deploy package (``a3_deploy/a3_deploy_example``) and the
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 import csv
+import hashlib
 import json
 import os
 import pathlib
 import sys
 
 import numpy as np
+
+try:
+    from scripts.planner_snapshot import (
+        instantiate_with_supported_kwargs,
+        load_planner_api,
+    )
+except ModuleNotFoundError:
+    from planner_snapshot import instantiate_with_supported_kwargs, load_planner_api
 
 
 _ISAAC_A3_CANONICAL_TO_ARTICULATION = np.array(
@@ -73,6 +83,71 @@ for _canonical_i, _articulation_i in enumerate(_ISAAC_A3_CANONICAL_TO_ARTICULATI
 _WAIST_ACTION_INDICES = np.arange(0, 3, dtype=np.int64)
 _RIGHT_ARM_ACTION_INDICES = np.arange(12, 19, dtype=np.int64)
 _LEG_ACTION_INDICES = np.arange(19, 31, dtype=np.int64)
+
+
+def _observation_field_names(joint_names, obs_dim: int) -> list[str]:
+    """Return semantic names in the exact actor observation column order."""
+    names = [
+        "base_ang_vel_b_x",
+        "base_ang_vel_b_y",
+        "base_ang_vel_b_z",
+    ]
+    names.extend(f"joint_pos_rel__{name}" for name in joint_names)
+    names.extend(f"joint_vel__{name}" for name in joint_names)
+    names.extend(f"last_action__{name}" for name in joint_names)
+    names.extend(
+        [
+            "projected_gravity_b_x",
+            "projected_gravity_b_y",
+            "projected_gravity_b_z",
+            "base_forward_w_x",
+            "base_forward_w_y",
+            "station_error_w_x",
+            "station_error_w_y",
+            "racket_target_rel_base_w_x",
+            "racket_target_rel_base_w_y",
+            "racket_target_rel_base_w_z",
+            "racket_target_vel_w_x",
+            "racket_target_vel_w_y",
+            "racket_target_vel_w_z",
+            "time_to_strike_s",
+            "swing_side",
+        ]
+    )
+    if obs_dim >= 114:
+        names.extend(
+            [
+                "racket_target_normal_w_x",
+                "racket_target_normal_w_y",
+                "racket_target_normal_w_z",
+            ]
+        )
+    if obs_dim >= 122:
+        names.extend(
+            [
+                "stability_base_lin_vel_b_x",
+                "stability_base_lin_vel_b_y",
+                "stability_torso_gravity_b_x",
+                "stability_torso_gravity_b_y",
+                "stability_com_support_b_x",
+                "stability_com_support_b_y",
+                "stability_left_foot_contact",
+                "stability_right_foot_contact",
+            ]
+        )
+    if len(names) != obs_dim:
+        raise ValueError(
+            f"unsupported observation dimension {obs_dim}: generated {len(names)} names"
+        )
+    return names
+
+
+def _sha256(path: str | pathlib.Path) -> str:
+    digest = hashlib.sha256()
+    with pathlib.Path(path).open("rb") as fh:
+        for chunk in iter(lambda: fh.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def _obs_for_policy_joint_order(obs: np.ndarray, last_action_canonical: np.ndarray, mode: str) -> np.ndarray:
@@ -308,6 +383,29 @@ def _angle_deg(a, b):
     return float(np.degrees(np.arccos(np.clip(float(np.dot(a_u, b_u)), -1.0, 1.0))))
 
 
+def _planner_alignment_diagnostics(
+    racket_pos,
+    racket_vel,
+    racket_normal,
+    target_pos,
+    target_vel,
+    target_normal,
+) -> dict[str, float | None]:
+    """Return world-frame task-space errors without changing policy inputs."""
+    racket_pos = np.asarray(racket_pos, dtype=np.float64).reshape(3)
+    racket_vel = np.asarray(racket_vel, dtype=np.float64).reshape(3)
+    racket_normal = np.asarray(racket_normal, dtype=np.float64).reshape(3)
+    target_pos = np.asarray(target_pos, dtype=np.float64).reshape(3)
+    target_vel = np.asarray(target_vel, dtype=np.float64).reshape(3)
+    target_normal = np.asarray(target_normal, dtype=np.float64).reshape(3)
+    return {
+        "racket_target_pos_error": _norm(racket_pos - target_pos),
+        "racket_target_vel_error": _norm(racket_vel - target_vel),
+        "racket_target_vel_angle_deg": _angle_deg(racket_vel, target_vel),
+        "racket_target_normal_error_deg": _angle_deg(racket_normal, target_normal),
+    }
+
+
 def _xyz(row: dict, prefix: str, value) -> None:
     if value is None:
         row[f"{prefix}_x"] = ""
@@ -362,21 +460,20 @@ def _outgoing_flight_diag(start_pos_table: np.ndarray, ball_vel_w: np.ndarray, p
     return out
 
 
-def _choose_racket_normal(racket_xmat: np.ndarray, to_ball: np.ndarray) -> np.ndarray:
-    """Pick the racket geom axis most aligned with the ball-side direction.
+def _racket_face_normal(racket_frame_xmat: np.ndarray, side_name: str) -> np.ndarray:
+    """Match the Isaac task's canonical racket-face convention.
 
-    The collision mesh/site convention is model-specific, so diagnostics avoid
-    assuming a named local face-normal axis. The chosen normal is always oriented
-    from the racket toward the ball at contact.
+    Training uses racket-link local +Y as the face normal and flips its sign for
+    a backhand. Use the explicit ``right_racket`` site frame here: MuJoCo mesh
+    compilation stores an asset ``mesh_quat`` and therefore the collision
+    geom's xmat is not the URDF link frame even when the XML geom quaternion is
+    identity.
     """
-    axes = [racket_xmat[:, i].copy() for i in range(3)]
-    to_ball_u = _unit_or_none(to_ball)
-    if to_ball_u is None:
-        return axes[0]
-    axis = max(axes, key=lambda a: abs(float(np.dot(a, to_ball_u))))
-    if float(np.dot(axis, to_ball_u)) < 0.0:
-        axis = -axis
-    return axis
+    normal = np.asarray(racket_frame_xmat, dtype=np.float64)[:, 1].copy()
+    if side_name == "backhand":
+        normal = -normal
+    norm = float(np.linalg.norm(normal))
+    return normal / norm if norm > 1.0e-9 else np.array([1.0, 0.0, 0.0], dtype=np.float64)
 
 
 def _new_contact_diag_row(trial: int, side_name: str, strike_pt, serve_pos, serve_vel) -> dict:
@@ -401,6 +498,8 @@ def _new_contact_diag_row(trial: int, side_name: str, strike_pt, serve_pos, serv
         "min_ball_racket_distance": "",
         "base_z_at_contact": "",
         "base_z_end": "",
+        "contact_separation_tick": "",
+        "contact_duration_s": "",
         "time_to_strike_cmd": "",
         "racket_target_speed": "",
         "racket_speed_pre": "",
@@ -435,10 +534,13 @@ def _new_contact_diag_row(trial: int, side_name: str, strike_pt, serve_pos, serv
         ("ball_pre_vel", None),
         ("ball_post_pos", None),
         ("ball_post_vel", None),
+        ("ball_separation_vel", None),
         ("racket_pre_pos", None),
+        ("racket_site_pos_exact_pre", None),
         ("racket_pre_vel", None),
         ("racket_post_pos", None),
         ("racket_post_vel", None),
+        ("racket_site_vel_separation", None),
     ):
         _xyz(row, prefix, value)
     row.update(
@@ -476,6 +578,8 @@ def _contact_diag_fields() -> list[str]:
         "min_ball_racket_distance",
         "base_z_at_contact",
         "base_z_end",
+        "contact_separation_tick",
+        "contact_duration_s",
     ]
     xyz_prefixes = [
         "strike_sample",
@@ -492,10 +596,16 @@ def _contact_diag_fields() -> list[str]:
         "ball_pre_vel",
         "ball_post_pos",
         "ball_post_vel",
+        "ball_separation_vel",
         "racket_pre_pos",
+        "racket_site_pos_exact_pre",
         "racket_pre_vel",
+        "racket_site_vel_exact_pre",
+        "racket_ang_vel_exact_pre",
+        "racket_point_vel_exact_pre",
         "racket_post_pos",
         "racket_post_vel",
+        "racket_site_vel_separation",
     ]
     xyz_fields = [f"{prefix}_{axis}" for prefix in xyz_prefixes for axis in ("x", "y", "z")]
     scalars = [
@@ -951,20 +1061,20 @@ class _RealHopePlannerBridge:
         self.forehand = int(forehand)
         self.backhand = int(backhand)
 
-        pkg_parent = self.repo_root / "hope_ws" / "src" / "hope_planner"
-        if str(pkg_parent) not in sys.path:
-            sys.path.insert(0, str(pkg_parent))
-
-        from hope_planner.constants import PlannerConfig, load_ball_physics, load_paddle_params, load_table_params
-        from hope_planner.planner import HOPEPlanner
-        from hope_planner.side_selection import select_swing_side
-
-        self._PlannerConfig = PlannerConfig
-        self._HOPEPlanner = HOPEPlanner
-        self._load_ball_physics = load_ball_physics
-        self._load_paddle_params = load_paddle_params
-        self._load_table_params = load_table_params
-        self._select_swing_side = select_swing_side
+        planner_api = load_planner_api(
+            self.repo_root,
+            getattr(args, "real_planner_code_dir", None),
+        )
+        self.planner_code_dir = planner_api.package_dir
+        self.planner_code_sha256 = planner_api.source_sha256
+        self._PlannerConfig = planner_api.PlannerConfig
+        self._HOPEPlanner = planner_api.HOPEPlanner
+        self._CommandStabilityConfig = planner_api.CommandStabilityConfig
+        self._CommandStabilityGate = planner_api.CommandStabilityGate
+        self._load_ball_physics = planner_api.load_ball_physics
+        self._load_paddle_params = planner_api.load_paddle_params
+        self._load_table_params = planner_api.load_table_params
+        self._select_swing_side = planner_api.select_swing_side
 
         self.yaml_path = _resolve_repo_path(self.repo_root, args.real_planner_yaml) or _default_real_planner_yaml(self.repo_root)
         self.params = self._load_yaml_params(self.yaml_path)
@@ -995,6 +1105,8 @@ class _RealHopePlannerBridge:
         self.solve_calls = 0
         self.command_count = 0
         self.no_command_count = 0
+        self.gate_reason_counts = Counter()
+        self.command_gate = self._make_command_gate()
         self.reset_for_new_ball()
 
     @staticmethod
@@ -1047,29 +1159,91 @@ class _RealHopePlannerBridge:
             ],
             dtype=np.float64,
         )
-        return self._PlannerConfig(
-            x_hit=float(x_hit),
-            target_land=target_land,
-            delta_t_flight=float(self.params.get("delta_t_flight", 0.5)),
-            max_predict_time=float(self.params.get("max_predict_time", 2.0)),
-            fit_window=int(self.params.get("fit_window", 67)),
-            min_ready_samples=int(self.params.get("min_ready_samples", 6)),
-            bounce_z_tol=float(self.params.get("bounce_z_tol", 0.005)),
-            bounce_center_z_max=float(self.params.get("bounce_center_z_max", 0.11)),
-            C_r=float(paddle["C_r"]),
-            paddle_a_t=float(paddle["paddle_a_t"]),
-            paddle_b_t=float(paddle["paddle_b_t"]),
-            paddle_mu=float(paddle["paddle_mu"]),
+        return instantiate_with_supported_kwargs(
+            self._PlannerConfig,
+            {
+                "x_hit": float(x_hit),
+                "target_land": target_land,
+                "delta_t_flight": float(
+                    self.params.get("delta_t_flight", 0.5)
+                ),
+                "max_predict_time": float(
+                    self.params.get("max_predict_time", 2.0)
+                ),
+                "dt_integrate": float(self.params.get("dt_integrate", 0.001)),
+                "fit_window_s": float(self.params.get("fit_window_s", 0.14)),
+                "fit_window": int(self.params.get("fit_window", 67)),
+                "poly_order_xy": int(self.params.get("poly_order_xy", 1)),
+                "poly_order_z": int(self.params.get("poly_order_z", 2)),
+                "min_ready_samples": int(
+                    self.params.get("min_ready_samples", 6)
+                ),
+                "bounce_z_tol": float(self.params.get("bounce_z_tol", 0.005)),
+                "bounce_center_z_max": float(
+                    self.params.get("bounce_center_z_max", 0.11)
+                ),
+                "bounce_min_vertical_delta": float(
+                    self.params.get("bounce_min_vertical_delta", 0.002)
+                ),
+                "bounce_refractory_s": float(
+                    self.params.get("bounce_refractory_s", 0.08)
+                ),
+                "bounce_max_sample_gap_s": float(
+                    self.params.get("bounce_max_sample_gap_s", 0.01)
+                ),
+                "C_r": float(paddle["C_r"]),
+                "paddle_a_t": float(paddle["paddle_a_t"]),
+                "paddle_b_t": float(paddle["paddle_b_t"]),
+                "paddle_mu": float(paddle["paddle_mu"]),
+            },
         )
+
+    def _make_command_gate(self):
+        if (
+            self._CommandStabilityConfig is None
+            or self._CommandStabilityGate is None
+        ):
+            return None
+        config = instantiate_with_supported_kwargs(
+            self._CommandStabilityConfig,
+            {
+                "initial_consecutive": int(
+                    self.params.get("revision_gate_initial_consecutive", 2)
+                ),
+                "initial_position_tolerance_m": float(
+                    self.params.get(
+                        "revision_gate_initial_position_tolerance_m", 0.10
+                    )
+                ),
+                "max_position_jump_m": float(
+                    self.params.get("revision_gate_max_position_jump_m", 0.10)
+                ),
+                "max_velocity_jump_mps": float(
+                    self.params.get("revision_gate_max_velocity_jump_mps", 1.50)
+                ),
+                "freeze_time_to_strike_s": float(
+                    self.params.get("revision_gate_freeze_tts_s", 0.20)
+                ),
+                "max_strike_time_jump_s": float(
+                    self.params.get(
+                        "revision_gate_max_strike_time_jump_s", 0.040
+                    )
+                ),
+            },
+        )
+        return self._CommandStabilityGate(config)
 
     def reset_for_new_ball(self) -> None:
         self.planner = self._HOPEPlanner(physics=self.physics, config=self.config, table=self.table)
         self._task_revision = 0
         self._task_active = False
+        self._candidate_active = False
         self._last_solve_t = None
         self._last_control_t = None
         self._last_control_pos = None
         self._next_mocap_t = None
+        if self.command_gate is not None:
+            self.command_gate.reset()
 
     def _select_side(self, intercept_y: float) -> int:
         side = self._select_swing_side(float(intercept_y), self.split_y, self.hysteresis_y, self._prev_side)
@@ -1094,8 +1268,30 @@ class _RealHopePlannerBridge:
         if cmd is None:
             if self.planner.ball_incoming is False:
                 self._task_active = False
+                self._candidate_active = False
+                if self.command_gate is not None:
+                    self.command_gate.reset()
             self.no_command_count += 1
             return None
+
+        tts = self.planner.time_to_strike
+        if tts is None:
+            latest_t = getattr(self.planner, "_latest_t", float(t))
+            tts = float(cmd.t_strike) - float(latest_t)
+        if not self._candidate_active:
+            self._candidate_active = True
+            if self.command_gate is not None:
+                self.command_gate.reset()
+        if self.command_gate is not None:
+            accepted = self.command_gate.consider(
+                cmd.p_intercept,
+                cmd.v_racket,
+                float(tts),
+                candidate_time_s=float(t),
+            )
+            self.gate_reason_counts[self.command_gate.last_reason] += 1
+            if not accepted:
+                return None
 
         if not self._task_active:
             self._task_id += 1
@@ -1106,10 +1302,6 @@ class _RealHopePlannerBridge:
         else:
             self._task_revision += 1
 
-        tts = self.planner.time_to_strike
-        if tts is None:
-            latest_t = getattr(self.planner, "_latest_t", float(t))
-            tts = float(cmd.t_strike) - float(latest_t)
         normal = np.asarray(cmd.n_racket, dtype=np.float64)
         normal /= max(float(np.linalg.norm(normal)), 1.0e-9)
         deploy_cmd = self.DeployRacketCommand(
@@ -1203,6 +1395,8 @@ def run_eval(args) -> dict:
     from mujoco_pingpong_scene import PingPongRealPhysicsScene
 
     runtime_cfg = RuntimeConfig.load(args.runtime_config or _default_runtime_config(repo_root))
+    if args.ready_reach_x is not None:
+        runtime_cfg.lifecycle.ready_reach_x = float(args.ready_reach_x)
     if float(args.lifecycle_recovery_blend_seconds) > 0.0:
         runtime_cfg.lifecycle.recovery_blend_s = float(args.lifecycle_recovery_blend_seconds)
         runtime_cfg.lifecycle.recovery_blend_velocity = bool(args.lifecycle_recovery_blend_velocity)
@@ -1239,6 +1433,13 @@ def run_eval(args) -> dict:
         near_edge_x=args.near_edge_x,
         launch_viewer=args.view,
     )
+    ground_contact_friction = None
+    if args.ground_sliding_friction is not None:
+        ground_contact_friction = scene.set_ground_contact_friction(
+            args.ground_sliding_friction,
+            args.ground_torsional_friction,
+            args.ground_rolling_friction,
+        )
     recorder = (
         _MujocoVideoRecorder(
             scene,
@@ -1262,12 +1463,35 @@ def run_eval(args) -> dict:
     kp = runtime_cfg.sim_kp.copy() * float(args.kp_scale)
     kd = runtime_cfg.sim_kd.copy() * float(args.kd_scale)
     head_idx = list(HEAD_INDICES)
+    active_action_idx = np.asarray(
+        [idx for idx in range(31) if idx not in head_idx], dtype=np.int64
+    )
     net_clear_z = table.net_height + physics.ball_radius
     contact_radius = args.contact_radius
     dt = runtime_cfg.control_dt
     max_ticks = max(1, int(round(args.max_trial_seconds / dt)))
     rng = np.random.default_rng(args.seed)
     continuous = args.eval_mode == "continuous"
+    if args.startup_prepare_seconds < 0.0 or args.startup_policy_ready_seconds < 0.0:
+        raise ValueError("startup prepare/ready durations must be non-negative")
+    if args.startup_blend_seconds < 0.0:
+        raise ValueError("--startup-blend-seconds must be non-negative")
+    if (
+        args.startup_ready_calibration_seconds <= 0.0
+        or args.startup_ready_calibration_window_seconds <= 0.0
+    ):
+        raise ValueError("policy READY calibration durations must be positive")
+    if (
+        args.startup_handover_mode == "smooth"
+        and args.startup_blend_seconds > args.startup_policy_ready_seconds
+    ):
+        raise ValueError(
+            "--startup-blend-seconds must not exceed --startup-policy-ready-seconds"
+        )
+    if not continuous and (
+        args.startup_prepare_seconds > 0.0 or args.startup_policy_ready_seconds > 0.0
+    ):
+        raise ValueError("startup handover evaluation is only defined for --eval-mode continuous")
     counts = _new_eval_counts()
     by_side = {"forehand": _new_eval_counts(), "backhand": _new_eval_counts()}
     trace_fh = None
@@ -1314,16 +1538,35 @@ def run_eval(args) -> dict:
             "racket_x",
             "racket_y",
             "racket_z",
+            "racket_vel_x",
+            "racket_vel_y",
+            "racket_vel_z",
+            "racket_normal_x",
+            "racket_normal_y",
+            "racket_normal_z",
             "ball_racket_distance",
             "target_x",
             "target_y",
             "target_z",
+            "target_vel_x",
+            "target_vel_y",
+            "target_vel_z",
+            "target_normal_x",
+            "target_normal_y",
+            "target_normal_z",
+            "racket_target_pos_error",
+            "racket_target_vel_error",
+            "racket_target_vel_angle_deg",
+            "racket_target_normal_error_deg",
             "station_x",
             "station_y",
             "station_error_xy",
             "target_rel_base_x",
             "target_rel_base_y",
             "target_rel_base_z",
+            "target_rel_base_body_x",
+            "target_rel_base_body_y",
+            "target_rel_base_body_z",
             "target_shoulder_distance",
             "time_to_strike",
             "incoming_bounce",
@@ -1357,39 +1600,58 @@ def run_eval(args) -> dict:
     joint_diag_fh = None
     joint_diag_writer = None
     joint_diag_sequence_step = 0
+    policy_obs_dim = int(getattr(policy, "obs_dim", 111))
+    policy_obs_fields = _observation_field_names(JOINT_NAMES, policy_obs_dim)
     if args.joint_action_diag_csv:
         joint_diag_path = pathlib.Path(args.joint_action_diag_csv)
         joint_diag_path.parent.mkdir(parents=True, exist_ok=True)
         joint_diag_fh = joint_diag_path.open("w", encoding="utf-8", newline="")
         joint_diag_fields = [
             "sequence_step",
+            "sim_time_s",
             "trial",
             "segment",
             "tick",
             "side",
             "phase",
+            "command_valid",
             "time_to_strike",
             "base_x",
             "base_y",
             "base_z",
+            "base_quat_w",
+            "base_quat_x",
+            "base_quat_y",
+            "base_quat_z",
             "base_pitch_deg",
             "base_ang_vel_norm",
             "com_support_margin",
             "fallen",
         ]
+        joint_diag_fields.extend(f"obs__{name}" for name in policy_obs_fields)
         for prefix in (
+            "raw_policy",
             "raw",
+            "command",
             "effective",
             "feedback",
             "overflow",
             "position_clamped",
+            "policy_q_des",
+            "q_des_unclipped",
             "q",
             "qd",
             "q_des",
             "tracking_error",
+            "kp",
+            "kd",
+            "torque_p",
+            "torque_d",
             "torque_requested",
             "torque_applied",
             "torque_clipped",
+            "torque_lower_limit",
+            "torque_upper_limit",
         ):
             joint_diag_fields.extend(f"{prefix}__{name}" for name in JOINT_NAMES)
         joint_diag_writer = csv.DictWriter(joint_diag_fh, fieldnames=joint_diag_fields)
@@ -1427,7 +1689,7 @@ def run_eval(args) -> dict:
         racket_pre_vel,
         racket_post_pos,
         racket_post_vel,
-        racket_geom_xmat,
+        racket_frame_xmat,
         ball_post_pos,
         ball_post_vel,
         base_at_contact,
@@ -1439,9 +1701,31 @@ def run_eval(args) -> dict:
         contact_ball_post_pos = ball_post_pos
         contact_ball_post_vel = ball_post_vel
         contact_pos = events.contact_pos_w if real and events.contact_pos_w is not None else contact_ball_post_pos
+        racket_site_vel_exact_pre = (
+            events.contact_racket_site_vel_pre_w
+            if real and events.contact_racket_site_vel_pre_w is not None
+            else None
+        )
+        racket_site_pos_exact_pre = (
+            events.contact_racket_site_pos_pre_w
+            if real and events.contact_racket_site_pos_pre_w is not None
+            else None
+        )
+        racket_ang_vel_exact_pre = (
+            events.contact_racket_ang_vel_pre_w
+            if real and events.contact_racket_ang_vel_pre_w is not None
+            else None
+        )
+        racket_point_vel_exact_pre = (
+            events.contact_racket_point_vel_pre_w
+            if real and events.contact_racket_point_vel_pre_w is not None
+            else None
+        )
 
         to_ball = np.asarray(contact_ball_pre_pos, dtype=np.float64) - np.asarray(racket_post_pos, dtype=np.float64)
-        racket_normal = _choose_racket_normal(np.asarray(racket_geom_xmat, dtype=np.float64), to_ball)
+        racket_normal = _racket_face_normal(
+            np.asarray(racket_frame_xmat, dtype=np.float64), row["side"]
+        )
         mujoco_normal = events.contact_normal_w if real and events.contact_normal_w is not None else None
         if mujoco_normal is not None:
             mujoco_normal = np.asarray(mujoco_normal, dtype=np.float64).copy()
@@ -1449,11 +1733,16 @@ def run_eval(args) -> dict:
             if to_ball_u is not None and float(np.dot(mujoco_normal, to_ball_u)) < 0.0:
                 mujoco_normal = -mujoco_normal
 
-        target_vel = np.asarray(cmd.velocity, dtype=np.float64)
+        # Record the command that actually entered this policy inference.  The
+        # queue keeps the last accepted command with its original TTS, while
+        # SwingLifecycle owns the per-tick countdown and may retain/freeze a
+        # target after later planner candidates are rejected.
+        target_pos = np.asarray(diag["observed_target_pos"], dtype=np.float64)
+        target_vel = np.asarray(diag["observed_target_vel"], dtype=np.float64)
         target_outgoing_vel = np.asarray(getattr(cmd, "outgoing_velocity", target_vel), dtype=np.float64)
-        target_normal = getattr(cmd, "target_normal", None)
-        if target_normal is not None:
-            target_normal = np.asarray(target_normal, dtype=np.float64)
+        target_normal = np.asarray(
+            diag["observed_target_normal"], dtype=np.float64
+        )
         racket_pre_vel = np.asarray(racket_pre_vel, dtype=np.float64)
         racket_post_vel = np.asarray(racket_post_vel, dtype=np.float64)
         contact_ball_pre_vel = np.asarray(contact_ball_pre_vel, dtype=np.float64)
@@ -1469,7 +1758,7 @@ def run_eval(args) -> dict:
         row["contact_dist"] = "" if events.contact_dist is None else float(events.contact_dist)
         row["phase_at_contact"] = phase
         row["base_z_at_contact"] = float(np.asarray(base_at_contact, dtype=np.float64)[2])
-        row["time_to_strike_cmd"] = float(cmd.time_to_strike)
+        row["time_to_strike_cmd"] = float(diag["observed_time_to_strike"])
         row["racket_target_speed"] = _norm(target_vel)
         row["racket_speed_pre"] = _norm(racket_pre_vel)
         row["racket_speed_post"] = _norm(racket_post_vel)
@@ -1496,7 +1785,7 @@ def run_eval(args) -> dict:
             ("contact_pos", contact_pos),
             ("mujoco_contact_normal", mujoco_normal),
             ("racket_normal", racket_normal),
-            ("target_pos", cmd.position),
+            ("target_pos", target_pos),
             ("target_vel", target_vel),
             ("target_outgoing_vel", target_outgoing_vel),
             ("target_normal", target_normal),
@@ -1505,19 +1794,37 @@ def run_eval(args) -> dict:
             ("ball_post_pos", contact_ball_post_pos),
             ("ball_post_vel", contact_ball_post_vel),
             ("racket_pre_pos", racket_pre_pos),
+            ("racket_site_pos_exact_pre", racket_site_pos_exact_pre),
             ("racket_pre_vel", racket_pre_vel),
+            ("racket_site_vel_exact_pre", racket_site_vel_exact_pre),
+            ("racket_ang_vel_exact_pre", racket_ang_vel_exact_pre),
+            ("racket_point_vel_exact_pre", racket_point_vel_exact_pre),
             ("racket_post_pos", racket_post_pos),
             ("racket_post_vel", racket_post_vel),
         ):
             _xyz(row, prefix, value)
 
-    def _policy_tick(lifecycle, source, last_action, fixed_station_xy, manifest_row=None):
+    def _policy_tick(
+        lifecycle,
+        source,
+        last_action,
+        fixed_station_xy,
+        manifest_row=None,
+        *,
+        handover_action=None,
+        handover_alpha=1.0,
+    ):
         """One 50 Hz policy step (identical to the deploy runner's tick).
 
         The current tick always sends the same q_des for a given policy output.
         ``last_action_feedback_mode`` only controls which representation of that
-        already-issued command is exposed to the actor on the next tick.
+        already-issued command is exposed to the actor on the next tick.  During
+        an optional startup handover, the command-domain action is interpolated
+        from the prepare pose to the live actor output before decoding.  This
+        preserves the actor's raw last-action contract and reaches the unmodified
+        policy command exactly when ``handover_alpha`` reaches one.
         """
+        sim_time_s = float(scene.data.time)
         state = scene.read_robot_state()
         target = lifecycle.update(source.poll(), state)
         station_xy = _station_xy_for_observation(fixed_station_xy, target, lifecycle.phase, manifest_row, args)
@@ -1532,14 +1839,31 @@ def run_eval(args) -> dict:
         policy_obs = _obs_for_policy_joint_order(obs, last_action, args.policy_joint_order)
         raw_policy_action = policy.infer(policy_obs)
         raw_action = _raw_action_to_canonical(raw_policy_action, args.policy_joint_order)
-        # Applied action = raw with the passive head columns zeroed, matching both
-        # the deploy runner and training's zeroed last_action feedback.
-        applied_action = np.asarray(raw_action, dtype=np.float64).copy()
+        policy_action = np.asarray(raw_action, dtype=np.float64).copy()
         if runtime_cfg.passive_neck:
-            applied_action[head_idx] = 0.0
+            policy_action[head_idx] = 0.0
+        policy_q_des = runtime_cfg.action_adapter.decode(policy_action)
+        if runtime_cfg.passive_neck:
+            policy_q_des[head_idx] = default_q[head_idx]
+
+        # Applied action normally equals the actor output.  Startup smoothing is
+        # deliberately performed in the residual-action domain so raw-action
+        # feedback, q_des decoding and joint clamps remain internally consistent.
+        applied_action = policy_action.copy()
+        if handover_action is not None:
+            alpha = float(np.clip(handover_alpha, 0.0, 1.0))
+            prepare_action = np.asarray(handover_action, dtype=np.float64)
+            applied_action = (1.0 - alpha) * prepare_action + alpha * policy_action
+            if runtime_cfg.passive_neck:
+                applied_action[head_idx] = 0.0
         q_des = runtime_cfg.action_adapter.decode(applied_action)
+        q_des_unclipped = (
+            runtime_cfg.action_adapter.default_q
+            + applied_action * runtime_cfg.action_adapter.action_scale
+        )
         if runtime_cfg.passive_neck:
             q_des[head_idx] = default_q[head_idx]
+            q_des_unclipped[head_idx] = default_q[head_idx]
         scene.write_targets(q_des, kp, kd)
         effective_action = runtime_cfg.action_adapter.encode_effective(q_des)
         if runtime_cfg.passive_neck:
@@ -1585,11 +1909,27 @@ def run_eval(args) -> dict:
             "right_arm_joint_vel_rms": _group_rms(state.qd, _RIGHT_ARM_ACTION_INDICES),
             "leg_joint_vel_rms": _group_rms(state.qd, _LEG_ACTION_INDICES),
             "station_xy": np.asarray(station_xy, dtype=np.float64).copy(),
-            "raw_action": applied_action.copy(),
+            "observed_target_pos": np.asarray(target.pos_w, dtype=np.float64).copy(),
+            "observed_target_vel": np.asarray(target.vel_w, dtype=np.float64).copy(),
+            "observed_target_normal": np.asarray(
+                target.normal_w if target.normal_w is not None else target.vel_w,
+                dtype=np.float64,
+            ).copy(),
+            "observed_time_to_strike": float(target.time_to_strike),
+            "sim_time_s": sim_time_s,
+            "policy_obs": np.asarray(policy_obs, dtype=np.float32).copy(),
+            "canonical_obs": np.asarray(obs, dtype=np.float32).copy(),
+            "raw_policy_action": np.asarray(raw_policy_action, dtype=np.float64).copy(),
+            "base_pos_w": np.asarray(state.base_pos_w, dtype=np.float64).copy(),
+            "base_quat_w": np.asarray(state.base_quat_w, dtype=np.float64).copy(),
+            "raw_action": policy_action.copy(),
+            "command_action": applied_action.copy(),
             "effective_action": effective_action.copy(),
             "feedback_action": feedback_action.copy(),
             "overflow_action": clamp_overflow_action,
             "position_clamped": np.abs(clamp_overflow_action) > 1.0e-9,
+            "policy_q_des": policy_q_des.copy(),
+            "q_des_unclipped": q_des_unclipped.copy(),
             **control_diag,
         }
         return scene.step(), feedback_action, diag
@@ -1600,35 +1940,54 @@ def run_eval(args) -> dict:
             return
         base = scene.base_pos_w()
         balance = scene.robot_balance_diagnostics()
+        base_quat = np.asarray(diag["base_quat_w"], dtype=np.float64)
         row = {
             "sequence_step": joint_diag_sequence_step,
+            "sim_time_s": float(diag["sim_time_s"]),
             "trial": trial,
             "segment": segment,
             "tick": tick,
             "side": side_name,
             "phase": lifecycle.phase.value,
-            "time_to_strike": "" if cmd is None else float(cmd.time_to_strike),
+            "command_valid": int(cmd is not None),
+            "time_to_strike": float(diag["observed_time_to_strike"]),
             "base_x": float(base[0]),
             "base_y": float(base[1]),
             "base_z": float(base[2]),
+            "base_quat_w": float(base_quat[0]),
+            "base_quat_x": float(base_quat[1]),
+            "base_quat_y": float(base_quat[2]),
+            "base_quat_z": float(base_quat[3]),
             "base_pitch_deg": float(np.asarray(balance["pelvis_rpy_deg"])[1]),
             "base_ang_vel_norm": float(np.linalg.norm(balance["pelvis_ang_vel_w"])),
             "com_support_margin": float(balance["support_margin"]),
             "fallen": int(scene.base_fallen()),
         }
+        for name, value in zip(policy_obs_fields, np.asarray(diag["policy_obs"]).reshape(-1)):
+            row[f"obs__{name}"] = value
         values_by_prefix = {
+            "raw_policy": diag["raw_policy_action"],
             "raw": diag["raw_action"],
+            "command": diag["command_action"],
             "effective": diag["effective_action"],
             "feedback": diag["feedback_action"],
             "overflow": diag["overflow_action"],
             "position_clamped": diag["position_clamped"].astype(np.int8),
+            "policy_q_des": diag["policy_q_des"],
+            "q_des_unclipped": diag["q_des_unclipped"],
             "q": diag["q"],
             "qd": diag["qd"],
             "q_des": diag["q_des"],
             "tracking_error": diag["tracking_error"],
+            "kp": diag["kp"],
+            "kd": diag["kd"],
+            "torque_p": diag["torque_p"],
+            "torque_d": diag["torque_d"],
             "torque_requested": diag["torque_requested"],
             "torque_applied": diag["torque_applied"],
             "torque_clipped": diag["torque_clipped"].astype(np.int8),
+            "torque_lower_limit": diag["torque_lower_limit"],
+            "torque_upper_limit": diag["torque_upper_limit"],
         }
         for prefix, values in values_by_prefix.items():
             for name, value in zip(JOINT_NAMES, np.asarray(values).reshape(-1)):
@@ -1647,14 +2006,263 @@ def run_eval(args) -> dict:
             [0.0, 0.0, 0.0],
         )
 
+    def _calibrate_policy_ready_pose():
+        """Extract this actor's steady no-command READY target and action history."""
+        calibration_ticks = max(
+            1, int(round(float(args.startup_ready_calibration_seconds) / dt))
+        )
+        window_ticks = max(
+            1, int(round(float(args.startup_ready_calibration_window_seconds) / dt))
+        )
+        if window_ticks > calibration_ticks:
+            raise ValueError(
+                "--startup-ready-calibration-window-seconds must not exceed "
+                "--startup-ready-calibration-seconds"
+            )
+        scene.reset_stand()
+        calibration_lifecycle = SwingLifecycle(runtime_cfg.lifecycle)
+        calibration_source = QueueRacketCommandSource()
+        calibration_last_action = np.zeros(31, dtype=np.float64)
+        calibration_station_xy = scene.base_pos_w()[:2].copy()
+        q_des_samples = []
+        q_samples = []
+        feedback_samples = []
+        max_abs_pitch = 0.0
+        max_ang_vel = 0.0
+        fell = False
+        for calibration_tick in range(calibration_ticks):
+            _events, calibration_last_action, diag = _policy_tick(
+                calibration_lifecycle,
+                calibration_source,
+                calibration_last_action,
+                calibration_station_xy,
+            )
+            balance = scene.robot_balance_diagnostics()
+            max_abs_pitch = max(
+                max_abs_pitch,
+                abs(float(np.asarray(balance["pelvis_rpy_deg"], dtype=np.float64)[1])),
+            )
+            max_ang_vel = max(
+                max_ang_vel,
+                float(np.linalg.norm(balance["pelvis_ang_vel_w"])),
+            )
+            fell = bool(fell or scene.base_fallen())
+            if calibration_tick >= calibration_ticks - window_ticks:
+                q_des_samples.append(np.asarray(diag["q_des"], dtype=np.float64).copy())
+                q_samples.append(np.asarray(diag["q"], dtype=np.float64).copy())
+                feedback_samples.append(
+                    np.asarray(diag["feedback_action"], dtype=np.float64).copy()
+                )
+        if fell:
+            raise RuntimeError(
+                "policy READY calibration fell before a stable prepare pose could be extracted"
+            )
+        q_des_window = np.stack(q_des_samples)
+        q_window = np.stack(q_samples)
+        feedback_window = np.stack(feedback_samples)
+        ready_state_q = np.median(q_window, axis=0)
+        ready_command_q = np.median(q_des_window, axis=0)
+        ready_last_action = np.median(feedback_window, axis=0)
+        if runtime_cfg.passive_neck:
+            ready_state_q[head_idx] = default_q[head_idx]
+            ready_command_q[head_idx] = default_q[head_idx]
+            ready_last_action[head_idx] = 0.0
+        return ready_state_q, ready_command_q, ready_last_action, {
+            "seconds": float(args.startup_ready_calibration_seconds),
+            "window_seconds": float(args.startup_ready_calibration_window_seconds),
+            "max_abs_base_pitch_deg": float(max_abs_pitch),
+            "max_base_ang_vel_norm": float(max_ang_vel),
+            "q_des_window_rms_spread": float(
+                np.sqrt(np.mean(np.square(q_des_window - ready_command_q)))
+            ),
+            "q_window_rms_spread": float(
+                np.sqrt(np.mean(np.square(q_window - ready_state_q)))
+            ),
+            "feedback_window_rms_spread": float(
+                np.sqrt(np.mean(np.square(feedback_window - ready_last_action)))
+            ),
+            "tracking_error_l2": float(
+                np.linalg.norm(
+                    (ready_command_q - ready_state_q)[active_action_idx]
+                )
+            ),
+            "base_xy_displacement": float(
+                np.linalg.norm(scene.base_pos_w()[:2] - calibration_station_xy)
+            ),
+        }
+
     # Continuous mode: ONE initialization for the whole session — robot state,
     # last_action, lifecycle and the fixed station all persist across serves
     # (matching the deploy runner). Independent mode re-creates them per serve.
+    ready_calibration = None
+    calibrated_last_action = None
+    calibrated_prepare_state_q = None
+    calibrated_prepare_command_q = None
+    if args.startup_prepare_pose == "policy-ready":
+        (
+            calibrated_prepare_state_q,
+            calibrated_prepare_command_q,
+            calibrated_last_action,
+            ready_calibration,
+        ) = _calibrate_policy_ready_pose()
     scene.reset_stand()
+    if calibrated_prepare_state_q is not None:
+        scene.set_robot_joint_state(calibrated_prepare_state_q)
     lifecycle = SwingLifecycle(runtime_cfg.lifecycle)
     source = QueueRacketCommandSource()
-    last_action = np.zeros(31, dtype=np.float64)
+    last_action = (
+        np.asarray(calibrated_last_action, dtype=np.float64).copy()
+        if calibrated_last_action is not None
+        else np.zeros(31, dtype=np.float64)
+    )
     fixed_station_xy = scene.base_pos_w()[:2].copy()
+    prepare_q = scene.read_robot_state().q.copy()
+    prepare_command_q = (
+        np.asarray(calibrated_prepare_command_q, dtype=np.float64).copy()
+        if calibrated_prepare_command_q is not None
+        else prepare_q.copy()
+    )
+    prepare_action = (
+        np.asarray(calibrated_last_action, dtype=np.float64).copy()
+        if calibrated_last_action is not None
+        else runtime_cfg.action_adapter.encode_effective(prepare_q)
+    )
+    if runtime_cfg.passive_neck:
+        prepare_action[head_idx] = 0.0
+    startup_initial_base = scene.base_pos_w().copy()
+    startup_stats = {
+        "handover_mode": str(args.startup_handover_mode),
+        "prepare_hold_mode": str(args.startup_prepare_hold_mode),
+        "prepare_pose": str(args.startup_prepare_pose),
+        "ready_calibration": ready_calibration,
+        "prepare_seconds": float(args.startup_prepare_seconds),
+        "policy_ready_seconds": float(args.startup_policy_ready_seconds),
+        "blend_seconds": (
+            float(args.startup_blend_seconds)
+            if args.startup_handover_mode == "smooth"
+            else 0.0
+        ),
+        "prepare_q_l2_from_default": float(
+            np.linalg.norm((prepare_q - default_q)[active_action_idx])
+        ),
+        "prepare_command_q_l2_from_default": float(
+            np.linalg.norm((prepare_command_q - default_q)[active_action_idx])
+        ),
+        "first_policy_q_des_l2_from_prepare": None,
+        "first_applied_q_des_l2_from_prepare": None,
+        "max_applied_q_des_step_l2": 0.0,
+        "max_applied_q_des_step_abs": 0.0,
+        "max_abs_base_pitch_deg": 0.0,
+        "max_base_ang_vel_norm": 0.0,
+        "min_com_support_margin": None,
+        "base_xy_displacement": 0.0,
+        "base_z_delta": 0.0,
+        "fell": False,
+    }
+    previous_startup_q_des = prepare_command_q.copy()
+
+    def _update_startup_stats(diag=None):
+        nonlocal previous_startup_q_des
+        base = scene.base_pos_w()
+        balance = scene.robot_balance_diagnostics()
+        pitch = float(np.asarray(balance["pelvis_rpy_deg"], dtype=np.float64)[1])
+        ang_vel = float(np.linalg.norm(balance["pelvis_ang_vel_w"]))
+        support_margin = float(balance["support_margin"])
+        startup_stats["max_abs_base_pitch_deg"] = max(
+            float(startup_stats["max_abs_base_pitch_deg"]), abs(pitch)
+        )
+        startup_stats["max_base_ang_vel_norm"] = max(
+            float(startup_stats["max_base_ang_vel_norm"]), ang_vel
+        )
+        if np.isfinite(support_margin):
+            current_min = startup_stats["min_com_support_margin"]
+            startup_stats["min_com_support_margin"] = (
+                support_margin if current_min is None else min(float(current_min), support_margin)
+            )
+        startup_stats["base_xy_displacement"] = float(
+            np.linalg.norm(base[:2] - startup_initial_base[:2])
+        )
+        startup_stats["base_z_delta"] = float(base[2] - startup_initial_base[2])
+        startup_stats["fell"] = bool(startup_stats["fell"] or scene.base_fallen())
+        if diag is None:
+            return
+        applied_q_des = np.asarray(diag["q_des"], dtype=np.float64)
+        policy_q_des = np.asarray(diag["policy_q_des"], dtype=np.float64)
+        if startup_stats["first_policy_q_des_l2_from_prepare"] is None:
+            startup_stats["first_policy_q_des_l2_from_prepare"] = float(
+                np.linalg.norm(
+                    (policy_q_des - prepare_command_q)[active_action_idx]
+                )
+            )
+            startup_stats["first_applied_q_des_l2_from_prepare"] = float(
+                np.linalg.norm(
+                    (applied_q_des - prepare_command_q)[active_action_idx]
+                )
+            )
+        q_des_step = (applied_q_des - previous_startup_q_des)[active_action_idx]
+        startup_stats["max_applied_q_des_step_l2"] = max(
+            float(startup_stats["max_applied_q_des_step_l2"]),
+            float(np.linalg.norm(q_des_step)),
+        )
+        startup_stats["max_applied_q_des_step_abs"] = max(
+            float(startup_stats["max_applied_q_des_step_abs"]),
+            float(np.max(np.abs(q_des_step))),
+        )
+        previous_startup_q_des = applied_q_des.copy()
+
+    prepare_ticks = max(0, int(round(float(args.startup_prepare_seconds) / dt)))
+    policy_ready_ticks = max(0, int(round(float(args.startup_policy_ready_seconds) / dt)))
+    blend_ticks = max(1, int(round(float(args.startup_blend_seconds) / dt)))
+    if recorder is not None:
+        recorder.capture(scene)
+    if prepare_ticks > 0:
+        if args.startup_prepare_hold_mode == "frozen":
+            # The real prepare controller is external to this evaluator.  A
+            # frozen visual hold isolates policy takeover from the unrelated
+            # inability of the example MuJoCo PD bridge to balance prepare_q
+            # open-loop for multiple seconds.
+            for _prepare_tick in range(prepare_ticks):
+                _update_startup_stats()
+                if recorder is not None:
+                    recorder.capture(scene)
+        else:
+            scene.write_targets(prepare_command_q, kp, kd)
+            for _prepare_tick in range(prepare_ticks):
+                scene.step()
+                _update_startup_stats()
+                if recorder is not None:
+                    recorder.capture(scene)
+    for startup_tick in range(policy_ready_ticks):
+        handover_action = None
+        handover_alpha = 1.0
+        if args.startup_handover_mode == "smooth" and startup_tick < blend_ticks:
+            if blend_ticks == 1:
+                phase = 1.0
+            else:
+                phase = startup_tick / float(blend_ticks - 1)
+            handover_alpha = phase * phase * (3.0 - 2.0 * phase)
+            handover_action = prepare_action
+        _events, last_action, startup_diag = _policy_tick(
+            lifecycle,
+            source,
+            last_action,
+            fixed_station_xy,
+            handover_action=handover_action,
+            handover_alpha=handover_alpha,
+        )
+        _write_joint_diag(
+            -1,
+            "startup_ready",
+            startup_tick,
+            "ready",
+            lifecycle,
+            source.poll(),
+            startup_diag,
+        )
+        _update_startup_stats(startup_diag)
+        if recorder is not None:
+            recorder.capture(scene)
+
     max_rest_ticks = max(1, int(round(args.max_rest_seconds / dt)))
     min_rest_ticks = max(0, int(round(args.min_rest_seconds / dt)))
     if min_rest_ticks > max_rest_ticks:
@@ -1722,6 +2330,9 @@ def run_eval(args) -> dict:
         revision = 0
         contacted = False
         real_contacted = False
+        real_contact_active = False
+        real_contact_start_tick = None
+        contact_separation_recorded = False
         proximity_contacted = False
         net_clear = False
         first_bounce = None
@@ -1819,8 +2430,7 @@ def run_eval(args) -> dict:
             )
             trial_max_q_des = max(trial_max_q_des, diag["max_abs_q_des"])
 
-            r_pos, r_vel, _racket_site_xmat = scene.racket_site_pose()
-            _racket_geom_pos, racket_geom_xmat = scene.racket_geom_pose()
+            r_pos, r_vel, racket_site_xmat = scene.racket_site_pose()
             b_pos, b_vel = scene.ball_state()
             delta = b_pos - r_pos
             distance = float(np.linalg.norm(delta))
@@ -1837,10 +2447,13 @@ def run_eval(args) -> dict:
             #     racket moving toward it). ---
             new_contact_kind = None
             if events.ball_racket_contact:
+                first_real_contact = not real_contacted
                 real_contacted = True
                 if not contacted:
                     contacted = True
-                new_contact_kind = "real"
+                if first_real_contact:
+                    real_contact_start_tick = int(_tick)
+                    new_contact_kind = "real"
             elif not contacted and np.linalg.norm(delta) <= contact_radius and float(np.dot(r_vel, delta)) > 0.0:
                 contacted = True
                 proximity_contacted = True
@@ -1863,12 +2476,31 @@ def run_eval(args) -> dict:
                         racket_pre_vel=racket_pre_vel,
                         racket_post_pos=r_pos,
                         racket_post_vel=r_vel,
-                        racket_geom_xmat=racket_geom_xmat,
+                        racket_frame_xmat=racket_site_xmat,
                         ball_post_pos=b_pos,
                         ball_post_vel=b_vel,
                         base_at_contact=scene.base_pos_w(),
                         diag=diag,
                     )
+
+            if (
+                real_contact_active
+                and not events.ball_racket_contact
+                and not contact_separation_recorded
+            ):
+                contact_diag_row["contact_separation_tick"] = int(_tick)
+                if real_contact_start_tick is not None:
+                    contact_diag_row["contact_duration_s"] = (
+                        int(_tick) - int(real_contact_start_tick)
+                    ) * dt
+                _xyz(contact_diag_row, "ball_separation_vel", b_vel)
+                _xyz(
+                    contact_diag_row,
+                    "racket_site_vel_separation",
+                    r_vel,
+                )
+                contact_separation_recorded = True
+            real_contact_active = bool(events.ball_racket_contact)
 
             # --- after contact, watch the REAL outgoing ball for net clearance and its
             #     first bounce (both read off the simulated trajectory). ---
@@ -1892,17 +2524,28 @@ def run_eval(args) -> dict:
                 floor_count, floor_min = _floor_contact_summary()
                 base = scene.base_pos_w()
                 balance = scene.robot_balance_diagnostics()
-                trace_cmd = cmd if cmd is not None else source.poll()
-                if trace_cmd is None:
-                    target_rel_base = None
-                    target_shoulder_distance = None
-                else:
-                    target_w = np.asarray(trace_cmd.position, dtype=np.float64)
-                    pelvis_rot_w = np.asarray(balance["pelvis_xmat_w"], dtype=np.float64)
-                    target_rel_base = pelvis_rot_w.T @ (target_w - base)
-                    target_shoulder_distance = float(
-                        np.linalg.norm(target_w - np.asarray(balance["right_shoulder_pos_w"]))
-                    )
+                target_w = np.asarray(diag["observed_target_pos"], dtype=np.float64)
+                target_vel_w = np.asarray(diag["observed_target_vel"], dtype=np.float64)
+                target_normal_w = np.asarray(
+                    diag["observed_target_normal"], dtype=np.float64
+                )
+                racket_normal_w = _racket_face_normal(
+                    racket_site_xmat, side_name
+                )
+                alignment = _planner_alignment_diagnostics(
+                    r_pos,
+                    r_vel,
+                    racket_normal_w,
+                    target_w,
+                    target_vel_w,
+                    target_normal_w,
+                )
+                pelvis_rot_w = np.asarray(balance["pelvis_xmat_w"], dtype=np.float64)
+                target_rel_base = target_w - base
+                target_rel_base_body = pelvis_rot_w.T @ target_rel_base
+                target_shoulder_distance = float(
+                    np.linalg.norm(target_w - np.asarray(balance["right_shoulder_pos_w"]))
+                )
                 pelvis_rpy = np.asarray(balance["pelvis_rpy_deg"], dtype=np.float64)
                 torso_rpy = np.asarray(balance["torso_rpy_deg"], dtype=np.float64)
                 pelvis_lin_vel = np.asarray(balance["pelvis_lin_vel_w"], dtype=np.float64)
@@ -1943,22 +2586,36 @@ def run_eval(args) -> dict:
                         "racket_x": float(r_pos[0]),
                         "racket_y": float(r_pos[1]),
                         "racket_z": float(r_pos[2]),
+                        "racket_vel_x": float(r_vel[0]),
+                        "racket_vel_y": float(r_vel[1]),
+                        "racket_vel_z": float(r_vel[2]),
+                        "racket_normal_x": float(racket_normal_w[0]),
+                        "racket_normal_y": float(racket_normal_w[1]),
+                        "racket_normal_z": float(racket_normal_w[2]),
                         "ball_racket_distance": float(distance),
-                        "target_x": "" if trace_cmd is None else float(trace_cmd.position[0]),
-                        "target_y": "" if trace_cmd is None else float(trace_cmd.position[1]),
-                        "target_z": "" if trace_cmd is None else float(trace_cmd.position[2]),
+                        "target_x": float(target_w[0]),
+                        "target_y": float(target_w[1]),
+                        "target_z": float(target_w[2]),
+                        "target_vel_x": float(target_vel_w[0]),
+                        "target_vel_y": float(target_vel_w[1]),
+                        "target_vel_z": float(target_vel_w[2]),
+                        "target_normal_x": float(target_normal_w[0]),
+                        "target_normal_y": float(target_normal_w[1]),
+                        "target_normal_z": float(target_normal_w[2]),
+                        **alignment,
                         "station_x": float(diag["station_xy"][0]),
                         "station_y": float(diag["station_xy"][1]),
                         "station_error_xy": float(
                             np.linalg.norm(np.asarray(base[:2]) - diag["station_xy"])
                         ),
-                        "target_rel_base_x": "" if target_rel_base is None else float(target_rel_base[0]),
-                        "target_rel_base_y": "" if target_rel_base is None else float(target_rel_base[1]),
-                        "target_rel_base_z": "" if target_rel_base is None else float(target_rel_base[2]),
-                        "target_shoulder_distance": (
-                            "" if target_shoulder_distance is None else target_shoulder_distance
-                        ),
-                        "time_to_strike": "" if trace_cmd is None else float(trace_cmd.time_to_strike),
+                        "target_rel_base_x": float(target_rel_base[0]),
+                        "target_rel_base_y": float(target_rel_base[1]),
+                        "target_rel_base_z": float(target_rel_base[2]),
+                        "target_rel_base_body_x": float(target_rel_base_body[0]),
+                        "target_rel_base_body_y": float(target_rel_base_body[1]),
+                        "target_rel_base_body_z": float(target_rel_base_body[2]),
+                        "target_shoulder_distance": target_shoulder_distance,
+                        "time_to_strike": float(diag["observed_time_to_strike"]),
                         "incoming_bounce": int(incoming_bounced),
                         "contacted": int(contacted),
                         "real_contact": int(real_contacted),
@@ -2030,6 +2687,18 @@ def run_eval(args) -> dict:
         contact_diag_row["timed_out"] = int(timed_out)
         contact_diag_row["min_ball_racket_distance"] = float(min_distance)
         contact_diag_row["base_z_end"] = float(scene.base_pos_w()[2])
+        if real_contacted and not contact_separation_recorded:
+            contact_diag_row["contact_separation_tick"] = int(_tick)
+            if real_contact_start_tick is not None:
+                contact_diag_row["contact_duration_s"] = (
+                    int(_tick) - int(real_contact_start_tick) + 1
+                ) * dt
+            _xyz(contact_diag_row, "ball_separation_vel", b_vel)
+            _xyz(
+                contact_diag_row,
+                "racket_site_vel_separation",
+                r_vel,
+            )
         if contact_diag_writer is not None:
             contact_diag_writer.writerow(contact_diag_row)
         accumulator.add_bool(success)
@@ -2111,6 +2780,8 @@ def run_eval(args) -> dict:
                 "real_planner": (
                     {
                         "yaml": str(real_planner.yaml_path),
+                        "code_dir": str(real_planner.planner_code_dir),
+                        "code_sha256": real_planner.planner_code_sha256,
                         "physics_path": real_planner.physics_path,
                         "x_hit_table": float(real_planner.x_hit_table),
                         "mocap_hz": float(real_planner.mocap_hz),
@@ -2118,6 +2789,12 @@ def run_eval(args) -> dict:
                         "solve_calls": int(real_planner.solve_calls),
                         "command_count": int(real_planner.command_count),
                         "no_command_count": int(real_planner.no_command_count),
+                        "revision_gate_enabled": (
+                            real_planner.command_gate is not None
+                        ),
+                        "revision_gate_reasons": dict(
+                            real_planner.gate_reason_counts
+                        ),
                         "no_command_fallback_mode": str(args.real_planner_no_command_fallback),
                         "fallback_command_count": int(real_planner_fallback_count),
                     }
@@ -2137,12 +2814,31 @@ def run_eval(args) -> dict:
                     "max_racket_speed": float(args.planner_max_racket_speed),
                 },
                 "policy_joint_order": args.policy_joint_order,
-                "policy_obs_dim": int(getattr(policy, "obs_dim", 111)),
+                "policy_obs_dim": policy_obs_dim,
+                "policy_io_contract": {
+                    "onnx": str(pathlib.Path(onnx_path).resolve()),
+                    "onnx_sha256": _sha256(onnx_path),
+                    "observation_fields": policy_obs_fields,
+                    "joint_order": list(JOINT_NAMES),
+                    "default_q": runtime_cfg.action_adapter.default_q.astype(float).tolist(),
+                    "action_scale": runtime_cfg.action_adapter.action_scale.astype(float).tolist(),
+                    "joint_position_clamp_lower": (
+                        runtime_cfg.action_adapter.clamp_lower.astype(float).tolist()
+                    ),
+                    "joint_position_clamp_upper": (
+                        runtime_cfg.action_adapter.clamp_upper.astype(float).tolist()
+                    ),
+                    "kp": kp.astype(float).tolist(),
+                    "kd": kd.astype(float).tolist(),
+                    "control_hz": float(runtime_cfg.control_hz),
+                },
                 "last_action_feedback_mode": args.last_action_feedback_mode,
                 "kp_scale": float(args.kp_scale),
                 "kd_scale": float(args.kd_scale),
+                "startup": startup_stats,
                 "lifecycle_recovery_blend_seconds": float(args.lifecycle_recovery_blend_seconds),
                 "lifecycle_recovery_blend_velocity": bool(args.lifecycle_recovery_blend_velocity),
+                "ready_reach_x": float(runtime_cfg.lifecycle.ready_reach_x),
                 "serve_manifest": str(args.serve_manifest) if args.serve_manifest else None,
                 "serve_strike_y_ranges": {
                     "forehand": (
@@ -2167,6 +2863,7 @@ def run_eval(args) -> dict:
                     "clip_y": [float(v) for v in args.dynamic_station_clip_y],
                     "blend": float(args.dynamic_station_blend),
                 },
+                "ground_contact_friction": ground_contact_friction,
                 "contact_diag_csv": str(args.contact_diag_csv) if args.contact_diag_csv else None,
                 "joint_action_diag_csv": (
                     str(args.joint_action_diag_csv) if args.joint_action_diag_csv else None
@@ -2181,6 +2878,37 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--onnx", default=None, help="Exported hope_pingpong.onnx (default: from runtime config).")
     parser.add_argument("--model-xml", default=None, help="a3_pingpong MJCF (default: from runtime config).")
     parser.add_argument("--runtime-config", default=None, help="hope_pingpong_runtime.yaml (default: shipped).")
+    parser.add_argument(
+        "--ground-sliding-friction",
+        type=float,
+        default=0.9,
+        help=(
+            "MuJoCo sliding friction on the floor and both foot collision geoms. "
+            "Default 0.9 is the nominal Isaac-aligned value; pass 1.5 to reproduce "
+            "the original MJCF."
+        ),
+    )
+    parser.add_argument(
+        "--ground-torsional-friction",
+        type=float,
+        default=0.005,
+        help="Torsional component used with --ground-sliding-friction.",
+    )
+    parser.add_argument(
+        "--ground-rolling-friction",
+        type=float,
+        default=0.0001,
+        help="Rolling component used with --ground-sliding-friction.",
+    )
+    parser.add_argument(
+        "--ready-reach-x",
+        type=float,
+        default=None,
+        help=(
+            "Override the base-relative lifecycle READY racket target x. "
+            "None uses the runtime config value (currently +0.40 m)."
+        ),
+    )
     parser.add_argument("--reference-dir", default=None, help="Dir containing the reference deploy package.")
     parser.add_argument("--num-serves", type=int, default=50, help="Number of served balls (denominator).")
     parser.add_argument(
@@ -2243,6 +2971,15 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="Planner YAML for --planner-mode real-hope-planner "
              "(default: hope_ws/src/hope_planner/config/hope_planner.yaml).",
+    )
+    parser.add_argument(
+        "--real-planner-code-dir",
+        default=None,
+        help=(
+            "Python package directory for the planner implementation. None uses "
+            "hope_ws/src/hope_planner/hope_planner; pass a versioned snapshot "
+            "directory to prevent local-code drift."
+        ),
     )
     parser.add_argument(
         "--real-planner-physics-path",
@@ -2427,6 +3164,72 @@ def parse_args() -> argparse.Namespace:
         help="continuous (default): one uninterrupted rally session — robot/policy state persist "
              "across serves and all four adjacent side transitions are exercised. "
              "independent: reset the robot per serve (isolated-swing evaluation only).",
+    )
+    parser.add_argument(
+        "--startup-handover-mode",
+        choices=["direct", "smooth"],
+        default="direct",
+        help=(
+            "Policy takeover after the optional prepare hold. direct applies the first actor "
+            "command immediately; smooth uses a smoothstep residual-action blend from the "
+            "grounded prepare pose to the live actor output."
+        ),
+    )
+    parser.add_argument(
+        "--startup-prepare-seconds",
+        type=float,
+        default=0.0,
+        help="Duration to show/hold the grounded prepare keyframe before the first policy tick.",
+    )
+    parser.add_argument(
+        "--startup-prepare-hold-mode",
+        choices=["frozen", "pd"],
+        default="pd",
+        help=(
+            "frozen displays the externally stabilized prepare pose without stepping physics, "
+            "isolating policy takeover; pd physically holds prepare_q using the example MuJoCo "
+            "bridge gains and also audits that prepare controller."
+        ),
+    )
+    parser.add_argument(
+        "--startup-prepare-pose",
+        choices=["keyframe", "policy-ready"],
+        default="keyframe",
+        help=(
+            "keyframe uses the MuJoCo stand keyframe. policy-ready first runs this actor "
+            "with no command, extracts the median steady READY q_des and matching "
+            "last_action, then resets into that model-specific prepare state."
+        ),
+    )
+    parser.add_argument(
+        "--startup-ready-calibration-seconds",
+        type=float,
+        default=3.0,
+        help="No-command actor rollout used to extract --startup-prepare-pose policy-ready.",
+    )
+    parser.add_argument(
+        "--startup-ready-calibration-window-seconds",
+        type=float,
+        default=0.5,
+        help="Final stable calibration window used for median READY q_des/last_action.",
+    )
+    parser.add_argument(
+        "--startup-policy-ready-seconds",
+        type=float,
+        default=0.0,
+        help=(
+            "Run the policy with an empty command source in lifecycle READY before serving "
+            "the first ball. This interval includes the smooth handover when enabled."
+        ),
+    )
+    parser.add_argument(
+        "--startup-blend-seconds",
+        type=float,
+        default=1.0,
+        help=(
+            "Duration of the smoothstep prepare-action to policy-action transition. "
+            "Must not exceed --startup-policy-ready-seconds."
+        ),
     )
     parser.add_argument(
         "--last-action-feedback-mode",

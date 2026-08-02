@@ -1,0 +1,71 @@
+name: HOPEPingPongStage2CommandExecutorCore114V5
+gym_task: HOPE-PingPong-Stage2-Physical-AgibotA3-v0
+experiment_name: hope_pingpong_stage2_command_executor114_v5
+actor_obs_contract: hope_pingpong_normal114
+
+defaults:
+  - /base/env_base@_here_
+  - /base/sim_base@_here_
+  - /base/randomization_base@_here_
+  - _self_
+
+motion_manifest: hope_training/motions/stage1_core_two_motion_20260801/manifest.tsv
+
+env:
+  num_envs: 256
+  env_spacing: 6.0
+  episode_length_s: 12.0
+
+motion:
+  wrap_teleport: false
+
+actor_obs:
+  racket_target_normal_w: true
+  stability_feedback: false
+
+runtime:
+  prune_zero_weight_rewards: true
+
+domain_rand:
+  link_mass_range: [0.97, 1.03]
+  pd_gain_range: [0.97, 1.03]
+
+overrides:
+  # The rigid route is sampled independently of the motion-derived incoming
+  # state. The motion remains an action prior only.
+  commands.physical_shadow.route_geometry_mode: independent
+  commands.physical_shadow.pre_bounce_time_range: [0.50, 0.62]
+  commands.physical_shadow.post_bounce_time_range: [0.34, 0.46]
+  commands.physical_shadow.bounce_dx_range: [0.30, 0.68]
+  commands.physical_shadow.bounce_y_jitter_range: [-0.10, 0.10]
+
+  # Re-estimate the command from the same PhysX ball at 50 Hz after bounce,
+  # then freeze at the deployed planner's 200 ms horizon.
+  commands.physical_shadow.post_bounce_command_refresh_enabled: true
+  commands.physical_shadow.command_refresh_continuous_post_bounce: true
+  commands.physical_shadow.command_refresh_freeze_tts_s: 0.20
+  commands.physical_shadow.command_refresh_solution_blend: 1.0
+  commands.physical_shadow.command_refresh_update_dynamic_station: true
+
+  # Sample the strike task from table geometry rather than a motion box. A
+  # random return landing/time produces a generic physically feasible racket
+  # velocity and normal; no production HOPEPlanner code runs in this task.
+  commands.racket_target.table_workspace_fixed_level: 0.0
+  commands.racket_target.table_workspace_motion_seed_blend_start: 0.0
+  commands.racket_target.table_workspace_motion_seed_end_level: 0.0
+  commands.racket_target.impact_inverse_command_curriculum_enabled: false
+  commands.racket_target.impact_inverse_command_start_blend: 1.0
+  commands.racket_target.planner_perturb_curriculum_source: fixed
+  commands.racket_target.planner_perturb_fixed_scale: 0.0
+  commands.racket_target.ability_curriculum_start_ball_scale: 0.50
+
+  # Physical outcomes cannot be earned by rewriting the command. This term
+  # only scores command execution at a real PhysX contact.
+  rewards.physical_contact_planner_alignment.weight: 1.5
+  rewards.physical_contact_planner_alignment.params.position_std: 0.10
+  rewards.physical_contact_planner_alignment.params.velocity_std: 0.85
+  rewards.physical_contact_planner_alignment.params.direction_std_deg: 22.0
+  rewards.physical_contact_planner_alignment.params.normal_std_deg: 18.0
+  rewards.physical_contact_planner_alignment.params.timing_std_s: 0.08
+  rewards.physical_capability_curriculum.params.fixed_level: 0.0
+  rewards.physical_outcome_events.params.impact_inverse_quality_floor: 1.0

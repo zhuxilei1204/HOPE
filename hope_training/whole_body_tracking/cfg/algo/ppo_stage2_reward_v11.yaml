@@ -1,0 +1,30 @@
+name: ppo_stage2_reward_v11
+
+runner:
+  # 128 steps = 2.56 s at 50 Hz: approach, impact, flight resolution,
+  # and the fixed 1.05 s durable READY check fit in one rollout.
+  num_steps_per_env: 128
+  max_iterations: 300
+  save_interval: 100
+  empirical_normalization: false
+
+policy:
+  actor_hidden_dims: [512, 256, 128]
+  critic_hidden_dims: [512, 256, 128]
+  activation: elu
+  init_noise_std: 0.10
+  noise_std_type: log
+
+algorithm:
+  learning_rate: 0.00002
+  schedule: fixed
+  desired_kl: 0.003
+  entropy_coef: 0.0005
+  num_learning_epochs: 3
+  num_mini_batches: 4
+  gamma: 0.995
+  lam: 0.98
+  clip_param: 0.15
+  value_loss_coef: 1.0
+  use_clipped_value_loss: true
+  max_grad_norm: 0.7

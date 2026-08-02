@@ -1,0 +1,14 @@
+# Frozen B19495 four-motion control for the last-action migration gate.
+# Keep every task/reward/lifecycle setting from the exact teacher provenance;
+# only make the legacy raw-feedback contract explicit.
+
+defaults:
+  - HOPEPingPongOneBounceCollisionRecoveryCycleUserFourMotionNormal114B17996ReadyBalancePerturbedV1
+  - _self_
+
+name: HOPEPingPongB19495ActionFeedbackRawControlV1
+motion_manifest: /mnt/ssd/zxl/HOPE_deploy_models_20260730/03_hope_Bdeploy_model19495_rollback/motions/manifest.tsv
+
+overrides:
+  actions.joint_pos.feedback_mode: raw
+

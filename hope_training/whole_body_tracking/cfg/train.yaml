@@ -39,14 +39,47 @@ run_name: null
 # counter continues from the checkpoint). null -> fresh initialization. Example:
 #   checkpoint_path=logs/rsl_rl/hope_pingpong/<run>/model_<iter>.pt
 checkpoint_path: null
+# Load only the actor network from checkpoint_path. The critic, optimizer,
+# exploration state, and iteration counter stay freshly initialized.
+checkpoint_actor_only: false
+checkpoint_load_optimizer: true
+# Optional value-function adaptation after a task-changing checkpoint load.
+# The actor mean and exploration std remain frozen for these PPO updates.
+critic_warmup_iterations: null
+# Optional controlled fine-tune LR applied after optimizer-state loading. This preserves Adam
+# moments/iteration while preventing the checkpoint's adaptive LR from overriding the selected
+# fine-tune configuration.
+optimizer_learning_rate_after_load: null
+
+# Optional behavior-space trust region for task-changing fine-tunes. After each
+# PPO update, the actor delta is measured on current rollout observations and
+# interpolated back when either deterministic-action limit is exceeded.
+actor_step_trust_region_rms: null
+actor_step_trust_region_p99: null
+actor_step_trust_region_max_samples: 4096
 
 # Optional deployment-preserving fine-tune anchor. The reference checkpoint is
 # normally the selected MuJoCo-valid baseline, not the latest continuation.
 actor_anchor_coefficient: 0.0
 actor_anchor_checkpoint_path: null
 # Keep the deployment-preserving anchor on the legacy policy while allowing
-# appended observation columns to learn. null anchors the complete actor.
+# a selected first-layer input range to learn. With only start set, the range
+# extends to the final input (legacy appended-observation behavior). Set end to
+# isolate an interior slice, e.g. [65, 96) for last_action in normal114.
 actor_anchor_first_layer_input_exempt_start: null
+actor_anchor_first_layer_input_exempt_end: null
+# Optional lower anchor coefficient for the appended columns. Zero preserves
+# the legacy full exemption; a positive value bounds their policy drift.
+actor_anchor_exempt_coefficient: 0.0
+
+# Optional raw-action Gaussian standard deviations applied after checkpoint
+# loading. The mapping is canonical joint name -> positive raw-action std.
+# This changes stochastic training exploration only; deterministic policy means
+# and the shared action adapter remain unchanged.
+action_noise_std_overrides: {}
+# Optional global stochastic exploration scale used before per-joint overrides.
+# This does not change deterministic actor output or the deployment contract.
+action_noise_std_global: null
 
 # Video capture (off by default).
 video: false

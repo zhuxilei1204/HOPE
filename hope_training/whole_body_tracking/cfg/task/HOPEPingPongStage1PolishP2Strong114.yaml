@@ -1,0 +1,99 @@
+name: HOPEPingPongStage1PolishP2Strong114
+gym_task: HOPE-PingPong-Stage1-Operational-AgibotA3-v0
+experiment_name: hope_pingpong_stage1_operational114
+actor_obs_contract: hope_pingpong_normal114
+
+defaults:
+  - /base/env_base@_here_
+  - /base/sim_base@_here_
+  - /base/randomization_base@_here_
+  - _self_
+
+motion_manifest: hope_training/motions/stage1_core_two_motion_20260801/manifest.tsv
+
+env:
+  num_envs: 4096
+  env_spacing: 2.5
+  episode_length_s: 10.0
+
+motion:
+  wrap_teleport: false
+
+actor_obs:
+  racket_target_normal_w: true
+  stability_feedback: false
+
+runtime:
+  prune_zero_weight_rewards: true
+
+domain_rand:
+  link_mass_range: [0.97, 1.03]
+  pd_gain_range: [0.97, 1.03]
+
+# Stronger screening member. Racket wrist noise remains identical to B1500;
+# only the audited torso/lower-body/shoulder-roll joints are tightened further.
+action_noise_std_overrides:
+  waist_yaw_joint: 0.06
+  waist_roll_joint: 0.08
+  waist_pitch_joint: 0.06
+  left_shoulder_pitch_joint: 0.30
+  left_shoulder_roll_joint: 0.14
+  left_shoulder_yaw_joint: 0.40
+  left_elbow_joint: 0.40
+  left_wrist_roll_joint: 0.50
+  left_wrist_pitch_joint: 0.50
+  left_wrist_yaw_joint: 0.50
+  right_shoulder_pitch_joint: 0.35
+  right_shoulder_roll_joint: 0.20
+  right_shoulder_yaw_joint: 0.40
+  right_elbow_joint: 0.45
+  right_wrist_roll_joint: 0.65
+  right_wrist_pitch_joint: 0.90
+  right_wrist_yaw_joint: 0.90
+  left_hip_pitch_joint: 0.09
+  left_hip_roll_joint: 0.16
+  left_hip_yaw_joint: 0.16
+  left_knee_joint: 0.15
+  left_ankle_pitch_joint: 0.06
+  left_ankle_roll_joint: 0.14
+  right_hip_pitch_joint: 0.09
+  right_hip_roll_joint: 0.16
+  right_hip_yaw_joint: 0.16
+  right_knee_joint: 0.15
+  right_ankle_pitch_joint: 0.06
+  right_ankle_roll_joint: 0.14
+
+overrides:
+  rewards.joint_target_slew.weight: -0.10
+  rewards.joint_target_slew.params.waist_scale: 1.30
+  rewards.joint_target_slew.params.other_upper_scale: 0.10
+  rewards.joint_target_slew.params.right_arm_scale: 0.05
+  rewards.joint_target_slew.params.leg_scale: 1.60
+  rewards.joint_target_slew.params.pre_strike_scale: 0.20
+  rewards.joint_target_slew.params.strike_scale: 0.01
+  rewards.joint_target_slew.params.recovery_scale: 1.80
+  rewards.joint_target_slew.params.hold_scale: 2.40
+  rewards.joint_target_slew.params.velocity_excess_scale: 0.50
+  rewards.joint_target_slew.params.acceleration_excess_scale: 1.0
+  rewards.joint_target_slew.params.acceleration_weight: 0.90
+  rewards.joint_target_slew.params.acceleration_cost_mode: robust_log
+  rewards.joint_target_slew.params.maximum: 4.0
+
+  rewards.phase_action_rate_waist.weight: -0.075
+  rewards.phase_action_rate_waist.params.pre_strike_scale: 0.008
+  rewards.phase_action_rate_waist.params.strike_scale: 0.001
+  rewards.phase_action_rate_waist.params.recovery_scale: 0.30
+  rewards.phase_action_rate_waist.params.hold_scale: 0.48
+
+  rewards.phase_action_rate_upper.weight: -0.014
+  rewards.phase_action_rate_upper.params.joint_names: [left_shoulder_roll_joint, right_shoulder_roll_joint]
+  rewards.phase_action_rate_upper.params.pre_strike_scale: 0.002
+  rewards.phase_action_rate_upper.params.strike_scale: 0.0
+  rewards.phase_action_rate_upper.params.recovery_scale: 0.18
+  rewards.phase_action_rate_upper.params.hold_scale: 0.28
+
+  rewards.phase_action_rate_legs.weight: -0.020
+  rewards.phase_action_rate_legs.params.pre_strike_scale: 0.004
+  rewards.phase_action_rate_legs.params.strike_scale: 0.0005
+  rewards.phase_action_rate_legs.params.recovery_scale: 0.24
+  rewards.phase_action_rate_legs.params.hold_scale: 0.36

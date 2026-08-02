@@ -1,0 +1,11 @@
+defaults:
+  - HOPEPingPongClosedLoopV3ScratchPhaseImmediateC7AMultiSkill114
+  - _self_
+
+name: HOPEPingPongClosedLoopV3ScratchPhaseImmediateC7ABatchedMetricsMultiSkill114
+
+# Runtime-only benchmark variant. The same metrics are logged and cleared, but
+# their means cross the GPU/CPU boundary in one batch instead of one sync each.
+overrides:
+  commands.motion.batched_metric_reset_logging: true
+  commands.racket_target.batched_metric_reset_logging: true

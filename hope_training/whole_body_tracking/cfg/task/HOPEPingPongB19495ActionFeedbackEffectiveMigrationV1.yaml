@@ -1,0 +1,14 @@
+# Isolated B19495 four-motion migration experiment.
+# This does not enable provisional operational limits or alter q_des decoding;
+# it retrains the actor/critic under feedback representing the command that was
+# actually executed after the existing mechanical clamp.
+
+defaults:
+  - HOPEPingPongB19495ActionFeedbackRawControlV1
+  - _self_
+
+name: HOPEPingPongB19495ActionFeedbackEffectiveMigrationV1
+
+overrides:
+  actions.joint_pos.feedback_mode: effective
+

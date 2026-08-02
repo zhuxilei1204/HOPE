@@ -1,0 +1,74 @@
+{
+  "steps": 12,
+  "recovery_triggers": 2,
+  "recovery_successes": 2,
+  "closed_cycle_successes": 1,
+  "phase_counts": {
+    "READY_NO_COMMAND": 3,
+    "COMMAND_ACQUIRE": 2,
+    "PRE_STRIKE": 1,
+    "STRIKE": 2,
+    "FOLLOW_THROUGH": 0,
+    "RECOVERY": 2,
+    "NEXT_READY": 2
+  },
+  "planner_velocity_score": {
+    "aligned": 0.9999990463256836,
+    "underspeed": 0.2698846459388733,
+    "stationary": 7.471487606380833e-06
+  },
+  "recovered_planner_velocity_score": {
+    "controlled": 0.9753440022468567,
+    "unstable": 0.24589592218399048
+  },
+  "recovery_peak_excess_cost": {
+    "controlled": 0.0,
+    "new_excess": 0.9999997615814209,
+    "held_peak": 0.0
+  },
+  "durable_ready_settlement": {
+    "early_success": false,
+    "deadline_success": true,
+    "deadline_failure": true,
+    "safe_cycle_success": true,
+    "unsafe_cycle_success": false
+  },
+  "safe_quality_settlement": {
+    "window_mask": [
+      false,
+      true,
+      true,
+      true
+    ],
+    "safe_events": [
+      true,
+      true,
+      false,
+      false
+    ],
+    "unsafe_events": [
+      false,
+      false,
+      true,
+      false
+    ],
+    "incomplete_events": [
+      false,
+      false,
+      false,
+      true
+    ],
+    "outcome_values": [
+      1.5,
+      0.4000000059604645,
+      0.0,
+      0.0
+    ],
+    "cycle_values": [
+      1.0,
+      0.4000000059604645,
+      0.0,
+      0.0
+    ]
+  }
+}

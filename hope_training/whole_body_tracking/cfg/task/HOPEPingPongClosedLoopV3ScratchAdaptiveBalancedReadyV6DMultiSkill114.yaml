@@ -1,0 +1,25 @@
+defaults:
+  - HOPEPingPongClosedLoopV3ScratchAdaptiveMotionV6CMultiSkill114
+  - _self_
+
+name: HOPEPingPongClosedLoopV3ScratchAdaptiveBalancedReadyV6DMultiSkill114
+
+# V6D keeps V6C's ability-gated motion lifecycle and adds a dedicated active
+# balance skill. The extra dense credit is gated by no-command READY, so it
+# cannot damp the arm during pre-strike or impact.
+overrides:
+  commands.motion.stand_episode_prob: 0.25
+
+  rewards.no_command_ready_balance.weight: 1.2
+  rewards.no_command_ready_balance.params:
+    command_name: racket_target
+    pitch_std: 0.11
+    roll_std: 0.13
+    lin_vel_std: 0.18
+    ang_vel_std: 0.50
+    height_std: 0.09
+    station_std: 0.18
+    min_feet_contact: 0.50
+    start_step: 0
+    warmup_steps: 600
+    start_scale: 0.35

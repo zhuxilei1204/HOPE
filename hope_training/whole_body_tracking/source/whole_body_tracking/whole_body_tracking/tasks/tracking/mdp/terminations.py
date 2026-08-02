@@ -157,3 +157,30 @@ def cycle_v2_ready_timeout(
     if not enabled or int(getattr(env, "common_step_counter", 0)) < int(start_step):
         return torch.zeros(command.num_envs, dtype=torch.bool, device=command.device)
     return command.cycle_v2_ready_fail_latch
+
+
+def single_cycle_curriculum_timeout(
+    env: ManagerBasedRLEnv,
+    command_name: str,
+    enabled: bool = False,
+) -> torch.Tensor:
+    """Cleanly truncate a bootstrap episode after its READY settlement."""
+    command: RacketTargetCommand = env.command_manager.get_term(command_name)
+    if not enabled:
+        return torch.zeros(command.num_envs, dtype=torch.bool, device=command.device)
+    return command.single_cycle_timeout_latch
+
+
+def persistent_action_overflow(
+    env: ManagerBasedRLEnv,
+    command_name: str,
+    enabled: bool = False,
+    min_steps: int = 0,
+) -> torch.Tensor:
+    """Terminate after q_des clamping erases an extreme action for several ticks."""
+    command: RacketTargetCommand = env.command_manager.get_term(command_name)
+    if not enabled or int(getattr(env, "common_step_counter", 0)) < int(min_steps):
+        return torch.zeros(command.num_envs, dtype=torch.bool, device=command.device)
+    return command.actuator_overflow_consecutive_steps >= int(
+        command.cfg.actuator_safety_overflow_consecutive_steps
+    )

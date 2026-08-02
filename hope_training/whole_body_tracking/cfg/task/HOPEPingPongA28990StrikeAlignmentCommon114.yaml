@@ -1,0 +1,55 @@
+# Common trust-region setup for the two A28990 strike-alignment experiments.
+#
+# Keep the validated footwork, recovery, health gates, broad strike shaping,
+# and 114-D policy contract unchanged. Only soften the upper-body motion prior
+# near impact, restoring it fully after impact so the arm still returns to the
+# demonstrated forehand recovery.
+
+defaults:
+  - HOPEPingPongM25991FootworkRelocate114A
+  - _self_
+
+name: HOPEPingPongA28990StrikeAlignmentCommon114
+
+overrides:
+  rewards.imitation.params:
+    command_name: motion
+    std_pos: 0.3
+    std_ori: 0.4
+    body_names:
+      - torso_Link
+      - left_shoulder_roll_Link
+      - left_elbow_Link
+      - left_wrist_yaw_Link
+      - right_shoulder_roll_Link
+      - right_elbow_Link
+    core_clip_scale: 1.0
+    supplemental_clip_scale: 1.0
+    racket_command_name: racket_target
+    pre_strike_scale: 0.85
+    strike_scale: 0.25
+    recovery_scale: 1.0
+
+  # Preserve a non-zero wrist prior. The policy may correct impact pose but
+  # cannot solve the objective by abandoning the recorded forehand structure.
+  rewards.racket_wrist_motion_pos.params:
+    motion_command_name: motion
+    racket_command_name: racket_target
+    std: 0.65
+    body_names:
+      - right_wrist_yaw_Link
+    release_window_s: 0.14
+    release_scale: 0.30
+    hold_scale: 0.0
+  rewards.racket_wrist_motion_ori.params:
+    motion_command_name: motion
+    racket_command_name: racket_target
+    std: 1.0
+    body_names:
+      - right_wrist_yaw_Link
+    release_window_s: 0.14
+    release_scale: 0.30
+    hold_scale: 0.0
+
+  rewards.exact_impact_racket_velocity_alignment.weight: 0.0
+  rewards.exact_impact_outgoing_velocity_alignment.weight: 0.0

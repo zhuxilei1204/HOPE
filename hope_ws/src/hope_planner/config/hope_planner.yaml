@@ -12,7 +12,7 @@ hope_planner:
     # --- Strike plane ---
     # Fixed virtual hitting-plane x (m). Set to your robot placement + reach so
     # the incoming ball crosses this plane in front of the robot. Example only.
-    x_hit: 0.10
+    x_hit: 0.20
 
     # --- Forehand / backhand selection ---
     # The side is chosen once per incoming ball by splitting the predicted

@@ -16,6 +16,7 @@ Tune training by editing cfg/task/HOPEPingPong.yaml and cfg/algo/ppo.yaml.
 """
 
 import csv
+from collections.abc import MutableMapping
 import os
 import pathlib
 import sys
@@ -194,19 +195,47 @@ def _resolve_motion_sources(cfg) -> list[str]:
 
 
 def _set_dotted(obj, dotted: str, value, applied: list, where: str) -> None:
-    """Set ``obj.<a>.<b>... = value`` if the attribute chain exists; else warn and skip."""
+    """Set an existing dotted path across config objects and mapping fields."""
     parts = dotted.split(".")
     node = obj
-    for attr in parts[:-1]:
-        if not hasattr(node, attr):
-            print(f"[train.py] WARNING: {where}: '{dotted}' — no attribute '{attr}'; skipped.", flush=True)
-            return
-        node = getattr(node, attr)
+    for component in parts[:-1]:
+        if isinstance(node, MutableMapping):
+            if component not in node:
+                print(
+                    f"[train.py] WARNING: {where}: '{dotted}' — "
+                    f"no mapping key '{component}'; skipped.",
+                    flush=True,
+                )
+                return
+            node = node[component]
+        else:
+            if not hasattr(node, component):
+                print(
+                    f"[train.py] WARNING: {where}: '{dotted}' — "
+                    f"no attribute '{component}'; skipped.",
+                    flush=True,
+                )
+                return
+            node = getattr(node, component)
     leaf = parts[-1]
-    if not hasattr(node, leaf):
-        print(f"[train.py] WARNING: {where}: '{dotted}' — no attribute '{leaf}'; skipped.", flush=True)
-        return
-    setattr(node, leaf, value)
+    if isinstance(node, MutableMapping):
+        if leaf not in node:
+            print(
+                f"[train.py] WARNING: {where}: '{dotted}' — "
+                f"no mapping key '{leaf}'; skipped.",
+                flush=True,
+            )
+            return
+        node[leaf] = value
+    else:
+        if not hasattr(node, leaf):
+            print(
+                f"[train.py] WARNING: {where}: '{dotted}' — "
+                f"no attribute '{leaf}'; skipped.",
+                flush=True,
+            )
+            return
+        setattr(node, leaf, value)
     applied.append(f"{dotted} = {value}")
 
 
@@ -395,6 +424,15 @@ def _apply_motion_metadata(env_cfg, motion_files: list[str], metadata: list[dict
         values = tuple(float(phase) for phase in phases)
         racket.strike_phase_per_clip = values
         applied.append(f"commands.racket_target.strike_phase_per_clip = {values}")
+        motion = getattr(commands, "motion", None)
+        if motion is not None and hasattr(
+            motion, "motion_start_warmup_phase_per_clip"
+        ):
+            motion.motion_start_warmup_phase_per_clip = values
+            applied.append(
+                "commands.motion.motion_start_warmup_phase_per_clip = "
+                f"{values}"
+            )
 
     sides = [m.get("swing_side") for m in metadata]
     if all(side is not None for side in sides):
@@ -453,6 +491,35 @@ def _apply_task_overrides(env_cfg, cfg, applied: list) -> None:
             _set_dotted(env_cfg, str(dotted), value, applied, "overrides")
 
 
+def _prune_stateless_zero_weight_reward_terms(env_cfg) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    """Remove inert reward configs before Isaac builds the RewardManager.
+
+    Isaac skips zero-weight rewards in ``compute()``, but still allocates and
+    resets their episodic buffers.  Stateful class terms are deliberately kept:
+    their ``reset()`` method may own task state even when the current weight is
+    zero.  This helper is runtime-only and must be explicitly enabled by a task
+    config so behavior and throughput experiments remain separable.
+    """
+    rewards = getattr(env_cfg, "rewards", None)
+    if rewards is None:
+        return (), ()
+
+    pruned: list[str] = []
+    stateful: list[str] = []
+    for name, term_cfg in tuple(vars(rewards).items()):
+        if term_cfg is None or not hasattr(term_cfg, "weight"):
+            continue
+        if float(term_cfg.weight) != 0.0:
+            continue
+        func = getattr(term_cfg, "func", None)
+        if callable(getattr(func, "reset", None)):
+            stateful.append(str(name))
+            continue
+        setattr(rewards, name, None)
+        pruned.append(str(name))
+    return tuple(sorted(pruned)), tuple(sorted(stateful))
+
+
 def _run(cfg):
     import gymnasium as gym
     import torch
@@ -485,6 +552,22 @@ def _run(cfg):
         print(f"[train.py] motion clip {i}: {mf}", flush=True)
     env_cfg.commands.motion.motion_file = motion_files if len(motion_files) > 1 else motion_files[0]
     _apply_motion_metadata(env_cfg, motion_files, motion_metadata, applied)
+    runtime_cfg = cfg.task.get("runtime")
+    if runtime_cfg is not None and bool(runtime_cfg.get("prune_zero_weight_rewards", False)):
+        pruned_rewards, stateful_zero_rewards = _prune_stateless_zero_weight_reward_terms(env_cfg)
+        print(
+            "[train.py] runtime reward pruning: "
+            f"removed {len(pruned_rewards)} stateless zero-weight term(s); "
+            f"kept {len(stateful_zero_rewards)} stateful zero-weight term(s).",
+            flush=True,
+        )
+        if pruned_rewards:
+            print(f"[train.py]     pruned rewards: {list(pruned_rewards)}", flush=True)
+        if stateful_zero_rewards:
+            print(
+                f"[train.py]     preserved stateful zero rewards: {list(stateful_zero_rewards)}",
+                flush=True,
+            )
     print(f"[train.py] task={task_id} num_envs={num_envs} — applied {len(applied)} task override(s):", flush=True)
     for line in applied:
         print(f"[train.py]     {line}", flush=True)
@@ -573,12 +656,88 @@ def _run(cfg):
         ckpt = os.path.abspath(str(ckpt))
         if not os.path.isfile(ckpt):
             raise FileNotFoundError(f"[train.py] checkpoint_path does not exist: {ckpt}")
-        load_optimizer = bool(getattr(cfg, "checkpoint_load_optimizer", True))
-        runner.load(ckpt, load_optimizer=load_optimizer)
+        actor_only = bool(getattr(cfg, "checkpoint_actor_only", False))
+        if actor_only and bool(cfg.task.get("warm_start_requires_critic", False)):
+            raise ValueError(
+                "this task changes reward/lifecycle semantics and requires a full "
+                "actor+critic checkpoint warm start; set checkpoint_actor_only=false "
+                "and checkpoint_load_optimizer=false"
+            )
+        if actor_only:
+            runner.load_actor_only(ckpt)
+        else:
+            load_optimizer = bool(getattr(cfg, "checkpoint_load_optimizer", True))
+            runner.load(ckpt, load_optimizer=load_optimizer)
+            print(
+                f"[train.py] resumed from checkpoint: {ckpt} "
+                f"(load_optimizer={load_optimizer})",
+                flush=True,
+            )
+            lr_after_load = getattr(cfg, "optimizer_learning_rate_after_load", None)
+            if lr_after_load is not None:
+                lr_after_load = float(lr_after_load)
+                if lr_after_load <= 0.0:
+                    raise ValueError(
+                        "optimizer_learning_rate_after_load must be positive, "
+                        f"got {lr_after_load}"
+                    )
+                runner.alg.learning_rate = lr_after_load
+                for param_group in runner.alg.optimizer.param_groups:
+                    param_group["lr"] = lr_after_load
+                print(
+                    "[train.py] optimizer LR overridden after checkpoint load: "
+                    f"{lr_after_load:.8g}",
+                    flush=True,
+                )
+
+    noise_overrides = getattr(cfg, "action_noise_std_overrides", None)
+    task_noise_overrides = cfg.task.get("action_noise_std_overrides")
+    if task_noise_overrides:
+        noise_overrides = task_noise_overrides
+    global_noise_std = getattr(cfg, "action_noise_std_global", None)
+    if global_noise_std is not None:
+        global_noise_std = float(global_noise_std)
+        if global_noise_std <= 0.0:
+            raise ValueError(
+                "action_noise_std_global must be positive, "
+                f"got {global_noise_std}"
+            )
+        runner.override_action_noise_std(
+            {index: global_noise_std for index in range(len(_expected_order))}
+        )
         print(
-            f"[train.py] resumed from checkpoint: {ckpt} "
-            f"(load_optimizer={load_optimizer})",
+            "[train.py] global action-noise std applied: "
+            f"{global_noise_std:.6g}",
             flush=True,
+        )
+    if noise_overrides:
+        noise_overrides = OmegaConf.to_container(noise_overrides, resolve=True)
+        if not isinstance(noise_overrides, dict):
+            raise ValueError("action_noise_std_overrides must be a joint-name mapping")
+        name_to_index = {name: index for index, name in enumerate(_expected_order)}
+        unknown = sorted(set(noise_overrides) - set(name_to_index))
+        if unknown:
+            raise ValueError(f"unknown action-noise override joints: {unknown}")
+        runner.override_action_noise_std(
+            {name_to_index[name]: float(value) for name, value in noise_overrides.items()}
+        )
+        print(
+            "[train.py] action-noise joint overrides: "
+            + ", ".join(f"{name}={float(value):.6g}" for name, value in noise_overrides.items()),
+            flush=True,
+        )
+
+    actor_step_trust_region_rms = getattr(cfg, "actor_step_trust_region_rms", None)
+    actor_step_trust_region_p99 = getattr(cfg, "actor_step_trust_region_p99", None)
+    if (actor_step_trust_region_rms is None) != (actor_step_trust_region_p99 is None):
+        raise ValueError(
+            "actor step trust region requires both rms and p99 limits"
+        )
+    if actor_step_trust_region_rms is not None:
+        runner.configure_actor_step_trust_region(
+            float(actor_step_trust_region_rms),
+            float(actor_step_trust_region_p99),
+            int(getattr(cfg, "actor_step_trust_region_max_samples", 4096)),
         )
 
     actor_anchor_coefficient = float(getattr(cfg, "actor_anchor_coefficient", 0.0))
@@ -597,12 +756,36 @@ def _run(cfg):
             first_layer_input_exempt_start=getattr(
                 cfg, "actor_anchor_first_layer_input_exempt_start", None
             ),
+            first_layer_input_exempt_end=getattr(
+                cfg, "actor_anchor_first_layer_input_exempt_end", None
+            ),
+            exempt_coefficient=float(
+                getattr(cfg, "actor_anchor_exempt_coefficient", 0.0)
+            ),
         )
+
+    critic_warmup_override = getattr(cfg, "critic_warmup_iterations", None)
+    critic_warmup_iterations = int(
+        cfg.task.get("critic_warmup_iterations", 0)
+        if critic_warmup_override is None
+        else critic_warmup_override
+    )
+    if ckpt is not None and critic_warmup_iterations > 0:
+        runner.configure_critic_only_warmup(critic_warmup_iterations)
 
     # 7) dump the resolved configuration + train.
     dump_yaml(os.path.join(log_dir, "params", "env.yaml"), env_cfg)
     dump_yaml(os.path.join(log_dir, "params", "agent.yaml"), agent_cfg)
-    runner.learn(num_learning_iterations=agent_cfg.max_iterations, init_at_random_ep_len=True)
+    init_at_random_ep_len = bool(cfg.task.get("init_at_random_ep_len", True))
+    print(
+        "[train.py] random initial episode age: "
+        f"{init_at_random_ep_len}",
+        flush=True,
+    )
+    runner.learn(
+        num_learning_iterations=agent_cfg.max_iterations,
+        init_at_random_ep_len=init_at_random_ep_len,
+    )
     env.close()
 
 

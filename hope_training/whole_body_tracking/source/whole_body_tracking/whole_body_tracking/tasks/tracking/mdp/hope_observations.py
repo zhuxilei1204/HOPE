@@ -33,7 +33,12 @@ def base_forward_xy(env: ManagerBasedRLEnv, command_name: str) -> torch.Tensor:
 
 
 def fixed_station_error_xy(env: ManagerBasedRLEnv, command_name: str) -> torch.Tensor:
-    """Current station XY minus current base XY, world frame (2)."""
+    """Active station XY minus current base XY, world frame (2).
+
+    The public term name is retained for existing 111/114-D checkpoints.  In
+    dynamic-station tasks this is the per-swing base target before impact and
+    the fixed ready station during recovery.
+    """
     return _cmd(env, command_name).fixed_station_error_xy()
 
 

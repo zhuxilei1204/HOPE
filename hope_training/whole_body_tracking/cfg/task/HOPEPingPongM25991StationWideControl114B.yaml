@@ -1,0 +1,14 @@
+# Control for the explicit-relocation experiment.
+#
+# It uses the same model_25991 source and final station envelope as A, but does
+# not add relocation holds, event bonuses, curriculum, or joint-group release.
+
+defaults:
+  - HOPEPingPongM24492DeployStationStepV1
+  - _self_
+
+name: HOPEPingPongM25991StationWideControl114B
+
+overrides:
+  commands.racket_target.dynamic_station_xy_clip: [[0.0, 0.0], [-0.10, 0.16]]
+

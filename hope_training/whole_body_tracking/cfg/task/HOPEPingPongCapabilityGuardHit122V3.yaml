@@ -1,0 +1,20 @@
+# Strike-protected variant of CapabilityGuard122V3. The total sparse outcome
+# budgets are unchanged; 60% remains available after imperfect impacts so PPO
+# can recover contact before health conditioning receives the remaining 40%.
+
+defaults:
+  - HOPEPingPongCapabilityGuard122V3
+  - _self_
+
+name: HOPEPingPongCapabilityGuardHit122V3
+actor_obs_contract: hope_pingpong_stability122
+
+overrides:
+  rewards.soft_ball_contact.weight: 3.0
+  rewards.health_gated_soft_ball_contact.weight: 2.0
+  rewards.ball_contact.weight: 0.90
+  rewards.health_gated_ball_contact.weight: 0.60
+  rewards.net_cross.weight: 1.08
+  rewards.health_gated_net_cross.weight: 0.72
+  rewards.opponent_bounce.weight: 1.32
+  rewards.health_gated_opponent_bounce.weight: 0.88

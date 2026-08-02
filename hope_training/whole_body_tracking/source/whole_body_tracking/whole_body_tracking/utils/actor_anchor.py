@@ -13,7 +13,9 @@ class ActorParameterAnchor:
 
     The hook is equivalent to adding ``0.5 * coefficient * ||theta-theta_ref||^2``
     to the PPO loss, but it leaves the shared rsl_rl PPO implementation and
-    checkpoint format unchanged.
+    checkpoint format unchanged. Appended first-layer inputs may use a separate
+    lower coefficient so they can learn without becoming an unregularized
+    bypass around the reference policy.
     """
 
     def __init__(
@@ -22,11 +24,18 @@ class ActorParameterAnchor:
         reference_state: Mapping[str, torch.Tensor],
         coefficient: float,
         first_layer_input_exempt_start: int | None = None,
+        first_layer_input_exempt_end: int | None = None,
+        exempt_coefficient: float = 0.0,
     ) -> None:
         self.actor = actor
         self.coefficient = float(coefficient)
+        self.exempt_coefficient = float(exempt_coefficient)
         if self.coefficient <= 0.0:
             raise ValueError(f"actor anchor coefficient must be positive, got {coefficient}")
+        if self.exempt_coefficient < 0.0:
+            raise ValueError(
+                f"actor anchor exempt coefficient must be non-negative, got {exempt_coefficient}"
+            )
 
         actor_params = dict(actor.named_parameters())
         missing = sorted(set(actor_params) - set(reference_state))
@@ -34,16 +43,27 @@ class ActorParameterAnchor:
             raise ValueError(f"reference actor state is missing parameters: {missing}")
 
         first_linear_weight_name: str | None = None
+        if first_layer_input_exempt_end is not None and first_layer_input_exempt_start is None:
+            raise ValueError(
+                "first-layer input anchor exemption end requires an exemption start"
+            )
+        exempt_end: int | None = None
         if first_layer_input_exempt_start is not None:
             for module_name, module in actor.named_modules():
                 if isinstance(module, nn.Linear):
                     first_linear_weight_name = (
                         f"{module_name}.weight" if module_name else "weight"
                     )
-                    if not 0 <= first_layer_input_exempt_start <= module.in_features:
+                    exempt_end = (
+                        module.in_features
+                        if first_layer_input_exempt_end is None
+                        else int(first_layer_input_exempt_end)
+                    )
+                    if not 0 <= first_layer_input_exempt_start <= exempt_end <= module.in_features:
                         raise ValueError(
-                            "first-layer input anchor exemption must be within "
-                            f"[0, {module.in_features}], got {first_layer_input_exempt_start}"
+                            "first-layer input anchor exemption must satisfy "
+                            f"0 <= start <= end <= {module.in_features}, got "
+                            f"[{first_layer_input_exempt_start}, {exempt_end})"
                         )
                     break
             if first_linear_weight_name is None:
@@ -66,7 +86,7 @@ class ActorParameterAnchor:
             self.reference[name] = reference.clone()
             mask = torch.ones_like(parameter)
             if name == first_linear_weight_name:
-                mask[:, first_layer_input_exempt_start:] = 0.0
+                mask[:, first_layer_input_exempt_start:exempt_end] = 0.0
             self.anchor_masks[name] = mask
             self.handles.append(
                 parameter.register_hook(
@@ -74,7 +94,11 @@ class ActorParameterAnchor:
                     p=parameter,
                     ref=self.reference[name],
                     anchor_mask=self.anchor_masks[name]: (
-                        gradient + self.coefficient * (p.detach() - ref) * anchor_mask
+                        gradient
+                        + self.coefficient * (p.detach() - ref) * anchor_mask
+                        + self.exempt_coefficient
+                        * (p.detach() - ref)
+                        * (1.0 - anchor_mask)
                     )
                 )
             )

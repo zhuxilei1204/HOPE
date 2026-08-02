@@ -1,0 +1,66 @@
+name: HOPEPingPongStage2ImpactCredit114V2
+gym_task: HOPE-PingPong-Stage2-Physical-AgibotA3-v0
+experiment_name: hope_pingpong_stage2_impact_credit114_v2
+actor_obs_contract: hope_pingpong_normal114
+
+defaults:
+  - /base/env_base@_here_
+  - /base/sim_base@_here_
+  - /base/randomization_base@_here_
+  - _self_
+
+motion_manifest: hope_training/motions/stage1_core_two_motion_20260801/manifest.tsv
+
+env:
+  num_envs: 256
+  env_spacing: 6.0
+  episode_length_s: 12.0
+
+motion:
+  wrap_teleport: false
+
+actor_obs:
+  racket_target_normal_w: true
+  stability_feedback: false
+
+runtime:
+  prune_zero_weight_rewards: true
+
+domain_rand:
+  link_mass_range: [0.97, 1.03]
+  pd_gain_range: [0.97, 1.03]
+
+overrides:
+  # Isolate policy learning from command-distribution expansion.
+  commands.racket_target.table_workspace_fixed_level: 0.0
+  commands.racket_target.planner_perturb_curriculum_source: fixed
+  commands.racket_target.planner_perturb_fixed_scale: 0.0
+  commands.racket_target.impact_inverse_command_start_blend: 0.10
+  rewards.physical_capability_curriculum.params.fixed_level: 0.0
+  rewards.physical_outcome_events.params.impact_inverse_quality_floor: 0.10
+
+  # Motion remains a pre-strike/recovery prior. During the actual strike it
+  # must not dominate the planner-owned racket command.
+  rewards.imitation.weight: 0.85
+  rewards.imitation.params.strike_scale: 0.10
+
+  # Joint task-space score is intentionally not the dominant term: its
+  # geometric components can trade position/normal gains against lost speed.
+  rewards.planner_racket_task_space_crossfade.weight: 2.50
+  rewards.planner_racket_task_space_crossfade.params.ability_scaled_stds: false
+  rewards.planner_racket_task_space_crossfade.params.position_std: 0.16
+  rewards.planner_racket_task_space_crossfade.params.velocity_std: 0.85
+  rewards.planner_racket_task_space_crossfade.params.normal_std_rad: 0.30
+
+  # Non-compensable signed velocity feedback owns the final strike window.
+  rewards.near_impact_planner_velocity_progress.weight: 4.00
+  rewards.near_impact_planner_velocity_progress.params.minimum_health_multiplier: 0.30
+  rewards.near_impact_planner_velocity_progress.params.final_minimum_health_multiplier: 0.20
+  rewards.racket_velocity_projection.weight: 5.00
+  rewards.racket_velocity_projection.params.min_speed_ratio: 0.82
+  rewards.racket_velocity_projection.params.speed_std: 0.35
+  rewards.racket_velocity_projection.params.lateral_std: 0.90
+  rewards.racket_velocity_projection.params.minimum_health_multiplier: 0.30
+  rewards.racket_velocity_projection.params.final_minimum_health_multiplier: 0.20
+  rewards.blade_direction.weight: 0.70
+

@@ -147,7 +147,10 @@ def main() -> int:
         agent_cfg = RslRlOnPolicyRunnerCfg(**runner_kwargs(load_ppo_params(), args.experiment_name))
         agent_cfg.device = args.device
         runner = HOPEOnPolicyRunner(env, agent_cfg.to_dict(), log_dir=None, device=args.device)
-        runner.load(checkpoint)
+        # Export depends only on the actor.  Loading the complete checkpoint also
+        # deserializes optimizer/critic tensors on the GPU that produced the file,
+        # which breaks portable export when CUDA_VISIBLE_DEVICES remaps that GPU.
+        runner.load_actor_only(checkpoint)
 
         onnx_path, manifest_path = export_policy(
             runner.alg.policy,

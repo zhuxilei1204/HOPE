@@ -1,0 +1,41 @@
+# model_23499 wrist preparation timing experiment.
+
+defaults:
+  - HOPEPingPongCapabilityGuard122V3
+  - _self_
+
+name: HOPEPingPongGuard23499WristPrepTimingV1
+actor_obs_contract: hope_pingpong_stability122
+
+overrides:
+  rewards.racket_wrist_motion_pos.weight: 0.30
+  rewards.racket_wrist_motion_pos.params:
+    motion_command_name: motion
+    racket_command_name: racket_target
+    std: 0.65
+    body_names: [right_wrist_yaw_Link]
+    release_window_s: 0.14
+    release_scale: 0.18
+    pre_release_start_s: 0.35
+    post_release_end_s: 0.30
+
+  rewards.racket_wrist_motion_ori.weight: 0.18
+  rewards.racket_wrist_motion_ori.params:
+    motion_command_name: motion
+    racket_command_name: racket_target
+    std: 1.0
+    body_names: [right_wrist_yaw_Link]
+    release_window_s: 0.14
+    release_scale: 0.18
+    pre_release_start_s: 0.35
+    post_release_end_s: 0.30
+
+  rewards.prestrike_blade_direction.weight: 0.30
+  rewards.prestrike_blade_direction.params:
+    command_name: racket_target
+    std: 0.65
+    start_s: 0.35
+    full_s: 0.12
+    start_step: 0
+    warmup_steps: 500
+    start_scale: 0.35

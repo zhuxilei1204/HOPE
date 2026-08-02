@@ -1,0 +1,18 @@
+defaults:
+  - HOPEPingPongClosedLoopV3ScratchSafetyBootstrapV6AMultiSkill114
+  - _self_
+
+name: HOPEPingPongClosedLoopV3ScratchAdaptiveMotionV6CMultiSkill114
+
+# V6C follows V6A exactly until targeted strikes have been discovered. It then
+# introduces a conservative amount of post-impact motion seeding, based on
+# measured ability rather than iteration count.
+overrides:
+  commands.motion.motion_start_warmup_recovery_enabled: true
+  commands.motion.motion_start_warmup_recovery_fraction: 0.0
+  commands.motion.motion_start_warmup_recovery_steps_range: [8, 30]
+  commands.motion.motion_start_warmup_lifecycle_curriculum_enabled: true
+  commands.motion.motion_start_warmup_lifecycle_targeted_attempt_low: 0.01
+  commands.motion.motion_start_warmup_lifecycle_targeted_attempt_high: 0.05
+  commands.motion.motion_start_warmup_lifecycle_prestrike_fraction_end: 0.50
+  commands.motion.motion_start_warmup_lifecycle_recovery_fraction_end: 0.15

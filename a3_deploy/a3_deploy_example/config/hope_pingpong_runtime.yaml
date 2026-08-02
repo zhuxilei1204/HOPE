@@ -79,3 +79,14 @@ lifecycle:
   ready_reach_x: 0.40
   ready_reach_y: 0.20
   ready_reach_z: -0.05
+
+# Value supplied to obs[101:103]. Keep fixed for legacy policies. A policy
+# trained with deployment-aligned station commands may select
+# dynamic_from_racket_offset and use its motion strike offset and clip values.
+station:
+  mode: fixed
+  racket_offset_xy: [0.0, 0.0]
+  clip_x: [0.0, 0.0]
+  clip_y: [0.0, 0.0]
+  blend: 1.0
+  post_strike_window_s: 0.12

@@ -1,0 +1,34 @@
+name: HOPEPingPongStage1Plane020EscrowSoft114
+gym_task: HOPE-PingPong-Stage1-Plane020-Escrow-AgibotA3-v0
+experiment_name: hope_pingpong_stage1_plane020_escrow114
+actor_obs_contract: hope_pingpong_normal114
+
+defaults:
+  - /base/env_base@_here_
+  - /base/sim_base@_here_
+  - /base/randomization_base@_here_
+  - _self_
+
+motion_manifest: hope_training/motions/stage1_core_two_motion_20260801/manifest.tsv
+
+env:
+  num_envs: 4096
+  env_spacing: 2.5
+  episode_length_s: 10.0
+
+motion:
+  wrap_teleport: false
+
+actor_obs:
+  racket_target_normal_w: true
+  stability_feedback: false
+
+runtime:
+  prune_zero_weight_rewards: true
+
+domain_rand:
+  link_mass_range: [0.97, 1.03]
+  pd_gain_range: [0.97, 1.03]
+
+overrides:
+  commands.motion.clip_sampling_weights: [0.40, 0.60]

@@ -1,0 +1,30 @@
+name: HOPEPingPongClosedLoopV2ImpactFH
+gym_task: HOPE-PingPong-ClosedLoopV2-Impact-AgibotA3-v0
+experiment_name: hope_pingpong_closed_loop_v2_impact
+actor_obs_contract: hope_pingpong_normal114
+
+defaults:
+  - /base/env_base@_here_
+  - /base/sim_base@_here_
+  - /base/randomization_base@_here_
+  - _self_
+
+motion_file: hope_training/motions/user_four_motion_manual_hits_a3fk_yaw_leg_stabilized_20260724/user_forehand_raised_30fps_contact075_50hz_a3fk_aligned.npz
+
+env:
+  num_envs: 1536
+  env_spacing: 2.5
+  episode_length_s: 45.0
+
+motion:
+  wrap_teleport: false
+
+actor_obs:
+  racket_target_normal_w: true
+  stability_feedback: false
+
+domain_rand:
+  link_mass_range: [0.95, 1.05]
+  pd_gain_range: [0.95, 1.05]
+
+overrides: {}

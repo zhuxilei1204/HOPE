@@ -1,0 +1,15 @@
+defaults:
+  - HOPEPingPongClosedLoopV3ScratchSafetyBootstrapV6AMultiSkill114
+  - _self_
+
+name: HOPEPingPongClosedLoopV3ScratchLifecycleMotionV6BMultiSkill114
+
+# V6B differs from V6A only in the conditional distribution inside a
+# motion-seeded reset. Early training explicitly sees pre-strike and recovery
+# states; the existing ability-gated warmup automatically fades those starts as
+# contact and recovery improve. Clip identity probabilities remain unchanged.
+overrides:
+  commands.motion.motion_start_warmup_prestrike_fraction: 0.45
+  commands.motion.motion_start_warmup_recovery_enabled: true
+  commands.motion.motion_start_warmup_recovery_fraction: 0.35
+  commands.motion.motion_start_warmup_recovery_steps_range: [8, 30]

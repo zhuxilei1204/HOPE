@@ -1,0 +1,57 @@
+defaults:
+  - HOPEPingPongStrikeRecoveryAntiIdleCommon122V2
+  - _self_
+
+name: HOPEPingPongScratchSeededAntiIdle122V2
+actor_obs_contract: hope_pingpong_stability122
+
+overrides:
+  episode_length_s: 48.0
+
+  # Keep 80% motion-frame starts so a random actor sees useful strike phases,
+  # while retaining default-ready and deploy no-command starts.
+  commands.motion.wrap_teleport: false
+  commands.motion.stand_start_prob: 0.20
+  commands.motion.stand_start_min_hold: 90
+
+  # At ability zero, y/z targets are 85% motion-aligned. The dependency fades
+  # continuously and is exactly zero by ability 0.25.
+  commands.racket_target.table_workspace_motion_seed_blend_start: 0.85
+  commands.racket_target.table_workspace_motion_seed_end_level: 0.25
+  commands.racket_target.table_workspace_fringe_prob: 0.05
+  commands.racket_target.ability_curriculum_start_ball_scale: 0.45
+  commands.racket_target.ability_curriculum_start_planner_perturb_scale: 0.10
+
+  commands.racket_target.healthy_three_stage_enabled: true
+  commands.racket_target.healthy_stage2_start_level: 0.25
+  commands.racket_target.healthy_stage3_start_level: 0.60
+  commands.racket_target.healthy_stage1_ready_hold_prob: 0.10
+  commands.racket_target.healthy_stage2_ready_hold_prob: 0.35
+  commands.racket_target.healthy_stage3_ready_hold_prob: 0.20
+  commands.racket_target.healthy_stage3_planted_rehearsal_prob: 0.25
+  commands.racket_target.healthy_stage_side_contact_threshold: 0.25
+  commands.racket_target.healthy_stage_normal_threshold: 0.20
+  commands.racket_target.healthy_stage_safety_threshold: 0.985
+  commands.racket_target.healthy_stage_recovery_threshold: 0.62
+  commands.racket_target.healthy_stage_station_arrival_threshold: 0.65
+  commands.racket_target.healthy_stage_station_settle_threshold: 0.45
+
+  # Stage advancement remains capability-based. Side contact is mandatory, but
+  # net/closed-cycle requirements are introduced by later stages instead of
+  # blocking initial contact discovery.
+  commands.racket_target.ability_curriculum_require_side_contact: true
+  commands.racket_target.ability_curriculum_require_side_net: false
+  commands.racket_target.ability_curriculum_forehand_contact_threshold: 0.25
+  commands.racket_target.ability_curriculum_backhand_contact_threshold: 0.25
+  commands.racket_target.ability_curriculum_use_cycle_v2: false
+  commands.racket_target.ability_curriculum_attempt_threshold: 0.25
+  commands.racket_target.ability_curriculum_safety_threshold: 0.985
+  commands.racket_target.ability_curriculum_safety_floor: 0.970
+  commands.racket_target.ability_curriculum_recovery_floor: 0.50
+  commands.racket_target.ability_curriculum_outcome_regress_ratio: 0.65
+  commands.racket_target.ability_curriculum_advance_rate: 0.003
+  commands.racket_target.ability_curriculum_regress_rate: 0.010
+
+  # No-command standing stays represented but cannot dominate strike learning.
+  rewards.no_command_ready_stability.weight: 0.45
+

@@ -1,0 +1,774 @@
+{
+  "analytic_eval": {
+    "analytic_success_rate": 0.0,
+    "success_rate": 0.5737265415549598,
+    "task_contact_rate": 0.5817694369973191,
+    "task_net_cross_rate": 0.5737265415549598,
+    "task_opponent_bounce_rate": 0.5737265415549598
+  },
+  "contact_metric_buckets": {
+    "rim_or_edge": {
+      "means": {
+        "contact_actual_force_physics_model_residual": 1.3442012071609497,
+        "contact_actual_force_physics_predicted_target_error": 1.3450617790222168,
+        "contact_actual_normal_only_model_residual": 1.999942421913147,
+        "contact_actual_normal_only_predicted_target_error": 1.003202199935913,
+        "contact_actual_physics_model_residual": 1.8800251483917236,
+        "contact_actual_physics_predicted_target_error": 0.9064897894859314,
+        "contact_actual_route_incoming_velocity_error": 0.23229293525218964,
+        "contact_actual_training_model_residual": 1.961793065071106,
+        "contact_actual_training_predicted_target_error": 0.9626976251602173,
+        "contact_command_normal_only_error": 0.1156526729464531,
+        "contact_command_physics_model_error": 0.25203147530555725,
+        "contact_command_training_model_error": 0.13491277396678925,
+        "contact_face_radial_error": 0.0859467014670372,
+        "contact_force_normal_error_deg": 12.480451583862305,
+        "contact_force_normal_valid": 0.4035087823867798,
+        "contact_impact_normal_error_deg": 9.359006881713867,
+        "contact_incoming_velocity_direction_error_deg": 7.413825035095215,
+        "contact_incoming_velocity_error": 0.2316909283399582,
+        "contact_outgoing_direction_error_deg": 34.72890090942383,
+        "contact_outgoing_speed": 2.8384368419647217,
+        "contact_outgoing_speed_ratio": 0.7384220361709595,
+        "contact_outgoing_velocity_error": 2.202456474304199,
+        "contact_outgoing_velocity_x": 2.1757020950317383,
+        "contact_outgoing_velocity_y": 0.9795677065849304,
+        "contact_outgoing_velocity_z": 0.9032630324363708,
+        "contact_planner_normal_error_deg": 9.359006881713867,
+        "contact_planner_position_error": 0.07266092300415039,
+        "contact_planner_velocity_direction_error_deg": 18.856966018676758,
+        "contact_planner_velocity_error": 0.6533743739128113,
+        "contact_route_incoming_velocity_direction_error_deg": 1.8959416151046753,
+        "contact_route_incoming_velocity_error": 0.0658603385090828,
+        "contact_target_outgoing_speed": 3.87481951713562,
+        "contact_target_outgoing_velocity_x": 3.0535569190979004,
+        "contact_target_outgoing_velocity_y": 0.6380311846733093,
+        "contact_target_outgoing_velocity_z": 2.115281581878662,
+        "contact_time_to_strike": -0.009473683312535286,
+        "contact_true_target_error": 0.04371374845504761,
+        "contact_wire_impact_normal_gap_deg": 0.005984207149595022
+      },
+      "quantiles": {
+        "contact_actual_force_physics_model_residual": {
+          "p50": 1.3869860172271729,
+          "p90": 2.4608192443847656
+        },
+        "contact_actual_force_physics_predicted_target_error": {
+          "p50": 1.3997879028320312,
+          "p90": 2.178194284439087
+        },
+        "contact_actual_normal_only_model_residual": {
+          "p50": 1.8902027606964111,
+          "p90": 2.4991507530212402
+        },
+        "contact_actual_normal_only_predicted_target_error": {
+          "p50": 0.8908554315567017,
+          "p90": 1.7885464429855347
+        },
+        "contact_actual_physics_model_residual": {
+          "p50": 1.734601616859436,
+          "p90": 2.5919601917266846
+        },
+        "contact_actual_physics_predicted_target_error": {
+          "p50": 0.831824004650116,
+          "p90": 1.7212272882461548
+        },
+        "contact_actual_route_incoming_velocity_error": {
+          "p50": 0.20700189471244812,
+          "p90": 0.4191340506076813
+        },
+        "contact_actual_training_model_residual": {
+          "p50": 1.833540439605713,
+          "p90": 2.496429443359375
+        },
+        "contact_actual_training_predicted_target_error": {
+          "p50": 0.8653697371482849,
+          "p90": 1.7569496631622314
+        },
+        "contact_command_normal_only_error": {
+          "p50": 0.06290304660797119,
+          "p90": 0.30158549547195435
+        },
+        "contact_command_physics_model_error": {
+          "p50": 0.20335759222507477,
+          "p90": 0.5217577219009399
+        },
+        "contact_command_training_model_error": {
+          "p50": 0.084165059030056,
+          "p90": 0.3256879448890686
+        },
+        "contact_face_radial_error": {
+          "p50": 0.08533899486064911,
+          "p90": 0.10835307836532593
+        },
+        "contact_force_normal_error_deg": {
+          "p50": 0.01978234015405178,
+          "p90": 30.979080200195312
+        },
+        "contact_force_normal_valid": {
+          "p50": 0.0,
+          "p90": 1.0
+        },
+        "contact_impact_normal_error_deg": {
+          "p50": 8.29053020477295,
+          "p90": 17.10961151123047
+        },
+        "contact_incoming_velocity_direction_error_deg": {
+          "p50": 6.351286888122559,
+          "p90": 13.347273826599121
+        },
+        "contact_incoming_velocity_error": {
+          "p50": 0.2071162760257721,
+          "p90": 0.38354238867759705
+        },
+        "contact_outgoing_direction_error_deg": {
+          "p50": 30.365966796875,
+          "p90": 49.22978973388672
+        },
+        "contact_outgoing_speed": {
+          "p50": 2.8865609169006348,
+          "p90": 3.4217917919158936
+        },
+        "contact_outgoing_speed_ratio": {
+          "p50": 0.7295125126838684,
+          "p90": 0.8883216977119446
+        },
+        "contact_outgoing_velocity_error": {
+          "p50": 2.028954267501831,
+          "p90": 2.970665216445923
+        },
+        "contact_outgoing_velocity_x": {
+          "p50": 2.3649234771728516,
+          "p90": 2.67470645904541
+        },
+        "contact_outgoing_velocity_y": {
+          "p50": 1.3428928852081299,
+          "p90": 1.9578166007995605
+        },
+        "contact_outgoing_velocity_z": {
+          "p50": 0.8843910098075867,
+          "p90": 1.6621156930923462
+        },
+        "contact_planner_normal_error_deg": {
+          "p50": 8.29053020477295,
+          "p90": 17.109621047973633
+        },
+        "contact_planner_position_error": {
+          "p50": 0.06821697950363159,
+          "p90": 0.09809239208698273
+        },
+        "contact_planner_velocity_direction_error_deg": {
+          "p50": 18.16440200805664,
+          "p90": 28.960376739501953
+        },
+        "contact_planner_velocity_error": {
+          "p50": 0.6020170450210571,
+          "p90": 0.9948815107345581
+        },
+        "contact_route_incoming_velocity_direction_error_deg": {
+          "p50": 1.9086483716964722,
+          "p90": 2.22278094291687
+        },
+        "contact_route_incoming_velocity_error": {
+          "p50": 0.06713846325874329,
+          "p90": 0.08894225209951401
+        },
+        "contact_target_outgoing_speed": {
+          "p50": 3.811103105545044,
+          "p90": 4.468792915344238
+        },
+        "contact_target_outgoing_velocity_x": {
+          "p50": 3.1289844512939453,
+          "p90": 4.052539825439453
+        },
+        "contact_target_outgoing_velocity_y": {
+          "p50": 0.5475898385047913,
+          "p90": 1.24940025806427
+        },
+        "contact_target_outgoing_velocity_z": {
+          "p50": 2.0798182487487793,
+          "p90": 2.8571550846099854
+        },
+        "contact_time_to_strike": {
+          "p50": -0.019999999552965164,
+          "p90": 0.019999999552965164
+        },
+        "contact_true_target_error": {
+          "p50": 0.040597401559352875,
+          "p90": 0.07041539251804352
+        },
+        "contact_wire_impact_normal_gap_deg": {
+          "p50": 0.0,
+          "p90": 0.01978234015405178
+        }
+      },
+      "sample_count": 57
+    },
+    "usable_center": {
+      "means": {
+        "contact_actual_force_physics_model_residual": 0.8407531380653381,
+        "contact_actual_force_physics_predicted_target_error": 1.494563341140747,
+        "contact_actual_normal_only_model_residual": 1.7273716926574707,
+        "contact_actual_normal_only_predicted_target_error": 1.1297228336334229,
+        "contact_actual_physics_model_residual": 1.6987097263336182,
+        "contact_actual_physics_predicted_target_error": 0.9582940340042114,
+        "contact_actual_route_incoming_velocity_error": 0.3340114653110504,
+        "contact_actual_training_model_residual": 1.711059331893921,
+        "contact_actual_training_predicted_target_error": 1.0654867887496948,
+        "contact_command_normal_only_error": 0.15722258388996124,
+        "contact_command_physics_model_error": 0.31739386916160583,
+        "contact_command_training_model_error": 0.1787889301776886,
+        "contact_face_radial_error": 0.04225306585431099,
+        "contact_force_normal_error_deg": 17.876585006713867,
+        "contact_force_normal_valid": 0.7307692766189575,
+        "contact_impact_normal_error_deg": 9.734169960021973,
+        "contact_incoming_velocity_direction_error_deg": 8.0439453125,
+        "contact_incoming_velocity_error": 0.30962935090065,
+        "contact_outgoing_direction_error_deg": 26.65816879272461,
+        "contact_outgoing_speed": 3.053760051727295,
+        "contact_outgoing_speed_ratio": 0.7685585021972656,
+        "contact_outgoing_velocity_error": 1.9645285606384277,
+        "contact_outgoing_velocity_x": 2.2292802333831787,
+        "contact_outgoing_velocity_y": 0.6659735441207886,
+        "contact_outgoing_velocity_z": 1.3990674018859863,
+        "contact_planner_normal_error_deg": 9.734173774719238,
+        "contact_planner_position_error": 0.05352211371064186,
+        "contact_planner_velocity_direction_error_deg": 18.359886169433594,
+        "contact_planner_velocity_error": 0.6581577658653259,
+        "contact_route_incoming_velocity_direction_error_deg": 1.8391809463500977,
+        "contact_route_incoming_velocity_error": 0.07458188384771347,
+        "contact_target_outgoing_speed": 4.017311096191406,
+        "contact_target_outgoing_velocity_x": 3.26432466506958,
+        "contact_target_outgoing_velocity_y": 0.865797221660614,
+        "contact_target_outgoing_velocity_z": 1.951867938041687,
+        "contact_time_to_strike": 0.004615384619683027,
+        "contact_true_target_error": 0.037653207778930664,
+        "contact_wire_impact_normal_gap_deg": 0.006717190612107515
+      },
+      "quantiles": {
+        "contact_actual_force_physics_model_residual": {
+          "p50": 0.621004581451416,
+          "p90": 1.73520827293396
+        },
+        "contact_actual_force_physics_predicted_target_error": {
+          "p50": 1.6654125452041626,
+          "p90": 2.1781697273254395
+        },
+        "contact_actual_normal_only_model_residual": {
+          "p50": 1.8929541110992432,
+          "p90": 2.2327537536621094
+        },
+        "contact_actual_normal_only_predicted_target_error": {
+          "p50": 0.946107029914856,
+          "p90": 1.891181468963623
+        },
+        "contact_actual_physics_model_residual": {
+          "p50": 1.7096525430679321,
+          "p90": 2.290574073791504
+        },
+        "contact_actual_physics_predicted_target_error": {
+          "p50": 0.769294023513794,
+          "p90": 1.7214605808258057
+        },
+        "contact_actual_route_incoming_velocity_error": {
+          "p50": 0.2532234787940979,
+          "p90": 0.6546416878700256
+        },
+        "contact_actual_training_model_residual": {
+          "p50": 1.844336986541748,
+          "p90": 2.1763296127319336
+        },
+        "contact_actual_training_predicted_target_error": {
+          "p50": 0.8601285815238953,
+          "p90": 1.8294713497161865
+        },
+        "contact_command_normal_only_error": {
+          "p50": 0.11968133598566055,
+          "p90": 0.434242844581604
+        },
+        "contact_command_physics_model_error": {
+          "p50": 0.27615970373153687,
+          "p90": 0.6471477746963501
+        },
+        "contact_command_training_model_error": {
+          "p50": 0.13960006833076477,
+          "p90": 0.4557759761810303
+        },
+        "contact_face_radial_error": {
+          "p50": 0.042261067777872086,
+          "p90": 0.05763424187898636
+        },
+        "contact_force_normal_error_deg": {
+          "p50": 29.11783218383789,
+          "p90": 31.082551956176758
+        },
+        "contact_force_normal_valid": {
+          "p50": 1.0,
+          "p90": 1.0
+        },
+        "contact_impact_normal_error_deg": {
+          "p50": 9.083816528320312,
+          "p90": 17.64216423034668
+        },
+        "contact_incoming_velocity_direction_error_deg": {
+          "p50": 7.631622314453125,
+          "p90": 14.373826026916504
+        },
+        "contact_incoming_velocity_error": {
+          "p50": 0.25487640500068665,
+          "p90": 0.5799167156219482
+        },
+        "contact_outgoing_direction_error_deg": {
+          "p50": 24.345088958740234,
+          "p90": 40.371368408203125
+        },
+        "contact_outgoing_speed": {
+          "p50": 3.03108549118042,
+          "p90": 3.8363242149353027
+        },
+        "contact_outgoing_speed_ratio": {
+          "p50": 0.7735035419464111,
+          "p90": 0.9403889179229736
+        },
+        "contact_outgoing_velocity_error": {
+          "p50": 1.9859898090362549,
+          "p90": 2.453869342803955
+        },
+        "contact_outgoing_velocity_x": {
+          "p50": 2.362445592880249,
+          "p90": 2.8574042320251465
+        },
+        "contact_outgoing_velocity_y": {
+          "p50": 0.8042691946029663,
+          "p90": 1.856454849243164
+        },
+        "contact_outgoing_velocity_z": {
+          "p50": 1.0981305837631226,
+          "p90": 2.857156753540039
+        },
+        "contact_planner_normal_error_deg": {
+          "p50": 9.08382797241211,
+          "p90": 17.64216423034668
+        },
+        "contact_planner_position_error": {
+          "p50": 0.0509810708463192,
+          "p90": 0.0793573185801506
+        },
+        "contact_planner_velocity_direction_error_deg": {
+          "p50": 17.813140869140625,
+          "p90": 26.576950073242188
+        },
+        "contact_planner_velocity_error": {
+          "p50": 0.5819911956787109,
+          "p90": 1.0740315914154053
+        },
+        "contact_route_incoming_velocity_direction_error_deg": {
+          "p50": 1.8370656967163086,
+          "p90": 2.263859987258911
+        },
+        "contact_route_incoming_velocity_error": {
+          "p50": 0.07655320316553116,
+          "p90": 0.09835566580295563
+        },
+        "contact_target_outgoing_speed": {
+          "p50": 3.9317760467529297,
+          "p90": 4.785412788391113
+        },
+        "contact_target_outgoing_velocity_x": {
+          "p50": 3.0970029830932617,
+          "p90": 4.4100189208984375
+        },
+        "contact_target_outgoing_velocity_y": {
+          "p50": 0.8815335631370544,
+          "p90": 1.3398675918579102
+        },
+        "contact_target_outgoing_velocity_z": {
+          "p50": 1.8820011615753174,
+          "p90": 2.647550106048584
+        },
+        "contact_time_to_strike": {
+          "p50": 0.0,
+          "p90": 0.03999999910593033
+        },
+        "contact_true_target_error": {
+          "p50": 0.037929922342300415,
+          "p90": 0.0613640733063221
+        },
+        "contact_wire_impact_normal_gap_deg": {
+          "p50": 0.0,
+          "p90": 0.01978234015405178
+        }
+      },
+      "sample_count": 26
+    }
+  },
+  "contact_metric_means": {
+    "contact_actual_force_physics_model_residual": 1.1864947583301957,
+    "contact_actual_force_physics_predicted_target_error": 1.3918934098209244,
+    "contact_actual_normal_only_model_residual": 1.9145592379282756,
+    "contact_actual_normal_only_predicted_target_error": 1.0428352815559112,
+    "contact_actual_physics_model_residual": 1.8232274802334338,
+    "contact_actual_physics_predicted_target_error": 0.9227175425334149,
+    "contact_actual_route_incoming_velocity_error": 0.2641566173139825,
+    "contact_actual_training_model_residual": 1.8832502250211784,
+    "contact_actual_training_predicted_target_error": 0.994896578501506,
+    "contact_command_normal_only_error": 0.12867461055158133,
+    "contact_command_physics_model_error": 0.2725064151258354,
+    "contact_command_training_model_error": 0.14865714383412557,
+    "contact_face_radial_error": 0.0722595410174634,
+    "contact_force_normal_error_deg": 14.170804310993976,
+    "contact_force_normal_valid": 0.5060240963855421,
+    "contact_impact_normal_error_deg": 9.476525731833584,
+    "contact_incoming_velocity_direction_error_deg": 7.611216349774097,
+    "contact_incoming_velocity_error": 0.2561053540333208,
+    "contact_outgoing_direction_error_deg": 32.20071594973645,
+    "contact_outgoing_speed": 2.9058878335608056,
+    "contact_outgoing_speed_ratio": 0.7478623907250094,
+    "contact_outgoing_velocity_error": 2.1279245399567017,
+    "contact_outgoing_velocity_x": 2.192485763365964,
+    "contact_outgoing_velocity_y": 0.8813331328242658,
+    "contact_outgoing_velocity_z": 1.0585751820759601,
+    "contact_planner_normal_error_deg": 9.476526467196912,
+    "contact_planner_position_error": 0.06666563792401049,
+    "contact_planner_velocity_direction_error_deg": 18.701252764966114,
+    "contact_planner_velocity_error": 0.6548727104462773,
+    "contact_route_incoming_velocity_direction_error_deg": 1.8781611431075866,
+    "contact_route_incoming_velocity_error": 0.06859239325465927,
+    "contact_target_outgoing_speed": 3.919454919286521,
+    "contact_target_outgoing_velocity_x": 3.1195800045886672,
+    "contact_target_outgoing_velocity_y": 0.7093795868287603,
+    "contact_target_outgoing_velocity_z": 2.064091510083302,
+    "contact_time_to_strike": -0.005060240087738956,
+    "contact_true_target_error": 0.041815266551741635,
+    "contact_wire_impact_normal_gap_deg": 0.006213815097349236
+  },
+  "contact_metric_quantiles": {
+    "contact_actual_force_physics_model_residual": {
+      "p50": 1.1885453462600708,
+      "p90": 2.271785020828247
+    },
+    "contact_actual_force_physics_predicted_target_error": {
+      "p50": 1.4562506675720215,
+      "p90": 2.2084641456604004
+    },
+    "contact_actual_normal_only_model_residual": {
+      "p50": 1.8902027606964111,
+      "p90": 2.413442850112915
+    },
+    "contact_actual_normal_only_predicted_target_error": {
+      "p50": 0.9140073657035828,
+      "p90": 1.83863365650177
+    },
+    "contact_actual_physics_model_residual": {
+      "p50": 1.731119155883789,
+      "p90": 2.4488699436187744
+    },
+    "contact_actual_physics_predicted_target_error": {
+      "p50": 0.7745398283004761,
+      "p90": 1.725273847579956
+    },
+    "contact_actual_route_incoming_velocity_error": {
+      "p50": 0.23241490125656128,
+      "p90": 0.5279192924499512
+    },
+    "contact_actual_training_model_residual": {
+      "p50": 1.833540439605713,
+      "p90": 2.3906891345977783
+    },
+    "contact_actual_training_predicted_target_error": {
+      "p50": 0.8653697371482849,
+      "p90": 1.8014864921569824
+    },
+    "contact_command_normal_only_error": {
+      "p50": 0.06923799961805344,
+      "p90": 0.36042577028274536
+    },
+    "contact_command_physics_model_error": {
+      "p50": 0.21651096642017365,
+      "p90": 0.5821006298065186
+    },
+    "contact_command_training_model_error": {
+      "p50": 0.08532733470201492,
+      "p90": 0.38378867506980896
+    },
+    "contact_face_radial_error": {
+      "p50": 0.07297215610742569,
+      "p90": 0.10499760508537292
+    },
+    "contact_force_normal_error_deg": {
+      "p50": 5.202662467956543,
+      "p90": 31.293262481689453
+    },
+    "contact_force_normal_valid": {
+      "p50": 1.0,
+      "p90": 1.0
+    },
+    "contact_impact_normal_error_deg": {
+      "p50": 8.58849048614502,
+      "p90": 17.739194869995117
+    },
+    "contact_incoming_velocity_direction_error_deg": {
+      "p50": 6.983058929443359,
+      "p90": 14.047842025756836
+    },
+    "contact_incoming_velocity_error": {
+      "p50": 0.21321715414524078,
+      "p90": 0.4708263576030731
+    },
+    "contact_outgoing_direction_error_deg": {
+      "p50": 29.51750373840332,
+      "p90": 45.85097885131836
+    },
+    "contact_outgoing_speed": {
+      "p50": 2.938825845718384,
+      "p90": 3.5209908485412598
+    },
+    "contact_outgoing_speed_ratio": {
+      "p50": 0.7598893046379089,
+      "p90": 0.9051944017410278
+    },
+    "contact_outgoing_velocity_error": {
+      "p50": 2.028954267501831,
+      "p90": 2.822291612625122
+    },
+    "contact_outgoing_velocity_x": {
+      "p50": 2.3649234771728516,
+      "p90": 2.7151691913604736
+    },
+    "contact_outgoing_velocity_y": {
+      "p50": 1.2778193950653076,
+      "p90": 1.9496638774871826
+    },
+    "contact_outgoing_velocity_z": {
+      "p50": 0.9100980758666992,
+      "p90": 2.3544363975524902
+    },
+    "contact_planner_normal_error_deg": {
+      "p50": 8.588513374328613,
+      "p90": 17.739187240600586
+    },
+    "contact_planner_position_error": {
+      "p50": 0.06465034931898117,
+      "p90": 0.0973680168390274
+    },
+    "contact_planner_velocity_direction_error_deg": {
+      "p50": 18.16440200805664,
+      "p90": 28.709293365478516
+    },
+    "contact_planner_velocity_error": {
+      "p50": 0.6020170450210571,
+      "p90": 1.0246466398239136
+    },
+    "contact_route_incoming_velocity_direction_error_deg": {
+      "p50": 1.9041316509246826,
+      "p90": 2.2589221000671387
+    },
+    "contact_route_incoming_velocity_error": {
+      "p50": 0.07091832906007767,
+      "p90": 0.09570463001728058
+    },
+    "contact_target_outgoing_speed": {
+      "p50": 3.874765157699585,
+      "p90": 4.541635036468506
+    },
+    "contact_target_outgoing_velocity_x": {
+      "p50": 3.1087558269500732,
+      "p90": 4.191926956176758
+    },
+    "contact_target_outgoing_velocity_y": {
+      "p50": 0.6712906956672668,
+      "p90": 1.3261823654174805
+    },
+    "contact_target_outgoing_velocity_z": {
+      "p50": 2.07956862449646,
+      "p90": 2.838061809539795
+    },
+    "contact_time_to_strike": {
+      "p50": 0.0,
+      "p90": 0.019999999552965164
+    },
+    "contact_true_target_error": {
+      "p50": 0.039218317717313766,
+      "p90": 0.06984090805053711
+    },
+    "contact_wire_impact_normal_gap_deg": {
+      "p50": 0.0,
+      "p90": 0.01978234015405178
+    }
+  },
+  "contact_sample_count": 83,
+  "duplicate_event_counts": {
+    "contact": 0,
+    "incoming_bounce": 0,
+    "net_cross": 0,
+    "opponent_bounce": 0,
+    "outgoing_landing": 0
+  },
+  "evaluation_seed": 20260731,
+  "event_counts": {
+    "abort": 0,
+    "contact": 83,
+    "incoming_bounce": 174,
+    "incoming_net_collision": 0,
+    "landing_long": 0,
+    "landing_no_net": 64,
+    "landing_short": 64,
+    "landing_side": 0,
+    "net_cross": 4,
+    "opponent_bounce": 4,
+    "outgoing_landing": 68,
+    "reset_abort": 0,
+    "route_invalid": 246,
+    "route_unalignable": 131,
+    "serve": 188,
+    "timeout": 53
+  },
+  "event_order_violations": {
+    "bounce_without_serve": 0,
+    "contact_without_bounce": 0,
+    "landing_without_contact": 0,
+    "net_without_contact": 0,
+    "opponent_bounce_without_net": 0
+  },
+  "event_rates_per_serve": {
+    "abort": 0.0,
+    "contact": 0.44148936170212766,
+    "incoming_bounce": 0.925531914893617,
+    "incoming_net_collision": 0.0,
+    "landing_long": 0.0,
+    "landing_no_net": 0.3404255319148936,
+    "landing_short": 0.3404255319148936,
+    "landing_side": 0.0,
+    "net_cross": 0.02127659574468085,
+    "opponent_bounce": 0.02127659574468085,
+    "outgoing_landing": 0.3617021276595745,
+    "reset_abort": 0.0,
+    "timeout": 0.28191489361702127
+  },
+  "landing_metric_means": {
+    "landing_target_error": 1.0096161786247702,
+    "landing_target_x_error": -0.8606272865744198,
+    "landing_target_y_error": -0.03159788075615378
+  },
+  "landing_metric_quantiles": {
+    "landing_target_error": {
+      "p10": 0.580264151096344,
+      "p50": 0.9919717907905579,
+      "p90": 1.384564757347107
+    },
+    "landing_target_x_error": {
+      "p10": -1.2456715106964111,
+      "p50": -0.8321847915649414,
+      "p90": -0.45392075181007385
+    },
+    "landing_target_y_error": {
+      "p10": -0.8183954954147339,
+      "p50": 0.11011981964111328,
+      "p90": 0.5644903182983398
+    }
+  },
+  "landing_sample_count": 68,
+  "mean_abs_launch_timing_error_s": 0.005056069886430781,
+  "num_envs": 256,
+  "num_steps": 300,
+  "physical_contact_recovery": {
+    "counts": {
+      "attempts": 83,
+      "failure": 3,
+      "interrupted_by_next_contact": 0,
+      "reset_failure": 0,
+      "resolved": 62,
+      "success": 59,
+      "success_with_net_cross": 4,
+      "success_with_opponent_bounce": 4
+    },
+    "deadline_s": 1.1,
+    "pending_at_eval_end": 21,
+    "rates_per_resolved": {
+      "failure": 0.04838709677419355,
+      "reset_failure": 0.0,
+      "success": 0.9516129032258065,
+      "success_with_net_cross": 0.06451612903225806,
+      "success_with_opponent_bounce": 0.06451612903225806
+    },
+    "required_consecutive_steps": 15,
+    "resolved_metric_summary": {
+      "minimum_feet_contact": {
+        "mean": 0.8951612710952759,
+        "p50": 1.0,
+        "p90": 1.0
+      },
+      "peak_base_ang_vel": {
+        "mean": 0.792837917804718,
+        "p50": 0.7204201221466064,
+        "p90": 0.9408340454101562
+      },
+      "peak_base_tilt": {
+        "mean": 0.06783477216959,
+        "p50": 0.060521144419908524,
+        "p90": 0.08717723935842514
+      },
+      "peak_com_x": {
+        "mean": 0.03182258456945419,
+        "p50": 0.02750319615006447,
+        "p90": 0.05543134734034538
+      },
+      "peak_com_y": {
+        "mean": 0.024962754920125008,
+        "p50": 0.022575244307518005,
+        "p90": 0.037048131227493286
+      },
+      "peak_height_error": {
+        "mean": 0.012612811289727688,
+        "p50": 0.011901617050170898,
+        "p90": 0.017163537442684174
+      },
+      "peak_station_error": {
+        "mean": 0.06742023676633835,
+        "p50": 0.062436074018478394,
+        "p90": 0.10569203644990921
+      },
+      "peak_torso_ang_vel": {
+        "mean": 0.6587221622467041,
+        "p50": 0.6111958026885986,
+        "p90": 0.8548547625541687
+      }
+    }
+  },
+  "policy_reset_count": 0,
+  "resolved_cycles": {
+    "active_at_eval_end": 67,
+    "counts": {
+      "contact": 68,
+      "contact_no_net": 64,
+      "landing_long": 0,
+      "landing_no_net": 64,
+      "landing_short": 64,
+      "landing_side": 0,
+      "net_cross": 4,
+      "net_no_opponent_bounce": 0,
+      "no_contact": 53,
+      "opponent_bounce": 4,
+      "total": 121
+    },
+    "rates": {
+      "contact": 0.5619834710743802,
+      "contact_no_net": 0.5289256198347108,
+      "landing_long": 0.0,
+      "landing_no_net": 0.5289256198347108,
+      "landing_short": 0.5289256198347108,
+      "landing_side": 0.0,
+      "net_cross": 0.03305785123966942,
+      "net_no_opponent_bounce": 0.0,
+      "no_contact": 0.4380165289256198,
+      "opponent_bounce": 0.03305785123966942
+    }
+  },
+  "route_generation": {
+    "attempts": 565,
+    "invalid": 246,
+    "served": 188,
+    "served_rate": 0.3327433628318584,
+    "unalignable": 131
+  }
+}

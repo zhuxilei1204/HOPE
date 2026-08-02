@@ -1,0 +1,22 @@
+# V1: directly align the achieved racket velocity with the planner-inverted
+# target at the exact impact step. Broad strike and physical outcome rewards
+# inherited from A28990 remain active.
+
+defaults:
+  - HOPEPingPongA28990StrikeAlignmentCommon114
+  - _self_
+
+name: HOPEPingPongA28990ExactStrikeVelocity114V1
+
+overrides:
+  rewards.exact_impact_racket_velocity_alignment.weight: 10.0
+  rewards.exact_impact_racket_velocity_alignment.params:
+    command_name: racket_target
+    speed_ratio_std: 0.20
+    direction_std_rad: 0.35
+    position_std: 0.16
+    start_step: 0
+    warmup_steps: 800
+    start_scale: 0.25
+    minimum_health_multiplier: 0.15
+    final_minimum_health_multiplier: 0.05

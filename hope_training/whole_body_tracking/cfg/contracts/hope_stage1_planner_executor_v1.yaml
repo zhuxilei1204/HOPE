@@ -1,0 +1,138 @@
+schema_version: 1
+contract_id: hope_stage1_planner_executor_v1
+status: train_candidate
+
+task:
+  actor_observation: hope_pingpong_normal114
+  action_dimensions: 31
+  policy_hz: 50
+  episode_length_s: 10.0
+  rigid_ball: false
+  motion_clips: 2
+  balanced_clip_sampling: true
+  fixed_hit_plane_x_m: 0.20
+  command_velocity_mode: impact_inverse_landing
+  incoming_command_geometry: one_bounce_analytic
+  planner_perturbation: zero
+
+stage_boundary:
+  stage1_optimizes:
+    - command_position_at_impact
+    - command_timing
+    - racket_speed_ratio
+    - racket_velocity_direction
+    - actor_visible_racket_normal
+    - impact_health
+    - safe_reusable_recovery
+    - both_swing_sides
+    - operational_action_feasibility
+  stage1_does_not_optimize:
+    - rigid_ball_contact
+    - outgoing_ball_velocity
+    - net_cross
+    - opponent_bounce
+    - landing_accuracy
+    - planner_noise_robustness
+  stage2_must_preserve_stage1_as_auxiliary_contract: true
+
+event_accounting:
+  exact_impact_is_impulse: true
+  safe_command_cycle_is_impulse: true
+  command_cycle_failure_is_impulse: true
+  targeted_miss_is_impulse: true
+  inactivity_is_impulse: true
+  recovery_peak_increment_is_impulse: true
+  recovery_trigger: targeted_attempt
+  safe_cycle_requires_virtual_contact: true
+  safe_cycle_requires_terminal_recovery: true
+  unsafe_path_cannot_settle_positive_cycle: true
+
+learning_bootstrap:
+  hard_safety_terminations_remain_enabled: true
+  termination_penalty_weight: -12.0
+  dense_component_terms_are_low_value: true
+  dense_components:
+    - racket_position
+    - racket_velocity
+    - blade_direction
+  high_value_requires_joint_command_and_safe_recovery: true
+  recovery_gradient_targets:
+    - healthy_trunk_support
+    - post_strike_base_ang_vel
+    - recovery_peak_ang_vel_excess
+    - table_no_touch
+  recovery_gradient_constrains_right_arm_directly: false
+  table_barrier_is_ability_scaled: true
+  recovery_angular_velocity_kernel_is_ability_scaled: true
+  ordinary_motion_hold_earns_post_strike_damping: false
+
+required_nonzero_rewards:
+  - alive
+  - upright
+  - imitation
+  - planner_racket_task_space_crossfade
+  - prestrike_racket_progress
+  - near_impact_planner_velocity_progress
+  - racket_position
+  - racket_velocity
+  - blade_direction
+  - health_gated_soft_ball_contact
+  - prestrike_station_progress
+  - exact_impact_planner_task_space_alignment
+  - safe_recovered_planner_command
+  - command_cycle_failure
+  - targeted_contact_miss
+  - safe_strike_inactivity
+  - lower_body_support
+  - strike_balance
+  - healthy_trunk_support
+  - post_strike_base_ang_vel
+  - recovery_peak_ang_vel_excess
+  - post_contact_ready_region
+  - no_command_ready_stability
+  - operational_joint_margin
+  - joint_target_slew
+  - actuator_waist_feasibility
+  - actuator_right_arm_feasibility
+  - actuator_leg_feasibility
+  - phase_action_overflow
+  - phase_action_rate_waist
+  - phase_action_rate_upper
+  - phase_action_rate_legs
+  - joint_limit
+  - undesired_contacts
+  - feet_contact_slip
+  - table_no_touch
+  - termination_penalty
+
+forbidden_reward_terms:
+  - ball_contact
+  - net_cross
+  - opponent_bounce
+  - health_gated_ball_contact
+  - health_gated_net_cross
+  - health_gated_opponent_bounce
+  - safe_terminal_outcome
+  - capability_gated_safe_terminal_outcome
+  - impact_outgoing_velocity
+  - exact_impact_outgoing_velocity_alignment
+  - balanced_net_cross
+  - balanced_opponent_bounce
+  - backhand_racket_position
+  - backhand_soft_ball_contact
+  - health_gated_backhand_soft_ball_contact
+  - phase_lower_body_motion_prior
+  - recovery_health
+  - pre_strike_station
+
+acceptance:
+  hard_safety_rate_min: 0.985
+  forehand_virtual_contact_rate_min: 0.35
+  backhand_virtual_contact_rate_min: 0.35
+  terminal_safe_settlement_rate_min: 0.65
+  terminal_unsafe_settlement_rate_max: 0.02
+  position_error_median_m_max: 0.10
+  speed_ratio_abs_error_median_max: 0.25
+  direction_error_median_deg_max: 25.0
+  normal_error_median_deg_max: 22.0
+  no_fall_continuous_eval_required: true

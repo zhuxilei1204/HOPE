@@ -1,0 +1,11 @@
+# V10 keeps ordinary recovery-timeout credit soft while making a physical hit
+# followed by a hard safety reset repay most of the immediate impact value.
+defaults:
+  - HOPEPingPongStage2SafetyCreditSoft114V8A
+  - _self_
+
+name: HOPEPingPongStage2SafetyCreditHardDebit114V10
+
+overrides:
+  rewards.physical_recovery_settlement.params.failure_cost: 0.20
+  rewards.physical_recovery_settlement.params.terminal_failure_cost: 4.0

@@ -1,0 +1,28 @@
+name: ppo_stage2_physical
+
+runner:
+  num_steps_per_env: 32
+  max_iterations: 1500
+  save_interval: 100
+  empirical_normalization: false
+
+policy:
+  actor_hidden_dims: [512, 256, 128]
+  critic_hidden_dims: [512, 256, 128]
+  activation: elu
+  init_noise_std: 0.15
+  noise_std_type: log
+
+algorithm:
+  learning_rate: 0.00005
+  schedule: adaptive
+  desired_kl: 0.003
+  entropy_coef: 0.0005
+  num_learning_epochs: 5
+  num_mini_batches: 4
+  gamma: 0.99
+  lam: 0.95
+  clip_param: 0.2
+  value_loss_coef: 1.0
+  use_clipped_value_loss: true
+  max_grad_norm: 1.0

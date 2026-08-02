@@ -1,0 +1,115 @@
+# Explicit lateral relocation from the validated StepV1 model_25991.
+#
+# Thirty percent of deploy-ready holds reveal the station needed for the
+# upcoming strike while retaining a ready racket command. The policy must move
+# the pelvis, brake, and remain supported before the normal forehand strike.
+# Range expansion is event-gated rather than iteration-gated.
+
+defaults:
+  - HOPEPingPongM24492DeployStationStepV1
+  - _self_
+
+name: HOPEPingPongM25991FootworkRelocate114A
+
+overrides:
+  commands.racket_target.dynamic_station_xy_clip: [[0.0, 0.0], [-0.10, 0.16]]
+  commands.racket_target.station_relocation_enabled: true
+  commands.racket_target.station_relocation_rehearsal_prob: 0.30
+  commands.racket_target.station_relocation_abs_y_ranges:
+    [[0.05, 0.06], [0.06, 0.10], [0.10, 0.16]]
+  commands.racket_target.station_relocation_arrival_radius: 0.025
+  commands.racket_target.station_relocation_settle_max_lin_vel: 0.14
+  commands.racket_target.station_relocation_settle_max_ang_vel: 0.55
+  commands.racket_target.station_relocation_settle_min_steps: 12
+  commands.racket_target.station_relocation_settle_max_lin_vel_by_level:
+    [0.18, 0.16, 0.14]
+  commands.racket_target.station_relocation_settle_max_ang_vel_by_level:
+    [0.90, 0.70, 0.55]
+  commands.racket_target.station_relocation_settle_min_steps_by_level:
+    [4, 8, 12]
+  commands.racket_target.station_relocation_min_feet_contact: 0.90
+  commands.racket_target.station_relocation_ema_rate: 0.05
+  commands.racket_target.station_relocation_arrival_threshold: 0.85
+  commands.racket_target.station_relocation_settle_threshold: 0.72
+  commands.racket_target.station_relocation_contact_threshold: 0.55
+  commands.racket_target.station_relocation_contact_floor: 0.42
+  commands.racket_target.station_relocation_safety_threshold: 0.995
+  commands.racket_target.station_relocation_safety_floor: 0.985
+  commands.racket_target.station_relocation_min_resolved_events: 12288
+  commands.racket_target.station_relocation_required_advance_checks: 6
+
+  rewards.pre_strike_station.weight: 1.35
+  rewards.pre_strike_station.params:
+    command_name: racket_target
+    station_std: 0.06
+    stop_window_s: 0.10
+  rewards.prestrike_station_progress.weight: 0.80
+  rewards.prestrike_station_progress.params:
+    command_name: racket_target
+    speed_scale: 0.20
+    arrival_radius: 0.025
+    stop_window_s: 0.10
+    include_no_command_ready: true
+    start_step: 0
+    warmup_steps: 400
+    start_scale: 0.35
+  rewards.station_relocation_arrival_bonus.weight: 8.0
+  rewards.station_relocation_settle_bonus.weight: 14.0
+
+  # Remove the global all-joint phase cost that dominated station progress.
+  # Waist/upper-body smoothing remains, while legs are nearly free during the
+  # relocation hold and strike and are damped again during recovery.
+  rewards.phase_action_rate.weight: 0.0
+  rewards.post_strike_lower_body_action_rate.weight: 0.0
+  rewards.phase_action_rate_waist.weight: -0.035
+  rewards.phase_action_rate_waist.params:
+    command_name: racket_target
+    joint_names: [waist_yaw_joint, waist_roll_joint, waist_pitch_joint]
+    pre_strike_scale: 0.006
+    strike_scale: 0.002
+    recovery_scale: 0.050
+    hold_scale: 0.035
+  rewards.phase_action_rate_upper.weight: -0.012
+  rewards.phase_action_rate_upper.params:
+    command_name: racket_target
+    joint_names:
+      - head_yaw_joint
+      - head_pitch_joint
+      - left_shoulder_pitch_joint
+      - left_shoulder_roll_joint
+      - left_shoulder_yaw_joint
+      - left_elbow_joint
+      - left_wrist_roll_joint
+      - left_wrist_pitch_joint
+      - left_wrist_yaw_joint
+      - right_shoulder_pitch_joint
+      - right_shoulder_roll_joint
+      - right_shoulder_yaw_joint
+      - right_elbow_joint
+      - right_wrist_roll_joint
+      - right_wrist_pitch_joint
+      - right_wrist_yaw_joint
+    pre_strike_scale: 0.005
+    strike_scale: 0.001
+    recovery_scale: 0.030
+    hold_scale: 0.025
+  rewards.phase_action_rate_legs.weight: -0.006
+  rewards.phase_action_rate_legs.params:
+    command_name: racket_target
+    joint_names:
+      - left_hip_pitch_joint
+      - left_hip_roll_joint
+      - left_hip_yaw_joint
+      - left_knee_joint
+      - left_ankle_pitch_joint
+      - left_ankle_roll_joint
+      - right_hip_pitch_joint
+      - right_hip_roll_joint
+      - right_hip_yaw_joint
+      - right_knee_joint
+      - right_ankle_pitch_joint
+      - right_ankle_roll_joint
+    pre_strike_scale: 0.001
+    strike_scale: 0.0
+    recovery_scale: 0.015
+    hold_scale: 0.002

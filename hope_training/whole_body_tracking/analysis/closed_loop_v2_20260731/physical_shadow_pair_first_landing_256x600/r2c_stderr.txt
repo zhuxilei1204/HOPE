@@ -1,0 +1,26 @@
+[evaluate.py] applied 10 task override(s):
+[evaluate.py]     episode_length_s = 45.0
+[evaluate.py]     commands.motion.wrap_teleport = False
+[evaluate.py]     events.link_mass = (0.95, 1.05)
+[evaluate.py]     events.pd_gains = (0.95, 1.05)
+[evaluate.py]     observations.policy.racket_target_normal_w = enabled
+[evaluate.py]     commands.racket_target.strike_phase_per_clip = (0.4,)
+[evaluate.py]     commands.racket_target.swing_side_per_clip = (1.0,)
+[evaluate.py]     commands.racket_target.mount_normal_sign_per_clip = (1.0,)
+[evaluate.py]     commands.racket_target.racket_pos_range_per_clip = expanded from swing_side_per_clip
+[evaluate.py]     commands.racket_target.racket_vel_range_per_clip = expanded from swing_side_per_clip
+2026-07-31 02:50:58 [3,932ms] [Error] [gpu.foundation.plugin] DriverShaderCacheManager::init() called without a shutdown()!
+2026-07-31 02:51:00 [5,518ms] [Error] [isaacsim.asset.importer.urdf] *** Could not parse xyz string '0.0' 
+2026-07-31 02:51:00 [5,518ms] [Error] [isaacsim.asset.importer.urdf] *** xyz not specified for axis
+2026-07-31 02:51:00 [5,518ms] [Error] [isaacsim.asset.importer.urdf] *** Could not parse xyz string '' 
+2026-07-31 02:51:00 [5,518ms] [Error] [isaacsim.asset.importer.urdf] *** xyz not specified for axis
+2026-07-31 02:51:00 [5,518ms] [Error] [isaacsim.asset.importer.urdf] *** Could not parse xyz string '' 
+2026-07-31 02:51:00 [5,518ms] [Error] [isaacsim.asset.importer.urdf] *** xyz not specified for axis
+2026-07-31 02:51:00 [5,518ms] [Error] [isaacsim.asset.importer.urdf] *** Could not parse xyz string '' 
+2026-07-31 02:51:00 [5,518ms] [Error] [isaacsim.asset.importer.urdf] *** xyz not specified for axis
+2026-07-31 02:51:00 [5,518ms] [Error] [isaacsim.asset.importer.urdf] *** Could not parse xyz string '0.0' 
+2026-07-31 02:51:00 [5,518ms] [Error] [isaacsim.asset.importer.urdf] *** xyz not specified for axis
+2026-07-31 02:51:00 [5,518ms] [Error] [isaacsim.asset.importer.urdf] *** Could not parse xyz string '0.0' 
+2026-07-31 02:51:00 [5,518ms] [Error] [isaacsim.asset.importer.urdf] *** xyz not specified for axis
+/mnt/ssd/zxl/IsaacLab/source/isaaclab/isaaclab/envs/mdp/events.py:501: UserWarning: To copy construct from a tensor, it is recommended to use sourceTensor.detach().clone() or sourceTensor.detach().clone().requires_grad_(True), rather than torch.tensor(sourceTensor).
+  actuator_joint_indices = torch.tensor(actuator.joint_indices, device=asset.device)

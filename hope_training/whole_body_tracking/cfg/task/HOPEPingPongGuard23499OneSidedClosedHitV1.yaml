@@ -1,0 +1,26 @@
+# Add recovery/hold trunk and waist closure to the strike-only experiment.
+
+defaults:
+  - HOPEPingPongGuard23499OneSidedStrikeHitV1
+  - _self_
+
+name: HOPEPingPongGuard23499OneSidedClosedHitV1
+actor_obs_contract: hope_pingpong_stability122
+
+overrides:
+  rewards.one_sided_trunk_waist_recovery.weight: 0.16
+  rewards.one_sided_trunk_waist_recovery.params:
+    command_name: racket_target
+    phase: recovery_hold
+    pre_window_s: 0.34
+    post_window_s: 0.18
+    torso_backlean_tolerance: 0.06
+    torso_backlean_std: 0.12
+    waist_backfold_tolerance: 0.14
+    waist_backfold_std: 0.14
+    torso_pitch_rate_std: 1.40
+    waist_pitch_rate_std: 1.20
+    rate_weight: 0.20
+    start_step: 0
+    warmup_steps: 2400
+    start_scale: 0.20

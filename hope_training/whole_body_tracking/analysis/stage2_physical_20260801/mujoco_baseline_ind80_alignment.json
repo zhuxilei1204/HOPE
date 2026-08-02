@@ -1,0 +1,471 @@
+{
+  "groups": {
+    "all": {
+      "all_attempts": {
+        "min_ball_racket_distance_m": {
+          "max": 0.38124474621714405,
+          "mean": 0.18381904463506188,
+          "median": 0.18495793351513157,
+          "min": 0.04497201834373977,
+          "n": 80,
+          "p90": 0.27571185914051516
+        }
+      },
+      "attempts": 80,
+      "contact_alignment": {
+        "abs_time_to_strike_cmd_s": {
+          "max": 0.13997512018069674,
+          "mean": 0.08116913139398688,
+          "median": 0.07975455954998864,
+          "min": 0.05483055981547756,
+          "n": 14,
+          "p90": 0.10125823541793404
+        },
+        "applied_action_max": {
+          "max": 9.262833595275879,
+          "mean": 6.140938077654157,
+          "median": 4.742176294326782,
+          "min": 4.577645778656006,
+          "n": 14,
+          "p90": 9.242764472961426
+        },
+        "ball_post_target_outgoing_angle_deg": {
+          "max": 164.91462994665991,
+          "mean": 94.15336058539673,
+          "median": 83.70110464904941,
+          "min": 37.234163647340935,
+          "n": 14,
+          "p90": 158.01782121149324
+        },
+        "ball_post_target_outgoing_error_mps": {
+          "max": 6.062174185577105,
+          "mean": 4.148609630472427,
+          "median": 3.982320031530774,
+          "min": 2.5112521562650674,
+          "n": 14,
+          "p90": 5.665868553420988
+        },
+        "closing_speed_pre_mps": {
+          "max": 2.2605899785852483,
+          "mean": 1.801890404456681,
+          "median": 1.9495538252915274,
+          "min": 0.7683601885388123,
+          "n": 14,
+          "p90": 2.226799450980333
+        },
+        "contact_count": 14,
+        "contact_normal_target_angle_deg": {
+          "max": 81.96553411111007,
+          "mean": 46.292092547219355,
+          "median": 45.697679479661346,
+          "min": 26.049377581917607,
+          "n": 13,
+          "p90": 67.8234933292414
+        },
+        "contact_target_pos_error_m": {
+          "max": 0.22121199147001055,
+          "mean": 0.13856009615551731,
+          "median": 0.1319947731606519,
+          "min": 0.09130273796099385,
+          "n": 14,
+          "p90": 0.1894585139744993
+        },
+        "outgoing_normal_speed_post_mps": {
+          "max": 1.184185048397647,
+          "mean": -0.15246495890144912,
+          "median": 0.07146517644389301,
+          "min": -2.060686067548738,
+          "n": 14,
+          "p90": 1.1291558438514417
+        },
+        "q_des_max_rad": {
+          "max": 1.8525667190551758,
+          "mean": 1.560565207685743,
+          "median": 1.4783161103725433,
+          "min": 1.4166171669960022,
+          "n": 14,
+          "p90": 1.8485528945922853
+        },
+        "racket_normal_target_angle_deg": {
+          "max": 55.86238000454382,
+          "mean": 42.15757058587765,
+          "median": 40.43546631091017,
+          "min": 36.638483985977174,
+          "n": 14,
+          "p90": 48.15116874440571
+        },
+        "racket_speed_ratio": {
+          "max": 0.4504527150221745,
+          "mean": 0.33501294521728736,
+          "median": 0.37799438720928646,
+          "min": 0.10320853059568318,
+          "n": 14,
+          "p90": 0.42621818504851405
+        },
+        "racket_target_pos_error_m": {
+          "max": 0.23309949835066462,
+          "mean": 0.17390713232443686,
+          "median": 0.17623303333121038,
+          "min": 0.13578773042554626,
+          "n": 14,
+          "p90": 0.22203348185452507
+        },
+        "racket_vel_target_angle_deg": {
+          "max": 166.8023432882652,
+          "mean": 34.52465316703907,
+          "median": 13.026750933484031,
+          "min": 3.979702280298655,
+          "n": 14,
+          "p90": 162.53288214439067
+        },
+        "racket_vel_target_error_mps": {
+          "max": 2.4224103487194566,
+          "mean": 1.357635352920142,
+          "median": 1.2096755574082019,
+          "min": 1.0444678445194633,
+          "n": 14,
+          "p90": 1.9215461423235995
+        },
+        "raw_action_max": {
+          "max": 9.262833595275879,
+          "mean": 6.140938077654157,
+          "median": 4.742176294326782,
+          "min": 4.577645778656006,
+          "n": 14,
+          "p90": 9.242764472961426
+        },
+        "within_default_thresholds": {
+          "abs_tts_le_threshold": 0.0,
+          "normal_angle_le_threshold": 0.0,
+          "outgoing_angle_le_threshold": 0.0,
+          "outgoing_error_le_threshold": 0.0,
+          "racket_pos_le_threshold": 0.0,
+          "racket_vel_angle_le_threshold": 0.8571428571428571,
+          "racket_vel_error_le_threshold": 0.0
+        }
+      },
+      "contact_rate": 0.175,
+      "dominant_failure": "no_contact",
+      "fall_rate": 0.0,
+      "net_clear_rate": 0.0,
+      "opponent_bounce_rate": 0.0,
+      "real_contact_rate": 0.1625,
+      "success_rate": 0.0
+    },
+    "backhand": {
+      "all_attempts": {
+        "min_ball_racket_distance_m": {
+          "max": 0.38124474621714405,
+          "mean": 0.1644771832352697,
+          "median": 0.16748283331576255,
+          "min": 0.04497201834373977,
+          "n": 40,
+          "p90": 0.24261105820412562
+        }
+      },
+      "attempts": 40,
+      "contact_alignment": {
+        "abs_time_to_strike_cmd_s": {
+          "max": 0.13997512018069674,
+          "mean": 0.0848470183898003,
+          "median": 0.08403980974614186,
+          "min": 0.05483055981547756,
+          "n": 9,
+          "p90": 0.13997512018069674
+        },
+        "applied_action_max": {
+          "max": 4.772667407989502,
+          "mean": 4.668753200107151,
+          "median": 4.640327453613281,
+          "min": 4.577645778656006,
+          "n": 9,
+          "p90": 4.772667407989502
+        },
+        "ball_post_target_outgoing_angle_deg": {
+          "max": 112.30294484435245,
+          "mean": 75.0060782500218,
+          "median": 79.58538247795776,
+          "min": 37.234163647340935,
+          "n": 9,
+          "p90": 112.30294484435245
+        },
+        "ball_post_target_outgoing_error_mps": {
+          "max": 4.638142742592252,
+          "mean": 3.6641994656685934,
+          "median": 3.8815334550721703,
+          "min": 2.5112521562650674,
+          "n": 9,
+          "p90": 4.638142742592252
+        },
+        "closing_speed_pre_mps": {
+          "max": 2.226799450980333,
+          "mean": 1.8520795236787255,
+          "median": 1.9462947443607295,
+          "min": 1.4613403697341523,
+          "n": 9,
+          "p90": 2.226799450980333
+        },
+        "contact_count": 9,
+        "contact_normal_target_angle_deg": {
+          "max": 55.46216150413051,
+          "mean": 41.50209957454305,
+          "median": 45.697679479661346,
+          "min": 26.049377581917607,
+          "n": 9,
+          "p90": 55.46216150413051
+        },
+        "contact_target_pos_error_m": {
+          "max": 0.22121199147001055,
+          "mean": 0.13472447991132144,
+          "median": 0.1329960117690528,
+          "min": 0.09130273796099385,
+          "n": 9,
+          "p90": 0.22121199147001055
+        },
+        "outgoing_normal_speed_post_mps": {
+          "max": 1.1291558438514417,
+          "mean": 0.1547886887342471,
+          "median": 0.5695631563447663,
+          "min": -1.937122104993129,
+          "n": 9,
+          "p90": 1.1291558438514417
+        },
+        "q_des_max_rad": {
+          "max": 1.4897502779960632,
+          "mean": 1.4507824500401814,
+          "median": 1.4401227951049804,
+          "min": 1.4166171669960022,
+          "n": 9,
+          "p90": 1.4897502779960632
+        },
+        "racket_normal_target_angle_deg": {
+          "max": 55.86238000454382,
+          "mean": 43.89448459818184,
+          "median": 42.140773413133424,
+          "min": 38.0377456373866,
+          "n": 9,
+          "p90": 55.86238000454382
+        },
+        "racket_speed_ratio": {
+          "max": 0.4504527150221745,
+          "mean": 0.3814187433380903,
+          "median": 0.3923550717830733,
+          "min": 0.239490034515581,
+          "n": 9,
+          "p90": 0.4504527150221745
+        },
+        "racket_target_pos_error_m": {
+          "max": 0.192301168090682,
+          "mean": 0.16754771875774707,
+          "median": 0.16962951745777974,
+          "min": 0.14248186831685167,
+          "n": 9,
+          "p90": 0.192301168090682
+        },
+        "racket_vel_target_angle_deg": {
+          "max": 24.568444826267047,
+          "mean": 11.354724648156546,
+          "median": 10.601827800984521,
+          "min": 3.979702280298655,
+          "n": 9,
+          "p90": 24.568444826267047
+        },
+        "racket_vel_target_error_mps": {
+          "max": 1.551938651829762,
+          "mean": 1.2245732985598992,
+          "median": 1.1915751014048788,
+          "min": 1.0444678445194633,
+          "n": 9,
+          "p90": 1.551938651829762
+        },
+        "raw_action_max": {
+          "max": 4.772667407989502,
+          "mean": 4.668753200107151,
+          "median": 4.640327453613281,
+          "min": 4.577645778656006,
+          "n": 9,
+          "p90": 4.772667407989502
+        },
+        "within_default_thresholds": {
+          "abs_tts_le_threshold": 0.0,
+          "normal_angle_le_threshold": 0.0,
+          "outgoing_angle_le_threshold": 0.0,
+          "outgoing_error_le_threshold": 0.0,
+          "racket_pos_le_threshold": 0.0,
+          "racket_vel_angle_le_threshold": 1.0,
+          "racket_vel_error_le_threshold": 0.0
+        }
+      },
+      "contact_rate": 0.225,
+      "dominant_failure": "no_contact",
+      "fall_rate": 0.0,
+      "net_clear_rate": 0.0,
+      "opponent_bounce_rate": 0.0,
+      "real_contact_rate": 0.225,
+      "success_rate": 0.0
+    },
+    "forehand": {
+      "all_attempts": {
+        "min_ball_racket_distance_m": {
+          "max": 0.30631390742444714,
+          "mean": 0.20316090603485404,
+          "median": 0.21364511751060028,
+          "min": 0.054978324178552605,
+          "n": 40,
+          "p90": 0.28176380929285577
+        }
+      },
+      "attempts": 40,
+      "contact_alignment": {
+        "abs_time_to_strike_cmd_s": {
+          "max": 0.08505796161762702,
+          "mean": 0.07454893480152275,
+          "median": 0.07391553938544963,
+          "min": 0.05851453016535471,
+          "n": 5,
+          "p90": 0.08505796161762702
+        },
+        "applied_action_max": {
+          "max": 9.262833595275879,
+          "mean": 8.790870857238769,
+          "median": 9.105844497680664,
+          "min": 8.061324119567871,
+          "n": 5,
+          "p90": 9.262833595275879
+        },
+        "ball_post_target_outgoing_angle_deg": {
+          "max": 164.91462994665991,
+          "mean": 128.61846878907158,
+          "median": 136.89228506643425,
+          "min": 62.325849291762346,
+          "n": 5,
+          "p90": 164.91462994665991
+        },
+        "ball_post_target_outgoing_error_mps": {
+          "max": 6.062174185577105,
+          "mean": 5.020547927119328,
+          "median": 5.2368983699965925,
+          "min": 3.365441641019686,
+          "n": 5,
+          "p90": 6.062174185577105
+        },
+        "closing_speed_pre_mps": {
+          "max": 2.2605899785852483,
+          "mean": 1.711549989857001,
+          "median": 1.9870054296522253,
+          "min": 0.7683601885388123,
+          "n": 5,
+          "p90": 2.2605899785852483
+        },
+        "contact_count": 5,
+        "contact_normal_target_angle_deg": {
+          "max": 81.96553411111007,
+          "mean": 57.06957673574106,
+          "median": 53.82365198448481,
+          "min": 38.66546886288454,
+          "n": 4,
+          "p90": 81.96553411111007
+        },
+        "contact_target_pos_error_m": {
+          "max": 0.1894585139744993,
+          "mean": 0.14546420539506988,
+          "median": 0.13099353455225096,
+          "min": 0.12290258562967847,
+          "n": 5,
+          "p90": 0.1894585139744993
+        },
+        "outgoing_normal_speed_post_mps": {
+          "max": 1.184185048397647,
+          "mean": -0.7055215246457023,
+          "median": -1.2449888378374154,
+          "min": -2.060686067548738,
+          "n": 5,
+          "p90": 1.184185048397647
+        },
+        "q_des_max_rad": {
+          "max": 1.8525667190551758,
+          "mean": 1.7581741714477541,
+          "median": 1.8211688995361328,
+          "min": 1.6122648239135744,
+          "n": 5,
+          "p90": 1.8525667190551758
+        },
+        "racket_normal_target_angle_deg": {
+          "max": 41.09530436880661,
+          "mean": 39.03112536373011,
+          "median": 38.90016295517108,
+          "min": 36.638483985977174,
+          "n": 5,
+          "p90": 41.09530436880661
+        },
+        "racket_speed_ratio": {
+          "max": 0.38592457351298126,
+          "mean": 0.25148250859984217,
+          "median": 0.23838906033188711,
+          "min": 0.10320853059568318,
+          "n": 5,
+          "p90": 0.38592457351298126
+        },
+        "racket_target_pos_error_m": {
+          "max": 0.23309949835066462,
+          "mean": 0.18535407674447854,
+          "median": 0.18283654920464104,
+          "min": 0.13578773042554626,
+          "n": 5,
+          "p90": 0.23309949835066462
+        },
+        "racket_vel_target_angle_deg": {
+          "max": 166.8023432882652,
+          "mean": 76.2305245010276,
+          "median": 20.29212624392073,
+          "min": 13.270802405959818,
+          "n": 5,
+          "p90": 166.8023432882652
+        },
+        "racket_vel_target_error_mps": {
+          "max": 2.4224103487194566,
+          "mean": 1.5971470507685788,
+          "median": 1.3378734732204023,
+          "min": 1.0798798942215166,
+          "n": 5,
+          "p90": 2.4224103487194566
+        },
+        "raw_action_max": {
+          "max": 9.262833595275879,
+          "mean": 8.790870857238769,
+          "median": 9.105844497680664,
+          "min": 8.061324119567871,
+          "n": 5,
+          "p90": 9.262833595275879
+        },
+        "within_default_thresholds": {
+          "abs_tts_le_threshold": 0.0,
+          "normal_angle_le_threshold": 0.0,
+          "outgoing_angle_le_threshold": 0.0,
+          "outgoing_error_le_threshold": 0.0,
+          "racket_pos_le_threshold": 0.0,
+          "racket_vel_angle_le_threshold": 0.6,
+          "racket_vel_error_le_threshold": 0.0
+        }
+      },
+      "contact_rate": 0.125,
+      "dominant_failure": "no_contact",
+      "fall_rate": 0.0,
+      "net_clear_rate": 0.0,
+      "opponent_bounce_rate": 0.0,
+      "real_contact_rate": 0.1,
+      "success_rate": 0.0
+    }
+  },
+  "schema_version": 1,
+  "source_csv": "/mnt/ssd/zxl/HOPE_latest_20260721/hope_training/whole_body_tracking/analysis/stage2_physical_20260801/mujoco_baseline_ind80_contacts.csv",
+  "thresholds": {
+    "normal_angle_deg": 30.0,
+    "outgoing_angle_deg": 25.0,
+    "outgoing_mps": 2.0,
+    "pos_m": 0.08,
+    "time_s": 0.04,
+    "vel_angle_deg": 30.0,
+    "vel_mps": 1.0
+  }
+}

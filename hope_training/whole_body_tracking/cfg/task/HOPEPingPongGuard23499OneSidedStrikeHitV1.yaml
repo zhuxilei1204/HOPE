@@ -1,0 +1,44 @@
+# Conservative model_23499 fine-tune: preserve the validated policy while
+# rewarding healthy physical hits and removing backward torso/waist folding.
+
+defaults:
+  - HOPEPingPongCapabilityGuard122V3
+  - _self_
+
+name: HOPEPingPongGuard23499OneSidedStrikeHitV1
+actor_obs_contract: hope_pingpong_stability122
+
+overrides:
+  # Add waist backfold to impact health without enabling the legacy combined
+  # switch, which also measures retreat from a fixed (not dynamic) station.
+  commands.racket_target.impact_health_include_waist_backfold: true
+  commands.racket_target.impact_health_waist_backfold_tolerance: 0.14
+  commands.racket_target.impact_health_waist_backfold_std: 0.14
+  commands.racket_target.impact_health_max_waist_backfold: 0.24
+
+  # One-sided pose score: forward task motion is free; only backward torso and
+  # waist violations are reduced. No arm or leg action enters this term.
+  rewards.one_sided_trunk_waist_strike.weight: 0.28
+  rewards.one_sided_trunk_waist_strike.params:
+    command_name: racket_target
+    phase: strike
+    pre_window_s: 0.34
+    post_window_s: 0.18
+    torso_backlean_tolerance: 0.06
+    torso_backlean_std: 0.12
+    waist_backfold_tolerance: 0.14
+    waist_backfold_std: 0.14
+    torso_pitch_rate_std: 1.40
+    waist_pitch_rate_std: 1.20
+    rate_weight: 0.0
+    start_step: 0
+    warmup_steps: 2400
+    start_scale: 0.20
+
+  # Increase only health-conditioned physical outcomes. This keeps the
+  # stability prerequisite and avoids rewarding the old backward contact mode.
+  rewards.health_gated_soft_ball_contact.weight: 3.40
+  rewards.health_gated_backhand_soft_ball_contact.weight: 0.40
+  rewards.health_gated_ball_contact.weight: 1.10
+  rewards.health_gated_net_cross.weight: 1.35
+  rewards.health_gated_opponent_bounce.weight: 1.55

@@ -1,0 +1,122 @@
+schema_version: 1
+contract_id: hope_policy_migration_v1
+status: frozen_design_blocked_on_operational_limits_and_contact_calibration
+
+teacher:
+  id: b19495_deploy_ready_normal114
+  observation_contract: hope_pingpong_normal114
+  action_contract: legacy_raw_hard_clip_v1
+  onnx_path: >-
+    /mnt/ssd/zxl/HOPE_deploy_models_20260730/03_hope_Bdeploy_model19495_rollback/policy/B17996_model_19495_normal114.onnx
+  onnx_sha256: 87ed3b2bab4d828d0f2661757784719f2d108bb83a031636d071f47e01198b38
+  checkpoint_path: >-
+    /mnt/ssd/zxl/HOPE_deploy_models_20260730/03_hope_Bdeploy_model19495_rollback/checkpoint/model_19495.pt
+  checkpoint_sha256: 9af375eee169da3777c20b03c4a60687bf8f75fae5b4d0bd1b7f5f7ad6600072
+
+student:
+  observation_contract: hope_pingpong_normal114
+  observation_dimensions: 114
+  action_contract: bounded_effective_v2
+  action_dimensions: 31
+  policy_output: bounded_action
+  deterministic_inference: tanh(actor_latent_mean)
+  stochastic_training:
+    distribution: tanh_squashed_gaussian
+    log_probability_change_of_variables: required
+  decoder: BoundedJointActionCodec.decode_bounded
+  previous_action: BoundedJointActionCodec.effective_feedback
+  safe_initialization:
+    actor_output_weight: zero
+    actor_output_bias: >-
+      atanh((default_q - operational_mid) / operational_half)
+    first_deterministic_q_des: default_q
+    generic_zero_actor_output_helper_allowed: false
+  operational_limit_source: pending_calibrated_file
+  provisional_limit_use_for_training: forbidden
+
+distillation:
+  target: q_des_final
+  raw_action_target: forbidden
+  sample_projection_to_operational_range: forbidden
+  infeasible_teacher_sample_policy:
+    - retain_for_coverage_diagnostic
+    - exclude_from_supervised_action_loss
+    - revise_command_or_station_in_data_generation
+  losses:
+    joint_target:
+      type: smooth_l1
+      normalization: calibrated_operational_half_range
+    bounded_action:
+      type: smooth_l1
+      role: secondary_numeric_conditioning
+    temporal_rate:
+      type: smooth_l1
+      signal: q_des_final_delta
+    capability_preservation:
+      type: event_level
+      metrics:
+        - contact
+        - net_cross
+        - no_fall
+        - recovery_ready
+  dataset_fields:
+    - observation
+    - teacher_raw_action
+    - teacher_q_des_unclipped
+    - teacher_q_des_final
+    - teacher_effective_action
+    - student_target_feasible
+    - joint_position
+    - joint_velocity
+    - applied_torque
+    - position_clamp
+    - torque_clip
+    - lifecycle_phase
+    - contact
+    - net_cross
+    - opponent_bounce
+    - fall
+    - recovery_ready
+    - planner_command_id
+    - motion_clip_id
+
+stages:
+  - id: M0_frozen_teacher_capture
+    actor_updates: false
+    exit_gate:
+      - all_required_fields_present
+      - canonical_joint_order_verified
+      - train_eval_deploy_decoder_hash_equal
+  - id: M1_supervised_q_des_distillation
+    environment_interaction: replay_only
+    exit_gate:
+      - q_des_holdout_p95_rad_le_0.05
+      - effective_feedback_round_trip_max_rad_le_1e-6
+      - mechanical_clip_rate_zero_on_feasible_holdout
+  - id: M2_closed_loop_shadow
+    environment_interaction: isaac_and_mujoco
+    policy_updates: false
+    exit_gate:
+      - teacher_contact_relative_drop_le_0.10
+      - no_fall
+      - no_persistent_saturation
+  - id: M3_low_kl_ppo
+    enabled: false
+    enable_requires:
+      - operational_limits_calibrated
+      - contact_contract_train_ready
+      - M2_passed
+    constraints:
+      - teacher_capability_replay_gate
+      - per_phase_kl_gate
+      - rollback_on_capability_regression
+
+implementation:
+  codec_module: >-
+    hope_training/whole_body_tracking/source/whole_body_tracking/whole_body_tracking/utils/bounded_action_contract.py
+  codec_tests: >-
+    hope_training/whole_body_tracking/tests/test_bounded_action_contract.py
+  effective_feedback_existing_action_term: >-
+    hope_training/whole_body_tracking/source/whole_body_tracking/whole_body_tracking/tasks/tracking/mdp/hope_actions.py
+  ppo_policy_distribution_integration: pending
+  active_task_integration: disabled

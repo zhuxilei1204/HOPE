@@ -1,0 +1,38 @@
+name: HOPEPingPongStage2RewardV11
+gym_task: HOPE-PingPong-Stage2-RewardV11-AgibotA3-v0
+experiment_name: hope_pingpong_stage2_reward_v11
+actor_obs_contract: hope_pingpong_normal114
+warm_start_requires_critic: true
+critic_warmup_iterations: 3
+# A fixed-deadline recovery event must not be censored by artificial random
+# timeout ages at process start.
+init_at_random_ep_len: false
+
+defaults:
+  - /base/env_base@_here_
+  - /base/sim_base@_here_
+  - /base/randomization_base@_here_
+  - _self_
+
+motion_manifest: hope_training/motions/stage1_core_two_motion_20260801/manifest.tsv
+
+env:
+  num_envs: 256
+  env_spacing: 6.0
+  episode_length_s: 14.0
+
+motion:
+  wrap_teleport: false
+
+actor_obs:
+  racket_target_normal_w: true
+  stability_feedback: false
+
+runtime:
+  prune_zero_weight_rewards: true
+
+domain_rand:
+  link_mass_range: [0.97, 1.03]
+  pd_gain_range: [0.97, 1.03]
+
+overrides: {}

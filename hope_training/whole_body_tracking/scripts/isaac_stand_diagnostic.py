@@ -18,6 +18,13 @@ import yaml
 from omegaconf import OmegaConf
 
 
+_PACKAGE_SOURCE = (
+    pathlib.Path(__file__).resolve().parents[1] / "source" / "whole_body_tracking"
+)
+if str(_PACKAGE_SOURCE) not in sys.path:
+    sys.path.insert(0, str(_PACKAGE_SOURCE))
+
+
 def _repo_root() -> pathlib.Path:
     here = pathlib.Path(__file__).resolve()
     for parent in here.parents:
@@ -80,7 +87,14 @@ def _apply_training_task_overrides(env_cfg, task_yaml: str) -> list[str]:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--checkpoint", required=True)
-    parser.add_argument("--task", default="HOPE-PingPong-AgibotA3-v0")
+    parser.add_argument(
+        "--task",
+        default=None,
+        help=(
+            "Gym task id. By default this is read from task-yaml.gym_task so "
+            "the evaluator cannot silently instantiate a different base task."
+        ),
+    )
     parser.add_argument("--task-yaml", default="HOPEPingPong.yaml")
     parser.add_argument("--motion-manifest", default=None)
     parser.add_argument("--motion-file", default="hope_training/motions/preprocessed/hope_forehand.npz")
@@ -88,6 +102,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--num-envs", type=int, default=128)
     parser.add_argument("--num-steps", type=int, default=3000)
     parser.add_argument("--device", default="cuda:0")
+    parser.add_argument("--seed", type=int, default=20260801)
     parser.add_argument("--mode", choices=["normal", "ready-hold"], default="normal")
     parser.add_argument("--trace-csv", default=None)
     parser.add_argument("--trace-env", type=int, default=0)
@@ -101,6 +116,20 @@ def main() -> int:
     checkpoint = os.path.abspath(args.checkpoint)
     if not os.path.isfile(checkpoint):
         raise FileNotFoundError(checkpoint)
+
+    task_cfg = _load_task_yaml_with_defaults(_resolve_task_yaml(args.task_yaml))
+    configured_task = OmegaConf.select(task_cfg, "gym_task")
+    task_id = str(args.task or configured_task or "")
+    if not task_id:
+        raise ValueError(
+            "no Gym task was provided and task YAML has no gym_task field"
+        )
+    if args.task is not None and configured_task is not None:
+        if str(args.task) != str(configured_task):
+            raise ValueError(
+                "--task conflicts with task-yaml.gym_task: "
+                f"{args.task!r} != {configured_task!r}"
+            )
 
     sys.argv = sys.argv[:1]
     from isaaclab.app import AppLauncher
@@ -120,27 +149,35 @@ def main() -> int:
         from whole_body_tracking.utils.my_on_policy_runner import HOPEOnPolicyRunner
         from whole_body_tracking.utils.ppo_cfg import load_ppo_params, runner_kwargs
 
-        env_cfg = parse_env_cfg(args.task, device=args.device, num_envs=args.num_envs)
+        env_cfg = parse_env_cfg(task_id, device=args.device, num_envs=args.num_envs)
+        env_cfg.seed = int(args.seed)
         applied = _apply_training_task_overrides(env_cfg, args.task_yaml)
         clips, motion_metadata = _resolve_motion_plan(args)
         env_cfg.commands.motion.motion_file = clips if len(clips) > 1 else clips[0]
         _apply_motion_metadata(env_cfg, clips, motion_metadata, applied)
         if args.mode == "ready-hold":
             env_cfg.episode_length_s = max(float(env_cfg.episode_length_s), args.num_steps * 0.02 + 5.0)
+            env_cfg.commands.motion.stand_episode_prob = 1.0
+            env_cfg.commands.motion.stand_episode_hold_steps = args.num_steps + 10
             env_cfg.commands.motion.stand_start_prob = 1.0
             env_cfg.commands.motion.stand_start_min_hold = args.num_steps + 10
             env_cfg.commands.motion.hold_steps_range = (args.num_steps + 10, args.num_steps + 10)
+            env_cfg.commands.motion.motion_start_warmup_enabled = False
             env_cfg.commands.motion.wrap_teleport = False
+            env_cfg.commands.racket_target.deploy_ready_force_stand_episode = True
             applied.extend(
                 [
                     "diagnostic: env.episode_length_s >= rollout length",
+                    "diagnostic: commands.motion.stand_episode_prob = 1.0",
                     "diagnostic: commands.motion.stand_start_prob = 1.0",
                     "diagnostic: commands.motion.hold_steps_range = long fixed hold",
+                    "diagnostic: commands.motion.motion_start_warmup_enabled = False",
                     "diagnostic: commands.motion.wrap_teleport = False",
+                    "diagnostic: commands.racket_target.deploy_ready_force_stand_episode = True",
                 ]
             )
 
-        env_raw = gym.make(args.task, cfg=env_cfg, render_mode=None)
+        env_raw = gym.make(task_id, cfg=env_cfg, render_mode=None)
         base_env = env_raw.unwrapped
         env = RslRlVecEnvWrapper(env_raw)
 
@@ -154,6 +191,12 @@ def main() -> int:
         term_names = list(base_env.termination_manager.active_terms)
         term_counts = {name: 0 for name in term_names}
         reset_count = 0
+        reset_counts_per_env = torch.zeros(
+            args.num_envs, dtype=torch.long, device=base_env.device
+        )
+        first_done_steps = torch.full(
+            (args.num_envs,), -1, dtype=torch.long, device=base_env.device
+        )
         max_height_err = 0.0
         max_upright_err = 0.0
         max_lin_vel = 0.0
@@ -162,6 +205,8 @@ def main() -> int:
         first_manual_low = None
         first_manual_tilt = None
         first_done = None
+        no_command_steps = 0
+        stand_episode_steps = 0
 
         trace_fh = None
         writer = None
@@ -180,7 +225,12 @@ def main() -> int:
                 "base_ang_vel",
                 "episode_length",
                 "motion_in_hold",
+                "motion_stand_episode",
+                "motion_default_stand_reset",
+                "no_command_ready_active",
                 "time_to_strike",
+                "racket_target_error",
+                "station_error",
                 "recovery_ready_score",
             ] + [f"term_{name}" for name in term_names]
             writer = csv.DictWriter(trace_fh, fieldnames=fields)
@@ -190,11 +240,38 @@ def main() -> int:
         cmd = base_env.command_manager.get_term("racket_target")
         motion = base_env.command_manager.get_term("motion")
         default_z = robot.data.default_root_state[:, 2] + base_env.scene.env_origins[:, 2]
+        initial_racket_rel_base = None
+        initial_target_rel_base = None
+        initial_racket_target_error = None
+        initial_station_error = None
         for step in range(args.num_steps):
             with torch.inference_mode():
                 actions = policy(obs)
                 obs, _rew, dones, _extras = env.step(actions)
+            if initial_racket_rel_base is None:
+                initial_racket_rel_base = (
+                    cmd.racket_pos_w - cmd.base_pos_w
+                ).detach().cpu()
+                initial_target_rel_base = (
+                    cmd.racket_target_pos_w - cmd.base_pos_w
+                ).detach().cpu()
+                initial_racket_target_error = torch.norm(
+                    cmd.racket_target_pos_w - cmd.racket_pos_w, dim=-1
+                ).detach().cpu()
+                initial_station_error = torch.norm(
+                    cmd.base_pos_w[:, :2] - cmd.fixed_station_w, dim=-1
+                ).detach().cpu()
+            no_command_steps += int(
+                torch.count_nonzero(cmd.no_command_ready_active).item()
+            )
+            stand_episode_steps += int(
+                torch.count_nonzero(motion.stand_episode).item()
+            )
             reset_count += int(torch.count_nonzero(dones).item())
+            done_mask = dones > 0
+            reset_counts_per_env += done_mask.long()
+            first_failure = done_mask & (first_done_steps < 0)
+            first_done_steps[first_failure] = step + 1
             if first_done is None and bool(torch.any(dones > 0)):
                 first_done = (step + 1) * base_env.step_dt
             for name in term_names:
@@ -228,7 +305,24 @@ def main() -> int:
                     "base_ang_vel": float(ang_vel[e].item()),
                     "episode_length": int(base_env.episode_length_buf[e].item()),
                     "motion_in_hold": int(motion.in_hold[e].item()),
+                    "motion_stand_episode": int(motion.stand_episode[e].item()),
+                    "motion_default_stand_reset": int(
+                        motion.default_stand_reset[e].item()
+                    ),
+                    "no_command_ready_active": int(
+                        cmd.no_command_ready_active[e].item()
+                    ),
                     "time_to_strike": float(cmd.time_to_strike[e].item()),
+                    "racket_target_error": float(
+                        torch.norm(
+                            cmd.racket_target_pos_w[e] - cmd.racket_pos_w[e]
+                        ).item()
+                    ),
+                    "station_error": float(
+                        torch.norm(
+                            cmd.base_pos_w[e, :2] - cmd.fixed_station_w[e]
+                        ).item()
+                    ),
                     "recovery_ready_score": float(cmd.metrics["recovery_ready_score"][e].item()),
                 }
                 for name in term_names:
@@ -237,15 +331,74 @@ def main() -> int:
 
         if trace_fh is not None:
             trace_fh.close()
+        total_env_steps = max(1, args.num_envs * args.num_steps)
+        if args.mode == "ready-hold" and (
+            no_command_steps != total_env_steps
+            or stand_episode_steps != total_env_steps
+        ):
+            raise RuntimeError(
+                "ready-hold contract violated: expected every sample to be a "
+                "stand episode with no planner command, got "
+                f"no_command={no_command_steps}/{total_env_steps}, "
+                f"stand_episode={stand_episode_steps}/{total_env_steps}"
+            )
+        first_done_steps_cpu = first_done_steps.cpu().tolist()
+        survival_times = sorted(
+            (
+                args.num_steps if value < 0 else int(value)
+            )
+            * float(base_env.step_dt)
+            for value in first_done_steps_cpu
+        )
+        reset_counts_cpu = sorted(reset_counts_per_env.cpu().tolist())
+
+        def _nearest_rank(values, quantile):
+            index = int(round((len(values) - 1) * float(quantile)))
+            return values[min(max(index, 0), len(values) - 1)]
+
+        survived_full_count = sum(value < 0 for value in first_done_steps_cpu)
+        if initial_racket_rel_base is None:
+            raise RuntimeError("diagnostic rollout produced no samples")
         env.close()
 
         result = {
+            "task_id": task_id,
             "mode": args.mode,
             "num_envs": int(args.num_envs),
             "num_steps": int(args.num_steps),
             "seconds": float(args.num_steps * base_env.step_dt),
             "reset_count": int(reset_count),
             "reset_rate_per_env_step": float(reset_count / max(1, args.num_envs * args.num_steps)),
+            "mean_resets_per_env": float(reset_count / max(1, args.num_envs)),
+            "p90_resets_per_env": int(_nearest_rank(reset_counts_cpu, 0.90)),
+            "no_command_fraction": float(no_command_steps / total_env_steps),
+            "stand_episode_fraction": float(stand_episode_steps / total_env_steps),
+            "full_horizon_survival_count": int(survived_full_count),
+            "full_horizon_survival_rate": float(
+                survived_full_count / max(1, args.num_envs)
+            ),
+            "survival_time_p10_s": float(_nearest_rank(survival_times, 0.10)),
+            "survival_time_median_s": float(
+                _nearest_rank(survival_times, 0.50)
+            ),
+            "survival_time_p90_s": float(_nearest_rank(survival_times, 0.90)),
+            "initial_racket_rel_base_mean": [
+                float(value)
+                for value in torch.mean(initial_racket_rel_base, dim=0).tolist()
+            ],
+            "initial_target_rel_base_mean": [
+                float(value)
+                for value in torch.mean(initial_target_rel_base, dim=0).tolist()
+            ],
+            "initial_racket_target_error_mean_m": float(
+                torch.mean(initial_racket_target_error).item()
+            ),
+            "initial_racket_target_error_p90_m": float(
+                torch.quantile(initial_racket_target_error, 0.90).item()
+            ),
+            "initial_station_error_mean_m": float(
+                torch.mean(initial_station_error).item()
+            ),
             "first_done_s": None if first_done is None else float(first_done),
             "first_manual_low_s": None if first_manual_low is None else float(first_manual_low),
             "first_manual_tilt_s": None if first_manual_tilt is None else float(first_manual_tilt),

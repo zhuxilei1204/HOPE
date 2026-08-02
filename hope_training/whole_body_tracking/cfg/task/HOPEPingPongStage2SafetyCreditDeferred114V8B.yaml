@@ -1,0 +1,10 @@
+# V8B differs from V8A only in delayed failure credit after a physical hit.
+defaults:
+  - HOPEPingPongStage2SafetyCreditSoft114V8A
+  - _self_
+
+name: HOPEPingPongStage2SafetyCreditDeferred114V8B
+
+overrides:
+  rewards.physical_recovery_settlement.params.failure_cost: 0.50
+

@@ -1,0 +1,43 @@
+# R1 READY/recovery semantics plus a conservative robust collision term. Most
+# net/bounce payoff is moved to the strict post-contact settlement event.
+
+defaults:
+  - HOPEPingPongM22494ForehandReadyRegionR1
+  - _self_
+
+name: HOPEPingPongM22494ForehandDeferredHitR2
+
+overrides:
+  # Preserve immediate gradients, but prevent them from dominating recovery.
+  rewards.health_gated_net_cross.weight: 1.4
+  rewards.health_gated_opponent_bounce.weight: 1.5
+
+  rewards.robust_contact_net_margin.weight: 0.65
+  rewards.robust_contact_net_margin.params:
+    command_name: racket_target
+    pos_std: 0.17
+    approach_speed: 0.10
+    approach_std: 0.75
+    normal_speed: 0.0
+    normal_std: 0.75
+    window_s: 0.18
+    restitution_range: [0.50, 0.70]
+    tangent_retain_range: [0.45, 0.75]
+    min_forward_speed: 2.70
+    forward_std: 0.35
+    min_clearance: 0.05
+    clearance_std: 0.06
+    swing_side: 1.0
+    minimum_health_multiplier: 0.0
+    final_minimum_health_multiplier: 0.0
+    start_step: 0
+    warmup_steps: 1200
+    start_scale: 0.20
+
+  rewards.deferred_recovery_outcome_bonus.weight: 6.0
+  rewards.deferred_recovery_outcome_bonus.params:
+    command_name: racket_target
+    tier_multipliers: [0.40, 1.00, 1.30]
+    start_step: 0
+    warmup_steps: 1500
+    start_scale: 0.20

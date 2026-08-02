@@ -410,6 +410,12 @@ class TableTennisEnvCfg(ManagerBasedRLEnvCfg):
     # configs/ball_physics.yaml. Set enabled=False to fly on PhysX gravity + contacts alone.
     ball_aerodynamics: BallAerodynamicsCfg = BallAerodynamicsCfg.from_physics_config(enabled=True)
 
+    # The default Isaac Lab order computes rewards before commands. Physical
+    # outcome tasks can opt into a post-physics command snapshot so contact and
+    # recovery events are settled on the same control frame that produced them.
+    # It stays disabled for every historical task/configuration.
+    pre_reward_command_snapshot_enabled: bool = False
+
     def __post_init__(self):
         # General.
         self.decimation = 4

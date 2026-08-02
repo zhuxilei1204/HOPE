@@ -1,0 +1,33 @@
+# Same F2 precision-hit changes as H1, replacing the nominal clearance term
+# with a worst-case score over a small collision-parameter ensemble.
+
+defaults:
+  - HOPEPingPongM22494F2HitPrecisionNominalH1
+  - _self_
+
+name: HOPEPingPongM22494F2HitPrecisionRobustH2
+
+overrides:
+  rewards.contact_net_margin.weight: 0.0
+
+  rewards.robust_contact_net_margin.weight: 1.8
+  rewards.robust_contact_net_margin.params:
+    command_name: racket_target
+    pos_std: 0.17
+    approach_speed: 0.10
+    approach_std: 0.75
+    normal_speed: 0.0
+    normal_std: 0.75
+    window_s: 0.18
+    restitution_range: [0.50, 0.70]
+    tangent_retain_range: [0.45, 0.75]
+    min_forward_speed: 2.70
+    forward_std: 0.35
+    min_clearance: 0.05
+    clearance_std: 0.06
+    swing_side: 1.0
+    minimum_health_multiplier: 0.55
+    final_minimum_health_multiplier: 0.35
+    start_step: 0
+    warmup_steps: 1200
+    start_scale: 0.30

@@ -1,0 +1,437 @@
+[Warning] [simulation_app.simulation_app] Modules: ['omni.kit_app'] were loaded before SimulationApp was started and might not be loaded correctly.
+[Warning] [simulation_app.simulation_app] Please check to make sure no extra omniverse or pxr modules are imported before the call to SimulationApp(...)
+Loading user config located at: '/home/zxl/miniconda3/envs/zxl-pace/lib/python3.10/site-packages/omni/data/Kit/Isaac-Sim/4.5/user.config.json'
+[Info] [carb] Logging to file: /home/zxl/miniconda3/envs/zxl-pace/lib/python3.10/site-packages/omni/logs/Kit/Isaac-Sim/4.5/kit_20260802_065926.log
+2026-08-01 22:59:26 [0ms] [Warning] [omni.kit.app.plugin] No crash reporter present, dumps uploading isn't available.
+2026-08-01 22:59:26 [1ms] [Warning] [omni.ext.plugin] [ext: rendering_modes] Extensions config 'extension.toml' doesn't exist '/mnt/ssd/zxl/IsaacLab/apps/rendering_modes' or '/mnt/ssd/zxl/IsaacLab/apps/rendering_modes/config'
+2026-08-01 22:59:26 [69ms] [Warning] [omni.usd_config.extension] Enable omni.materialx.libs extension to use MaterialX
+2026-08-01 22:59:26 [117ms] [Warning] [omni.platforminfo.plugin] failed to open the default display.  Can't verify X Server version.
+2026-08-01 22:59:26 [255ms] [Warning] [omni.datastore] OmniHub is inaccessible
+2026-08-01 22:59:26 [311ms] [Warning] [omni.isaac.dynamic_control] omni.isaac.dynamic_control is deprecated as of Isaac Sim 4.5. No action is needed from end-users.
+2026-08-01 22:59:29 [2,908ms] [Warning] [carb.cudainterop.plugin] CUDA_VISIBLE_DEVICES environment variable is set.
+2026-08-01 22:59:29 [2,908ms] [Warning] [carb.cudainterop.plugin] Note CUDA device enumeration and Omniverse device enumeration are different.
+2026-08-01 22:59:29 [2,908ms] [Warning] [carb.cudainterop.plugin] Setting CUDA_VISIBLE_DEVICES can lead to undesired behavior or crashes.
+2026-08-01 22:59:29 [2,910ms] [Warning] [gpu.foundation.plugin] Skipping NVIDIA GPU due CUDA being in bad state: NVIDIA GeForce RTX 5090
+2026-08-01 22:59:29 [2,910ms] [Warning] [gpu.foundation.plugin] Please restart your system if CUDA is known to work in your system.
+2026-08-01 22:59:29 [2,911ms] [Warning] [gpu.foundation.plugin] Skipping NVIDIA GPU due CUDA being in bad state: NVIDIA GeForce RTX 5090
+2026-08-01 22:59:29 [2,911ms] [Warning] [gpu.foundation.plugin] Please restart your system if CUDA is known to work in your system.
+
+|---------------------------------------------------------------------------------------------|
+| Driver Version: 580.105.08    | Graphics API: Vulkan
+|=============================================================================================|
+| GPU | Name                             | Active | LDA | GPU Memory | Vendor-ID | LUID       |
+|     |                                  |        |     |            | Device-ID | UUID       |
+|     |                                  |        |     |            | Bus-ID    |            |
+|---------------------------------------------------------------------------------------------|
+| 0   | NVIDIA GeForce RTX 5090          |        |     | 32607   MB | 10de      | 0          |
+|     |                                  |        |     |            | 2b85      | c2a01bc3.. |
+|     |                                  |        |     |            | 1         |            |
+|---------------------------------------------------------------------------------------------|
+| 1   | NVIDIA GeForce RTX 5090          | Yes: 0 |     | 32607   MB | 10de      | 0          |
+|     |                                  |        |     |            | 2b85      | 837a84cc.. |
+|     |                                  |        |     |            | 7         |            |
+|=============================================================================================|
+| OS: 24.04.2 LTS (Noble Numbat) ubuntu, Version: 24.04.2, Kernel: 6.17.0-35-generic
+| Processor: Intel(R) Core(TM) i9-14900K
+| Bare Metal Cores: 24 | Bare Metal Logical Cores: 48
+| Available Cores:  32 
+|---------------------------------------------------------------------------------------------|
+| Total Memory (MB): 128491 | [evaluate.py] applied 85 task override(s):
+[evaluate.py]     episode_length_s = 12.0
+[evaluate.py]     commands.motion.wrap_teleport = False
+[evaluate.py]     events.link_mass = (0.95, 1.05)
+[evaluate.py]     events.pd_gains = (0.95, 1.05)
+[evaluate.py]     observations.policy.racket_target_normal_w = enabled
+[evaluate.py]     commands.physical_shadow.route_geometry_mode = independent
+[evaluate.py]     commands.physical_shadow.pre_bounce_time_range = [0.44, 0.68]
+[evaluate.py]     commands.physical_shadow.post_bounce_time_range = [0.28, 0.48]
+[evaluate.py]     commands.physical_shadow.bounce_dx_range = [0.24, 0.78]
+[evaluate.py]     commands.physical_shadow.bounce_y_jitter_range = [-0.18, 0.18]
+[evaluate.py]     commands.physical_shadow.route_sample_attempts = 8
+[evaluate.py]     commands.physical_shadow.route_ability_curriculum_enabled = True
+[evaluate.py]     commands.physical_shadow.route_ability_curriculum_start_level = 0.1
+[evaluate.py]     commands.physical_shadow.route_ability_curriculum_full_level = 1.0
+[evaluate.py]     commands.physical_shadow.route_easy_pre_bounce_time_range = [0.5, 0.62]
+[evaluate.py]     commands.physical_shadow.route_easy_post_bounce_time_range = [0.34, 0.46]
+[evaluate.py]     commands.physical_shadow.route_easy_bounce_dx_range = [0.3, 0.68]
+[evaluate.py]     commands.physical_shadow.route_easy_bounce_y_jitter_range = [-0.1, 0.1]
+[evaluate.py]     commands.physical_shadow.post_bounce_command_refresh_enabled = True
+[evaluate.py]     commands.physical_shadow.command_refresh_continuous_post_bounce = True
+[evaluate.py]     commands.physical_shadow.command_refresh_freeze_tts_s = 0.2
+[evaluate.py]     commands.physical_shadow.command_refresh_solution_blend = 1.0
+[evaluate.py]     commands.physical_shadow.command_refresh_update_dynamic_station = True
+[evaluate.py]     commands.racket_target.table_workspace_fixed_level = -1.0
+[evaluate.py]     commands.racket_target.table_workspace_curriculum_start_level = 0.0
+[evaluate.py]     commands.racket_target.table_workspace_curriculum_full_level = 1.0
+[evaluate.py]     commands.racket_target.table_workspace_motion_seed_blend_start = 0.0
+[evaluate.py]     commands.racket_target.table_workspace_motion_seed_end_level = 0.0
+[evaluate.py]     commands.racket_target.ability_curriculum_start_ball_scale = 0.5
+[evaluate.py]     commands.racket_target.ballistic_flight_time_range = [0.42, 0.78]
+[evaluate.py]     commands.racket_target.ballistic_land_x_range = [1.95, 3.05]
+[evaluate.py]     commands.racket_target.ballistic_land_y_range = [-0.55, 0.55]
+[evaluate.py]     commands.racket_target.impact_inverse_command_curriculum_enabled = False
+[evaluate.py]     commands.racket_target.impact_inverse_command_start_blend = 1.0
+[evaluate.py]     commands.racket_target.planner_perturb_curriculum_source = fixed
+[evaluate.py]     commands.racket_target.planner_perturb_fixed_scale = 0.0
+[evaluate.py]     rewards.physical_capability_curriculum.params.fixed_level = -1.0
+[evaluate.py]     rewards.physical_capability_curriculum.params.minimum_events = 512
+[evaluate.py]     rewards.physical_capability_curriculum.params.ema_rate = 0.25
+[evaluate.py]     rewards.physical_capability_curriculum.params.bootstrap_contact_threshold = 0.035
+[evaluate.py]     rewards.physical_capability_curriculum.params.contact_threshold = 0.08
+[evaluate.py]     rewards.physical_capability_curriculum.params.full_contact_threshold_level = 0.85
+[evaluate.py]     rewards.physical_capability_curriculum.params.aligned_contact_threshold = 0.0
+[evaluate.py]     rewards.physical_capability_curriculum.params.bootstrap_aligned_contact_threshold = 0.0
+[evaluate.py]     rewards.physical_capability_curriculum.params.full_aligned_contact_threshold_level = 0.85
+[evaluate.py]     rewards.physical_capability_curriculum.params.net_threshold = 0.02
+[evaluate.py]     rewards.physical_capability_curriculum.params.contact_only_until_level = 0.3
+[evaluate.py]     rewards.physical_capability_curriculum.params.net_full_threshold_level = 0.75
+[evaluate.py]     rewards.physical_capability_curriculum.params.bounce_threshold = 0.01
+[evaluate.py]     rewards.physical_capability_curriculum.params.net_only_until_level = 0.6
+[evaluate.py]     rewards.physical_capability_curriculum.params.bounce_full_threshold_level = 1.0
+[evaluate.py]     rewards.physical_capability_curriculum.params.bootstrap_recovery_threshold = 0.5
+[evaluate.py]     rewards.physical_capability_curriculum.params.recovery_threshold = 0.7
+[evaluate.py]     rewards.physical_capability_curriculum.params.full_recovery_threshold_level = 0.85
+[evaluate.py]     rewards.physical_capability_curriculum.params.safety_threshold = 0.78
+[evaluate.py]     rewards.physical_capability_curriculum.params.recovery_floor = 0.45
+[evaluate.py]     rewards.physical_capability_curriculum.params.safety_floor = 0.65
+[evaluate.py]     rewards.physical_capability_curriculum.params.contact_regress_ratio = 0.65
+[evaluate.py]     rewards.physical_capability_curriculum.params.aligned_contact_regress_ratio = 0.0
+[evaluate.py]     rewards.physical_capability_curriculum.params.net_regress_ratio = 0.25
+[evaluate.py]     rewards.physical_capability_curriculum.params.bounce_regress_ratio = 0.25
+[evaluate.py]     rewards.physical_capability_curriculum.params.level_step = 0.05
+[evaluate.py]     rewards.physical_capability_curriculum.params.regress_step = 0.05
+[evaluate.py]     rewards.physical_capability_curriculum.params.required_advance_checks = 3
+[evaluate.py]     rewards.physical_capability_curriculum.params.required_regress_checks = 2
+[evaluate.py]     rewards.physical_capability_curriculum.params.center_contact_radius = 0.061
+[evaluate.py]     rewards.physical_capability_curriculum.params.aligned_position_error_max = 0.14
+[evaluate.py]     rewards.physical_capability_curriculum.params.aligned_velocity_error_max = 1.25
+[evaluate.py]     rewards.physical_capability_curriculum.params.aligned_velocity_direction_error_max_deg = 40.0
+[evaluate.py]     rewards.physical_capability_curriculum.params.aligned_normal_error_max_deg = 32.0
+[evaluate.py]     rewards.physical_capability_curriculum.params.aligned_timing_error_max_s = 0.07
+[evaluate.py]     rewards.physical_contact_planner_alignment.weight = 6.0
+[evaluate.py]     rewards.physical_contact_planner_alignment.params.position_std = 0.1
+[evaluate.py]     rewards.physical_contact_planner_alignment.params.velocity_std = 0.85
+[evaluate.py]     rewards.physical_contact_planner_alignment.params.direction_std_deg = 22.0
+[evaluate.py]     rewards.physical_contact_planner_alignment.params.normal_std_deg = 18.0
+[evaluate.py]     rewards.physical_contact_planner_alignment.params.timing_std_s = 0.08
+[evaluate.py]     rewards.physical_outcome_events.params.impact_inverse_quality_floor = 1.0
+[evaluate.py]     rewards.physical_outcome_events.params.contact_scale = 0.5
+[evaluate.py]     rewards.physical_outcome_events.params.contact_quality_scale = 3.0
+[evaluate.py]     commands.racket_target.strike_phase_per_clip = (0.4, 0.4)
+[evaluate.py]     commands.motion.motion_start_warmup_phase_per_clip = (0.4, 0.4)
+[evaluate.py]     commands.racket_target.swing_side_per_clip = (1.0, -1.0)
+[evaluate.py]     commands.racket_target.mount_normal_sign_per_clip = (1.0, -1.0)
+[evaluate.py]     commands.racket_target.racket_pos_range_per_clip = from motion metadata
+Free Memory: 116171
+| Total Page/Swap (MB): 8191 | Free Page/Swap: 7149
+|---------------------------------------------------------------------------------------------|
+2026-08-01 22:59:29 [3,150ms] [Warning] [gpu.foundation.plugin] IOMMU is enabled.
+2026-08-01 22:59:29 [3,150ms] [Warning] [gpu.foundation.plugin] Detected IOMMU is enabled. Running CUDA peer-to-peer bandwidth and latency validation.
+Unidirectional P2P=Enabled Bandwidth (P2P Writes) Matrix (GB/s)
+   D\D     0 
+     0 1514.05 
+P2P=Enabled Latency (P2P Writes) Matrix (us)
+   GPU     0 
+     0   2.12 
+
+   CPU     0 
+     0   1.23 
+2026-08-01 22:59:29 [3,247ms] [Warning] [omni.kvdb.plugin] Disabling key-value database because another kit process is locking it
+2026-08-01 23:00:03 [37,240ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPreviewSurface.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-08-01 23:00:03 [37,240ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdUVTexture.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-08-01 23:00:03 [37,240ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_float.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-08-01 23:00:03 [37,240ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_float2.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-08-01 23:00:03 [37,240ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_float3.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-08-01 23:00:03 [37,240ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_float4.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-08-01 23:00:03 [37,240ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_int.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-08-01 23:00:03 [37,240ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_string.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-08-01 23:00:03 [37,241ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_normal.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-08-01 23:00:03 [37,241ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_point.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-08-01 23:00:03 [37,241ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_vector.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-08-01 23:00:03 [37,241ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve[INFO][AppLauncher]: Using device: cuda:0
+[INFO][AppLauncher]: Loading experience file: /mnt/ssd/zxl/IsaacLab/apps/isaaclab.python.headless.kit
+[INFO]: Parsing configuration from: <class 'whole_body_tracking.tasks.tracking.config.agibot_a3.hope_stage2_physical_env_cfg.HOPEStage2PhysicalEnvCfg'>
+Setting seed: 8830
+[INFO]: Base environment:
+	Environment device    : cuda:0
+	Environment seed      : 8830
+	Physics step-size     : 0.0025
+	Rendering step-size   : 0.02
+	Environment step-size : 0.02
+[INFO]: Time taken for scene creation : 33.688570 seconds
+[INFO]: Scene manager:  <class InteractiveScene>
+	Number of environments: 256
+	Environment spacing   : 6.0
+	Source prim name      : /World/envs/env_0
+	Global prim paths     : ['/World/ground']
+	Replicate physics     : True
+[INFO]: Starting the simulation. This may take a few seconds. Please wait...
+[INFO]: Time taken for simulation start : 0.700126 seconds
+[INFO] Command Manager:  <CommandManager> contains 3 active terms.
++-----------------------------------------------------+
+|                 Active Command Terms                |
++-------+-----------------+---------------------------+
+| Index | Name            |            Type           |
++-------+-----------------+---------------------------+
+|   0   | motion          |       MotionCommand       |
+|   1   | racket_target   |    RacketTargetCommand    |
+|   2   | physical_shadow | PhysicalBallShadowCommand |
++-------+-----------------+---------------------------+
+
+[INFO] Event Manager:  <EventManager> contains 2 active terms.
++---------------------------------------+
+| Active Event Terms in Mode: 'startup' |
++---------+-----------------------------+
+|  Index  | Name                        |
++---------+-----------------------------+
+|    0    | physics_material            |
+|    1    | base_com                    |
+|    2    | link_mass                   |
+|    3    | joint_default_pos           |
+|    4    | racket_material             |
++---------+-----------------------------+
++-------------------------------------+
+| Active Event Terms in Mode: 'reset' |
++--------------+----------------------+
+|    Index     | Name                 |
++--------------+----------------------+
+|      0       | pd_gains             |
++--------------+----------------------+
+
+[INFO] Recorder Manager:  <RecorderManager> contains 0 active terms.
++-----------------------+
+| Active Recorder Terms |
++------------+----------+
+|   Index    | Name     |
++------------+----------+
++------------+----------+
+
+[INFO] Action Manager:  <ActionManager> contains 1 active terms.
++---------------------------------+
+| Active Action Terms (shape: 31) |
++-------+-----------+-------------+
+| Index | Name      |   Dimension |
++-------+-----------+-------------+
+|   0   | joint_pos |          31 |
++-------+-----------+-------------+
+
+[INFO] Observation Manager: <ObservationManager> contains 2 groups.
++-------------------------------------------------------------+
+| Active Observation Terms in Group: 'policy' (shape: (114,)) |
++----------+--------------------------------------+-----------+
+|  Index   | Name                                 |   Shape   |
++----------+--------------------------------------+-----------+
+|    0     | base_ang_vel                         |    (3,)   |
+|    1     | joint_pos                            |   (31,)   |
+|    2     | joint_vel                            |   (31,)   |
+|    3     | last_action                          |   (31,)   |
+|    4     | projected_gravity                    |    (3,)   |
+|    5     | base_forward_xy                      |    (2,)   |
+|    6     | fixed_station_error_xy               |    (2,)   |
+|    7     | racket_target_rel_base               |    (3,)   |
+|    8     | racket_target_vel_w                  |    (3,)   |
+|    9     | time_to_strike                       |    (1,)   |
+|    10    | swing_side                           |    (1,)   |
+|    11    | racket_target_normal_w               |    (3,)   |
++----------+--------------------------------------+-----------+
++-------------------------------------------------------------+
+| Active Observation Terms in Group: 'critic' (shape: (324,)) |
++----------+--------------------------------------+-----------+
+|  Index   | Name                                 |   Shape   |
++----------+--------------------------------------+-----------+
+|    0     | base_ang_vel                         |    (3,)   |
+|    1     | joint_pos                            |   (31,)   |
+|    2     | joint_vel                            |   (31,)   |
+|    3     | last_action                          |   (31,)   |
+|    4     | projected_gravity                    |    (3,)   |
+|    5     | base_forward_xy                      |    (2,)   |
+|    6     | fixed_station_error_xy               |    (2,)   |
+|    7     | racket_target_rel_base               |    (3,)   |
+|    8     | racket_target_vel_w                  |    (3,)   |
+|    9     | time_to_strike                       |    (1,)   |
+|    10    | swing_side                           |    (1,)   |
+|    11    | base_lin_vel                         |    (3,)   |
+|    12    | motion_command                       |   (62,)   |
+|    13    | motion_anchor_pos_b                  |    (3,)   |
+|    14    | motion_anchor_ori_b                  |    (6,)   |
+|    15    | robot_body_pos_b                     |   (42,)   |
+|    16    | robot_body_ori_b                     |   (84,)   |
+|    17    | racket_pos_b                         |    (3,)   |
+|    18    | racket_lin_vel_w                     |    (3,)   |
+|    19    | racket_normal_w                      |    (3,)   |
+|    20    | racket_target_normal_w               |    (3,)   |
+|    21    | episode_time_left                    |    (1,)   |
++----------+--------------------------------------+-----------+
+
+[INFO] Termination Manager:  <TerminationManager> contains 5 active terms.
++-----------------------------------------------+
+|            Active Termination Terms           |
++-------+----------------------------+----------+
+| Index | Name                       | Time Out |
++-------+----------------------------+----------+
+|   0   | time_out                   |   True   |
+|   1   | base_too_low               |  False   |
+|   2   | base_tilted                |  False   |
+|   3   | table_touch                |  False   |
+|   4   | persistent_action_overflow |  False   |
++-------+----------------------------+----------+
+
+[INFO] Reward Manager:  /mnt/ssd/zxl/IsaacLab/source/isaaclab/isaaclab/envs/mdp/events.py:501: UserWarning: To copy construct from a tensor, it is recommended to use sourceTensor.detach().clone() or sourceTensor.detach().clone().requires_grad_(True), rather than torch.tensor(sourceTensor).
+  actuator_joint_indices = torch.tensor(actuator.joint_indices, device=asset.device)
+<RewardManager> contains 107 active terms.
++------------------------------------------------------------+
+|                    Active Reward Terms                     |
++-------+-------------------------------------------+--------+
+| Index | Name                                      | Weight |
++-------+-------------------------------------------+--------+
+|   0   | motion_global_anchor_pos                  |    0.0 |
+|   1   | motion_anchor_height                      |    0.0 |
+|   2   | motion_global_anchor_ori                  |    0.0 |
+|   3   | motion_body_pos                           |    0.0 |
+|   4   | motion_body_ori                           |    0.0 |
+|   5   | motion_body_lin_vel                       |    0.0 |
+|   6   | motion_body_ang_vel                       |    0.0 |
+|   7   | undesired_contacts                        |   -0.1 |
+|   8   | feet_contact_slip                         |  -0.05 |
+|   9   | table_no_touch                            |   -0.5 |
+|   10  | alive                                     |   0.02 |
+|   11  | upright                                   |   -0.4 |
+|   12  | imitation                                 |    1.2 |
+|   13  | phase_lower_body_motion_prior             |    0.0 |
+|   14  | racket_wrist_motion_pos                   |    0.0 |
+|   15  | racket_wrist_motion_ori                   |    0.0 |
+|   16  | racket_position                           |    0.8 |
+|   17  | backhand_racket_position                  |    0.0 |
+|   18  | racket_velocity                           |   0.45 |
+|   19  | racket_velocity_projection                |    0.0 |
+|   20  | impact_forward_lift                       |    0.0 |
+|   21  | impact_outgoing_velocity                  |    0.0 |
+|   22  | planner_racket_task_space_crossfade       |    3.5 |
+|   23  | exact_impact_planner_task_space_alignment |    0.0 |
+|   24  | exact_impact_racket_velocity_alignment    |    0.0 |
+|   25  | exact_impact_outgoing_velocity_alignment  |    0.0 |
+|   26  | blade_direction                           |   0.45 |
+|   27  | prestrike_blade_direction                 |    0.0 |
+|   28  | soft_ball_contact                         |    0.0 |
+|   29  | backhand_soft_ball_contact                |    0.0 |
+|   30  | contact_net_margin                        |    0.0 |
+|   31  | robust_contact_net_margin                 |    0.0 |
+|   32  | balanced_soft_ball_contact                |    0.0 |
+|   33  | balanced_ball_contact                     |    0.0 |
+|   34  | balanced_net_cross                        |    0.0 |
+|   35  | balanced_opponent_bounce                  |    0.0 |
+|   36  | health_gated_soft_ball_contact            |    0.0 |
+|   37  | health_gated_backhand_soft_ball_contact   |    0.0 |
+|   38  | health_gated_ball_contact                 |    0.0 |
+|   39  | health_gated_net_cross                    |    0.0 |
+|   40  | health_gated_opponent_bounce              |    0.0 |
+|   41  | healthy_trunk_support                     |    0.8 |
+|   42  | targeted_strike_attempt                   |    0.0 |
+|   43  | strike_inactivity                         |    0.0 |
+|   44  | ball_contact                              |    0.0 |
+|   45  | net_cross                                 |    0.0 |
+|   46  | opponent_bounce                           |    0.0 |
+|   47  | pre_strike_station                        |   0.15 |
+|   48  | follow_through_recovery                   |    0.0 |
+|   49  | recovery_health                           |   0.55 |
+|   50  | next_ball_readiness                       |    0.0 |
+|   51  | next_swing_ready_bonus                    |    0.0 |
+|   52  | no_command_ready_stability                |    0.2 |
+|   53  | next_prestrike_reachable                  |    0.0 |
+|   54  | post_contact_recovery_ready               |    0.0 |
+|   55  | post_net_recovery_ready                   |    0.0 |
+|   56  | post_return_recovery_ready                |    0.0 |
+|   57  | post_contact_arm_racket_ready             |    0.0 |
+|   58  | post_net_arm_racket_ready                 |    0.0 |
+|   59  | post_return_arm_racket_ready              |    0.0 |
+|   60  | cycle_contact_ready                       |    0.0 |
+|   61  | cycle_net_ready                           |    0.0 |
+|   62  | cycle_return_ready                        |    0.0 |
+|   63  | cycle_success_bonus                       |    0.0 |
+|   64  | cycle_v2_ready_success_bonus              |    0.0 |
+|   65  | cycle_v2_streak_bonus                     |    0.0 |
+|   66  | cycle_v2_ready_fail                       |    0.0 |
+|   67  | post_strike_base_ang_vel                  |   0.14 |
+|   68  | no_command_ready_balance                  |    0.0 |
+|   69  | functional_no_command_ready               |    0.0 |
+|   70  | no_command_forehand_joint_anchor          |    0.0 |
+|   71  | no_command_ready_progress                 |    0.0 |
+|   72  | active_ready_sustained_bonus              |    0.0 |
+|   73  | active_ready_survival_milestone_bonus     |    0.0 |
+|   74  | post_contact_directional_recovery         |    0.0 |
+|   75  | post_contact_ready_region                 |    0.0 |
+|   76  | post_contact_ready_success_bonus          |    0.0 |
+|   77  | post_contact_ready_fail                   |    0.0 |
+|   78  | deferred_recovery_outcome_bonus           |    0.0 |
+|   79  | phase_action_overflow                     |   -0.3 |
+|   80  | strike_balance                            |   0.22 |
+|   81  | torso_com_balance                         |    0.0 |
+|   82  | torso_com_recovery_balance                |    0.0 |
+|   83  | one_sided_trunk_waist_strike              |    0.0 |
+|   84  | one_sided_trunk_waist_recovery            |    0.0 |
+|   85  | prestrike_station_progress                |   0.45 |
+|   86  | station_relocation_arrival_bonus          |    0.0 |
+|   87  | station_relocation_settle_bonus           |    0.0 |
+|   88  | lower_body_support                        |   0.65 |
+|   89  | post_strike_lower_body_action_rate        |    0.0 |
+|   90  | termination_penalty                       |  -12.0 |
+|   91  | action_rate                               |    0.0 |
+|   92  | phase_action_rate                         |    0.0 |
+|   93  | phase_action_rate_waist                   |  -0.04 |
+|   94  | phase_action_rate_upper                   | -0.006 |
+|   95  | phase_action_rate_legs                    | -0.008 |
+|   96  | joint_limit                               |   -1.0 |
+|   97  | prestrike_racket_progress                 |    1.0 |
+|   98  | near_impact_planner_velocity_progress     |   1.25 |
+|   99  | operational_joint_margin                  |   -0.6 |
+|  100  | joint_target_slew                         | -0.035 |
+|  101  | actuator_waist_feasibility                |  -0.02 |
+|  102  | actuator_right_arm_feasibility            | -0.005 |
+|  103  | actuator_leg_feasibility                  | -0.015 |
+|  104  | physical_outcome_events                   |    3.0 |
+|  105  | physical_contact_planner_alignment        |    6.0 |
+|  106  | physical_recovery_settlement              |    2.0 |
++-------+-------------------------------------------+--------+
+
+[INFO] Curriculum Manager:  <CurriculumManager> contains 0 active terms.
++-------------------------+
+| Active Curriculum Terms |
++-------------+-----------+
+|    Index    | Name      |
++-------------+-----------+
++-------------+-----------+
+
+[INFO]: Completed setting up the environment...
+Actor MLP: Sequential(
+  (0): Linear(in_features=114, out_features=512, bias=True)
+  (1): ELU(alpha=1.0)
+  (2): Linear(in_features=512, out_features=256, bias=True)
+  (3): ELU(alpha=1.0)
+  (4): Linear(in_features=256, out_features=128, bias=True)
+  (5): ELU(alpha=1.0)
+  (6): Linear(in_features=128, out_features=31, bias=True)
+)
+Critic MLP: Sequential(
+  (0): Linear(in_features=324, out_features=512, bias=True)
+  (1): ELU(alpha=1.0)
+  (2): Linear(in_features=512, out_features=256, bias=True)
+  (3): ELU(alpha=1.0)
+  (4): Linear(in_features=256, out_features=128, bias=True)
+  (5): ELU(alpha=1.0)
+  (6): Linear(in_features=128, out_features=1, bias=True)
+)
+ info:sourceAsset </UsdPrimvarReader_matrix.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-08-01 23:00:03 [37,241ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdTransform2d.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+

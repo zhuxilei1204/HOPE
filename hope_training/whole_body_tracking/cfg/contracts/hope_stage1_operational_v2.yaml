@@ -1,0 +1,63 @@
+version: hope_stage1_operational_v2
+actor_observation: hope_pingpong_normal114
+action_dimension: 31
+control_hz: 50
+episode_seconds: 10.0
+motion_count: 2
+continuous_wrap: true
+
+required_nonzero_rewards:
+  - alive
+  - upright
+  - imitation
+  - undesired_contacts
+  - feet_contact_slip
+  - table_no_touch
+  - planner_racket_task_space_crossfade
+  - prestrike_racket_progress
+  - near_impact_planner_velocity_progress
+  - racket_position
+  - racket_velocity
+  - blade_direction
+  - prestrike_station_progress
+  - pre_strike_station
+  - healthy_trunk_support
+  - lower_body_support
+  - recovery_health
+  - no_command_ready_stability
+  - phase_action_overflow
+  - operational_joint_margin
+  - joint_target_slew
+  - actuator_waist_feasibility
+  - actuator_right_arm_feasibility
+  - actuator_leg_feasibility
+  - phase_action_rate_waist
+  - phase_action_rate_upper
+  - phase_action_rate_legs
+  - strike_balance
+  - post_strike_base_ang_vel
+  - joint_limit
+  - termination_penalty
+
+forbidden_reward_terms:
+  - ball_contact
+  - soft_ball_contact
+  - net_cross
+  - opponent_bounce
+  - impact_outgoing_velocity
+  - physical_outcome
+  - cycle_success_bonus
+  - cycle_v2_ready_success_bonus
+  - deferred_recovery_outcome_bonus
+
+screening_thresholds:
+  overall_hard_clamp_max: 0.03
+  waist_hard_clamp_max: 0.08
+  leg_hard_clamp_max: 0.05
+  overall_operational_outside_max: 0.08
+  waist_operational_outside_max: 0.15
+  leg_operational_outside_max: 0.10
+  q_des_velocity_violation_max: 0.08
+  q_des_acceleration_violation_max: 0.15
+  minimum_episode_length: 400.0
+  minimum_command_feasibility_score: 0.80

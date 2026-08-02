@@ -1,0 +1,22 @@
+# V2: align the analytic moving-racket post-impact ball velocity with the
+# desired outgoing velocity at the exact impact step. This tests a more
+# physics-facing objective without changing the simulator or planner command.
+
+defaults:
+  - HOPEPingPongA28990StrikeAlignmentCommon114
+  - _self_
+
+name: HOPEPingPongA28990ExactImpactOutcome114V2
+
+overrides:
+  rewards.exact_impact_outgoing_velocity_alignment.weight: 10.0
+  rewards.exact_impact_outgoing_velocity_alignment.params:
+    command_name: racket_target
+    std: 1.5
+    position_std: 0.16
+    require_contact: true
+    start_step: 0
+    warmup_steps: 800
+    start_scale: 0.25
+    minimum_health_multiplier: 0.15
+    final_minimum_health_multiplier: 0.05

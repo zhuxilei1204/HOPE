@@ -1,0 +1,23 @@
+defaults:
+  - HOPEPingPongClosedLoopV3ScratchAdaptiveMotionV6CMultiSkill114
+  - _self_
+
+name: HOPEPingPongClosedLoopV3ScratchBalancedReadyV6EMultiSkill114
+
+# Isolate the READY balance reward from V6D's no-ball sampling change.  The
+# no-ball probability stays at V6C's 0.10 so early strike discovery sees the
+# same reset distribution as the paired control.
+overrides:
+  rewards.no_command_ready_balance.weight: 1.2
+  rewards.no_command_ready_balance.params:
+    command_name: racket_target
+    pitch_std: 0.11
+    roll_std: 0.13
+    lin_vel_std: 0.18
+    ang_vel_std: 0.50
+    height_std: 0.09
+    station_std: 0.18
+    min_feet_contact: 0.50
+    start_step: 0
+    warmup_steps: 600
+    start_scale: 0.35

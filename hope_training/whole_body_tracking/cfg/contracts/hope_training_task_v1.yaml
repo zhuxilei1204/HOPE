@@ -1,0 +1,435 @@
+schema_version: 1
+contract_id: hope_training_task_v1
+status: frozen_design_not_train_ready
+description: >-
+  Unified task, reward, lifecycle, motion, and capability-curriculum contract
+  for a deployable continuous table-tennis policy. This contract supersedes
+  accumulated experiment switches but is not yet wired into an active task.
+
+dependencies:
+  contact_contract: hope_observable_contact_v1
+  action_contract: bounded_effective_v2
+  migration_contract: hope_policy_migration_v1
+  all_dependencies_must_be_train_ready: true
+
+task_goal:
+  required_capabilities:
+    - forehand
+    - backhand
+    - lateral_relocation
+    - physical_contact
+    - net_cross
+    - opponent_first_bounce
+    - post_strike_recovery
+    - no_command_quiet_standing
+    - continuous_multi_ball_no_fall
+  priority_order:
+    - hard_safety
+    - operational_action_feasibility
+    - healthy_recovery
+    - physical_hit_outcome
+    - landing_accuracy
+    - style_prior
+
+coordinate_and_time:
+  frame: table
+  frame_contract_source: hope_observable_contact_v1
+  policy_hz: 50.0
+  physics_substeps_must_capture_contact: true
+  command_time_fields:
+    - measurement_timestamp
+    - command_timestamp
+    - expected_strike_timestamp
+  stale_or_reordered_command: invalid
+
+actor:
+  observation_contract: hope_pingpong_normal114
+  dimensions: 114
+  command_validity_encoding:
+    explicit_dimension_added: false
+    no_command:
+      racket_target_position: functional_ready_target_in_table_frame
+      racket_target_contact_velocity: [0.0, 0.0, 0.0]
+      racket_target_normal: side_checked_default_normal
+      time_to_strike_s: 1.0
+      swing_side: retained_ready_side
+      station_xy: current_active_station
+    command_dropout_during_active_swing: freeze_last_accepted_command
+  action_contract: bounded_effective_v2
+  action_dimensions: 31
+  critic_privileged_only:
+    - hidden_ball_truth
+    - command_bias_and_age
+    - support_polygon_and_com
+    - foot_contact
+    - physical_contact_state
+    - outgoing_ball_state
+    - lifecycle_phase
+  dimension_extension_rule: >-
+    Keep 114D until a controlled observability test proves an unresolved
+    deployment-state alias; do not restore the historical 122D bundle by default.
+
+episode:
+  duration_s_range: [30.0, 60.0]
+  reset_only_on:
+    - hard_safety_termination
+    - numerical_invalid_state
+    - episode_timeout
+  must_not_reset_on:
+    - miss
+    - net_touch
+    - same_side_first_bounce
+    - recovery_timeout
+    - command_dropout
+  bad_posture_carries_into_next_ball: true
+  lifecycle_state_persists_across_serves: true
+
+lifecycle:
+  states:
+    - READY_NO_COMMAND
+    - COMMAND_ACQUIRE
+    - PRE_STRIKE_RELOCATE
+    - PRE_STRIKE_SETTLE
+    - STRIKE
+    - FOLLOW_THROUGH
+    - RECOVERY
+    - NEXT_READY
+  timing_s:
+    ready_no_command_range: [0.4, 1.2]
+    command_lead_range: [0.8, 1.2]
+    strike_window_range: [0.08, 0.14]
+    follow_through_range: [0.20, 0.35]
+    recovery_deadline_range: [0.8, 1.2]
+  invariants:
+    - each_ball_has_exactly_one_terminal_outcome
+    - each_attempt_has_at_most_one_recovery_settlement
+    - each_cycle_has_at_most_one_cycle_bonus
+    - next_ball_arrival_is_environment_clocked
+    - policy_cannot_delay_next_ball_by_avoiding_ready
+    - miss_still_opens_recovery
+    - command_revision_does_not_restart_physical_ball
+
+physical_truth:
+  ball_route_independent_of_motion: true
+  incoming_mode: one_bounce
+  spin_state:
+    observed: false
+    deterministic_target: forbidden
+    uncertainty_source: calibrated_tangential_residual_distribution
+  collision_truth:
+    contact: rigid_body_contact
+    net_cross: first_ordered_net_cross_after_contact
+    landing: first_table_contact_after_racket_contact
+    later_bounces_may_count_as_success: false
+  first_stage_workspace:
+    x_hit_m: [0.185, 0.215]
+    y_hit_m: [-0.55, -0.20]
+    z_above_table_m: [0.40, 0.58]
+    station_xy_m: [-0.50, -0.7625]
+    side: forehand
+  final_table_workspace:
+    y_hit_m: [-1.425, -0.10]
+    edge_clearance_m: 0.10
+  sampling:
+    variables:
+      - bounce_point
+      - bounce_to_hit_time
+      - hit_point
+      - incoming_speed
+    infeasible_sample_resolution: resample
+    clipping_infeasible_ball_route: forbidden
+
+planner_command_distribution:
+  online_ros_planner_during_training: false
+  layers:
+    - hidden_physical_truth
+    - ideal_planner_compatible_command
+    - actor_visible_noisy_lifecycle_command
+  command_fields:
+    - racket_target_position
+    - racket_target_contact_velocity
+    - racket_target_normal
+    - time_to_strike
+    - swing_side
+    - station_xy
+  joint_manifold_rules:
+    - normal_is_unit_length
+    - normal_sign_matches_swing_side
+    - velocity_and_normal_are_perturbed_together
+    - speed_noise_changes_magnitude_not_direction
+    - time_to_strike_matches_command_timestamp
+  lifecycle_noise:
+    types:
+      - bias
+      - revision
+      - freeze
+      - age
+      - dropout
+    capability_levels: [0.0, 0.25, 0.50, 1.0]
+    full_noise_at_training_start: false
+  station:
+    first_stage: fixed_home
+    lateral_stage: constrained_healthy_workspace_solver
+    motion_contact_frame_defines_station: false
+    solver_must_be_shared_with_deployment: true
+
+hard_safety:
+  termination_events:
+    - fall
+    - severe_base_tilt
+    - base_too_low
+    - table_or_forbidden_body_contact
+    - numerical_invalid_state
+    - persistent_operational_or_mechanical_saturation
+  never_relaxed_by_curriculum: true
+  positive_reward_on_unsafe_transition: forbidden
+
+health:
+  impact_components:
+    - upright_pitch_roll
+    - base_angular_velocity
+    - com_support_margin
+    - foot_contact_stability
+    - base_retreat_velocity
+    - table_clearance
+    - operational_joint_margin
+  aggregation: geometric_mean
+  recovery_components:
+    - upright
+    - low_base_linear_velocity
+    - low_base_angular_velocity
+    - com_support_margin
+    - stable_feet
+    - active_station_range
+    - racket_ready_region
+    - arm_and_racket_quiet_after_grace
+  arm_quiet_grace_after_strike_s: [0.20, 0.35]
+
+reward:
+  accounting:
+    time_integrated_phase_budget_fixed: true
+    ready_positive_reward_per_step: forbidden
+    event_rewards_are_one_shot: true
+    recovery_progress: bounded_potential_difference
+    physical_outcome_has_priority_over_command_tracking: true
+  command_tracking:
+    active_phases:
+      - PRE_STRIKE_RELOCATE
+      - PRE_STRIKE_SETTLE
+      - STRIKE
+    components:
+      - racket_position_error
+      - contact_velocity_magnitude_error
+      - contact_velocity_direction_error
+      - normal_angle_error
+      - timing_error
+      - blade_table_clearance
+    cannot_equal_physical_success_reward: true
+  outcome:
+    events:
+      - contact
+      - net_cross
+      - opponent_first_bounce
+      - landing_accuracy
+    formula: >-
+      action_feasible * (health_floor + (1 - health_floor) * impact_health)
+      * event_value
+    health_floor:
+      initial: 0.25
+      final: 0.05
+      reduced_by_capability_not_iteration: true
+  recovery:
+    trigger: valid_targeted_attempt
+    miss_triggers_recovery: true
+    progress_reward: bounded_potential_difference
+    resolved_bonus: one_shot_after_consecutive_ready_ticks
+    timeout_penalty: one_shot
+  cycle:
+    formula: >-
+      required_physical_outcome * impact_health * terminal_ready_quality
+      * no_hard_safety_event
+    one_shot: true
+    capability_levels:
+      - contact_healthy_ready
+      - net_cross_healthy_ready
+      - opponent_bounce_healthy_ready
+      - two_consecutive_cycles
+      - five_consecutive_cycles
+  anti_idle:
+    event: one_shot_missing_attempt_at_real_strike_window
+    active_only_if:
+      - command_valid
+      - command_reachable
+      - pre_strike_health_above_threshold
+    unsafe_robot_may_safe_skip: true
+    safe_skip_cycle_result: failed_without_hit_reward
+    policy_may_create_unhealthy_state_to_avoid_attempt: false
+
+motion_prior:
+  defines_ball_route: false
+  defines_planner_command: false
+  defines_station: false
+  defines_contact_time: false
+  roles:
+    - action_phase_prior
+    - upper_body_posture_prior
+    - validated_support_transfer_prior
+    - reset_and_warmup_state
+  first_stage:
+    active_side: forehand
+    source_clip: >-
+      hope_training/motions/user_four_motion_manual_hits_a3fk_yaw_leg_stabilized_20260724/user_forehand_raised_30fps_contact075_50hz_a3fk_aligned.npz
+  phase_body_strength:
+    PRE_STRIKE:
+      torso: medium
+      right_shoulder_elbow: medium
+      right_wrist_racket: medium
+      hip_knee_ankle: low
+    STRIKE:
+      torso: low
+      right_shoulder_elbow: very_low
+      right_wrist_racket: very_low
+      hip_knee_ankle: very_low
+    FOLLOW_THROUGH:
+      torso: low
+      right_shoulder_elbow: very_low
+      right_wrist_racket: very_low
+      hip_knee_ankle: very_low
+    RECOVERY:
+      torso: medium
+      right_shoulder_elbow: medium
+      right_wrist_racket: medium
+      hip_knee_ankle: low
+  global_actor_anchor: forbidden
+  lower_body_reference_rejection:
+    - foot_sliding
+    - com_outside_support
+    - missing_braking
+    - missing_settle_or_return
+    - ground_penetration
+    - table_collision
+  supplemental_motion_activation_requires:
+    - contact_frame_verified
+    - support_foot_lock_verified
+    - com_support_verified
+    - ground_alignment_verified
+    - isaac_fk_verified
+    - stable_settle_or_return_segment_verified
+
+curriculum:
+  driver: capability_ema
+  iteration_or_wall_clock_driver: forbidden
+  promotion:
+    minimum_evaluation_windows: 3
+    consecutive_pass_windows: 2
+    hysteresis_required: true
+    minimum_event_count_required: true
+    metrics:
+      - physical_outcome_rate
+      - healthy_impact_rate
+      - recovery_resolved_rate
+      - no_fall_rate
+      - no_table_touch_rate
+      - no_persistent_saturation_rate
+      - isaac_physical_mujoco_gap
+  rollback:
+    enabled: true
+    immediate_on_hard_safety_regression: true
+    reduce_task_distribution_not_reward_weight: true
+  stages:
+    - id: C0_regression_gates
+      capabilities:
+        - no_command_stand
+        - command_transition
+        - action_feasibility
+        - actuator_parity
+    - id: C1_forehand_core
+      capabilities:
+        - forehand_contact
+        - net_cross
+        - next_ready
+    - id: C2_forehand_lateral
+      capabilities:
+        - wider_y_workspace
+        - active_station
+        - healthy_support_transfer
+    - id: C3_backhand_core
+      capabilities:
+        - backhand_contact
+        - backhand_next_ready
+    - id: C4_side_transition
+      capabilities:
+        - forehand_backhand_hysteresis
+        - next_ball_conditioned_ready
+    - id: C5_full_table_planner_robustness
+      capabilities:
+        - full_width
+        - full_lifecycle_noise
+        - hidden_physics_randomization
+        - safe_skip_unreachable
+
+diagnostics:
+  required_training_metrics:
+    hit:
+      - attempt_rate
+      - contact_rate
+      - net_cross_rate
+      - opponent_first_bounce_rate
+      - racket_position_error
+      - speed_error
+      - direction_error
+      - normal_error
+      - timing_error
+    recovery:
+      - recovery_trigger_rate
+      - recovery_resolved_rate
+      - recovery_time
+      - next_ready_rate
+      - two_cycle_rate
+      - five_cycle_rate
+      - impact_and_recovery_base_pitch
+      - base_and_torso_angular_velocity
+      - com_support_margin
+      - foot_slip
+    control:
+      - operational_saturation_rate_per_joint
+      - mechanical_emergency_clip_rate_per_joint
+      - action_jerk
+      - torque_clip
+      - waist_leg_5_20hz_power
+    lifecycle:
+      - phase_occupancy
+      - command_age
+      - revision_accept_reject
+      - dropout_freeze_duration
+      - safe_skip_rate
+  evaluation_matrix:
+    - isaac_analytic
+    - isaac_physical
+    - mujoco_fixed_command
+    - mujoco_planner_lifecycle_replay
+  common_seed_and_command_manifest_required: true
+
+historical_switch_policy:
+  all_historical_reward_terms_default_zero: true
+  whitelist_only: true
+  explicitly_forbidden:
+    - global_actor_anchor
+    - dense_positive_ready_reward
+    - motion_defined_workspace
+    - motion_defined_station
+    - iteration_based_workspace_expansion
+    - reset_after_every_serve
+    - hidden_deploy_only_action_filter
+    - analytic_later_bounce_success
+
+implementation:
+  active_task_wired: false
+  existing_semantic_replay: >-
+    hope_training/whole_body_tracking/scripts/replay_closed_loop_v2.py
+  existing_reward_helpers: >-
+    hope_training/whole_body_tracking/source/whole_body_tracking/whole_body_tracking/tasks/tracking/mdp/closed_loop_v2.py
+  isolated_future_task: hope_closed_loop_v3
+  reason_not_wired: >-
+    N1 operational limits and N2 real contact distribution are not calibrated,
+    and N3 PPO squashed-distribution integration is pending.

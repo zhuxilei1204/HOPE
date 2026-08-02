@@ -314,6 +314,21 @@ class RewardsCfg:
             "threshold": 1.0,
         },
     )
+    feet_contact_slip = RewTerm(
+        func=mdp.feet_contact_slip,
+        weight=0.0,
+        params={
+            "sensor_cfg": SceneEntityCfg(
+                "contact_forces",
+                body_names=list(A3_FEET_BODIES),
+            ),
+            "asset_cfg": SceneEntityCfg(
+                "robot",
+                body_names=list(A3_FEET_BODIES),
+            ),
+            "contact_force_threshold": 10.0,
+        },
+    )
     table_no_touch = RewTerm(
         func=mdp.table_proximity_penalty,
         weight=0.0,
@@ -379,7 +394,14 @@ class RewardsCfg:
         },
     )
     racket_position = RewTerm(
-        func=mdp.racket_position, weight=6.0, params={"command_name": "racket_target", "std": 0.24}
+        func=mdp.racket_position,
+        weight=6.0,
+        params={
+            "command_name": "racket_target",
+            "std": 0.24,
+            "minimum_health_multiplier": 1.0,
+            "final_minimum_health_multiplier": 1.0,
+        },
     )
     backhand_racket_position = RewTerm(
         func=mdp.side_racket_position,
@@ -387,7 +409,14 @@ class RewardsCfg:
         params={"command_name": "racket_target", "std": 0.22, "swing_side": -1.0},
     )
     racket_velocity = RewTerm(
-        func=mdp.racket_velocity, weight=2.0, params={"command_name": "racket_target", "std": 2.5}
+        func=mdp.racket_velocity,
+        weight=2.0,
+        params={
+            "command_name": "racket_target",
+            "std": 2.5,
+            "minimum_health_multiplier": 1.0,
+            "final_minimum_health_multiplier": 1.0,
+        },
     )
     racket_velocity_projection = RewTerm(
         func=mdp.racket_velocity_projection,
@@ -400,6 +429,8 @@ class RewardsCfg:
             "start_step": 0,
             "warmup_steps": 0,
             "start_scale": 1.0,
+            "minimum_health_multiplier": 1.0,
+            "final_minimum_health_multiplier": 1.0,
         },
     )
     impact_forward_lift = RewTerm(
@@ -413,13 +444,110 @@ class RewardsCfg:
             "start_step": 0,
             "warmup_steps": 0,
             "start_scale": 1.0,
+            "minimum_health_multiplier": 1.0,
+            "final_minimum_health_multiplier": 1.0,
         },
     )
     impact_outgoing_velocity = RewTerm(
-        func=mdp.impact_outgoing_velocity, weight=0.75, params={"command_name": "racket_target", "std": 3.0}
+        func=mdp.impact_outgoing_velocity,
+        weight=0.75,
+        params={
+            "command_name": "racket_target",
+            "std": 3.0,
+            "minimum_health_multiplier": 1.0,
+            "final_minimum_health_multiplier": 1.0,
+        },
+    )
+    planner_racket_task_space_crossfade = RewTerm(
+        func=mdp.planner_racket_task_space_crossfade,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "pre_start_s": 0.40,
+            "pre_full_s": 0.15,
+            "post_full_s": 0.08,
+            "post_end_s": 0.22,
+            "position_std": 0.14,
+            "velocity_std": 0.95,
+            "normal_std_rad": 0.30,
+            "component_floor": 0.04,
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
+            "minimum_health_multiplier": 0.25,
+            "final_minimum_health_multiplier": 0.10,
+        },
+    )
+    exact_impact_planner_task_space_alignment = RewTerm(
+        func=mdp.exact_impact_planner_task_space_alignment,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "position_std": 0.08,
+            "speed_ratio_std": 0.18,
+            "direction_std_rad": 0.25,
+            "normal_std_rad": 0.18,
+            "component_floor": 0.03,
+            "require_contact": True,
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
+            "minimum_health_multiplier": 0.15,
+            "final_minimum_health_multiplier": 0.05,
+        },
+    )
+    exact_impact_racket_velocity_alignment = RewTerm(
+        func=mdp.exact_impact_racket_velocity_alignment,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "speed_ratio_std": 0.20,
+            "direction_std_rad": 0.35,
+            "position_std": 0.16,
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
+            "minimum_health_multiplier": 0.15,
+            "final_minimum_health_multiplier": 0.05,
+        },
+    )
+    exact_impact_outgoing_velocity_alignment = RewTerm(
+        func=mdp.exact_impact_outgoing_velocity_alignment,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "std": 1.5,
+            "position_std": 0.16,
+            "require_contact": True,
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
+            "minimum_health_multiplier": 0.15,
+            "final_minimum_health_multiplier": 0.05,
+        },
     )
     blade_direction = RewTerm(
-        func=mdp.racket_blade_direction, weight=0.35, params={"command_name": "racket_target", "std": 0.8}
+        func=mdp.racket_blade_direction,
+        weight=0.35,
+        params={
+            "command_name": "racket_target",
+            "std": 0.8,
+            "minimum_health_multiplier": 1.0,
+            "final_minimum_health_multiplier": 1.0,
+        },
+    )
+    prestrike_blade_direction = RewTerm(
+        func=mdp.prestrike_blade_direction,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "std": 0.65,
+            "start_s": 0.35,
+            "full_s": 0.12,
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
+        },
     )
     soft_ball_contact = RewTerm(
         func=mdp.soft_ball_contact,
@@ -466,6 +594,33 @@ class RewardsCfg:
             "min_clearance": 0.03,
             "clearance_std": 0.07,
             "swing_side": 0.0,
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
+            "minimum_health_multiplier": 1.0,
+            "final_minimum_health_multiplier": 1.0,
+        },
+    )
+    robust_contact_net_margin = RewTerm(
+        func=mdp.robust_contact_net_margin,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "pos_std": 0.17,
+            "approach_speed": 0.10,
+            "approach_std": 0.75,
+            "normal_speed": 0.0,
+            "normal_std": 0.75,
+            "window_s": 0.18,
+            "restitution_range": (0.50, 0.70),
+            "tangent_retain_range": (0.45, 0.75),
+            "min_forward_speed": 2.70,
+            "forward_std": 0.35,
+            "min_clearance": 0.05,
+            "clearance_std": 0.06,
+            "swing_side": 0.0,
+            "minimum_health_multiplier": 1.0,
+            "final_minimum_health_multiplier": 1.0,
             "start_step": 0,
             "warmup_steps": 0,
             "start_scale": 1.0,
@@ -551,28 +706,81 @@ class RewardsCfg:
         params={
             "command_name": "racket_target",
             "minimum_health_multiplier": 0.0,
+            "final_minimum_health_multiplier": 0.0,
             "pos_std": 0.18,
             "approach_speed": 0.10,
             "approach_std": 0.75,
             "normal_speed": 0.0,
             "normal_std": 0.75,
             "window_s": 0.22,
+            "swing_side": 0.0,
+        },
+    )
+    health_gated_backhand_soft_ball_contact = RewTerm(
+        func=mdp.health_gated_soft_ball_contact,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "minimum_health_multiplier": 0.0,
+            "final_minimum_health_multiplier": 0.0,
+            "pos_std": 0.20,
+            "approach_speed": 0.08,
+            "approach_std": 0.80,
+            "normal_speed": -0.05,
+            "normal_std": 0.85,
+            "window_s": 0.24,
+            "swing_side": -1.0,
         },
     )
     health_gated_ball_contact = RewTerm(
         func=mdp.health_gated_ball_contact,
         weight=0.0,
-        params={"command_name": "racket_target", "minimum_health_multiplier": 0.0},
+        params={
+            "command_name": "racket_target",
+            "minimum_health_multiplier": 0.0,
+            "final_minimum_health_multiplier": 0.0,
+        },
     )
     health_gated_net_cross = RewTerm(
         func=mdp.health_gated_net_cross,
         weight=0.0,
-        params={"command_name": "racket_target", "minimum_health_multiplier": 0.0},
+        params={
+            "command_name": "racket_target",
+            "minimum_health_multiplier": 0.0,
+            "final_minimum_health_multiplier": 0.0,
+        },
     )
     health_gated_opponent_bounce = RewTerm(
         func=mdp.health_gated_opponent_bounce,
         weight=0.0,
-        params={"command_name": "racket_target", "minimum_health_multiplier": 0.0},
+        params={
+            "command_name": "racket_target",
+            "minimum_health_multiplier": 0.0,
+            "final_minimum_health_multiplier": 0.0,
+        },
+    )
+    healthy_trunk_support = RewTerm(
+        func=mdp.healthy_trunk_support,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "pre_window_s": 0.34,
+            "post_window_s": 0.20,
+            "include_no_command_ready": True,
+        },
+    )
+    targeted_strike_attempt = RewTerm(
+        func=mdp.targeted_strike_attempt,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "minimum_health_multiplier": 0.40,
+        },
+    )
+    strike_inactivity = RewTerm(
+        func=mdp.strike_inactivity,
+        weight=0.0,
+        params={"command_name": "racket_target"},
     )
     ball_contact = RewTerm(func=mdp.ball_contact, weight=4.0, params={"command_name": "racket_target"})
     net_cross = RewTerm(func=mdp.ball_net_cross, weight=1.0, params={"command_name": "racket_target"})
@@ -585,7 +793,12 @@ class RewardsCfg:
     follow_through_recovery = RewTerm(
         func=mdp.follow_through_recovery,
         weight=0.8,
-        params={"command_name": "racket_target", "std": 0.5, "station_std": 0.3},
+        params={
+            "command_name": "racket_target",
+            "std": 0.5,
+            "station_std": 0.3,
+            "require_targeted_attempt": False,
+        },
     )
     recovery_health = RewTerm(
         func=mdp.recovery_health,
@@ -597,6 +810,7 @@ class RewardsCfg:
             "lin_vel_std": 0.35,
             "ang_vel_std": 1.0,
             "station_std": 0.25,
+            "require_targeted_attempt": False,
         },
     )
     next_ball_readiness = RewTerm(
@@ -614,6 +828,7 @@ class RewardsCfg:
             "arm_ori_std": 0.8,
             "arm_body_names": list(A3_RIGHT_ARM_READY_BODIES),
             "early_prestrike_window_steps": 12,
+            "require_targeted_attempt": False,
         },
     )
     next_swing_ready_bonus = RewTerm(
@@ -631,6 +846,7 @@ class RewardsCfg:
             "arm_pos_std": 0.32,
             "arm_ori_std": 0.75,
             "arm_body_names": list(A3_RIGHT_ARM_READY_BODIES),
+            "require_targeted_attempt": False,
         },
     )
     no_command_ready_stability = RewTerm(
@@ -904,6 +1120,141 @@ class RewardsCfg:
             "start_scale": 1.0,
         },
     )
+    no_command_ready_balance = RewTerm(
+        func=mdp.no_command_ready_balance,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "pitch_std": 0.11,
+            "roll_std": 0.13,
+            "lin_vel_std": 0.18,
+            "ang_vel_std": 0.50,
+            "height_std": 0.09,
+            "station_std": 0.18,
+            "min_feet_contact": 0.50,
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
+        },
+    )
+    functional_no_command_ready = RewTerm(
+        func=mdp.functional_no_command_ready,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
+        },
+    )
+    no_command_forehand_joint_anchor = RewTerm(
+        func=mdp.no_command_joint_anchor,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
+        },
+    )
+    no_command_ready_progress = RewTerm(
+        func=mdp.no_command_ready_progress,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
+        },
+    )
+    active_ready_sustained_bonus = RewTerm(
+        func=mdp.active_ready_sustained_bonus,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
+        },
+    )
+    active_ready_survival_milestone_bonus = RewTerm(
+        func=mdp.active_ready_survival_milestone_bonus,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
+        },
+    )
+    post_contact_directional_recovery = RewTerm(
+        func=mdp.post_contact_directional_recovery,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
+        },
+    )
+    post_contact_ready_region = RewTerm(
+        func=mdp.post_contact_ready_region,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
+        },
+    )
+    post_contact_ready_success_bonus = RewTerm(
+        func=mdp.post_contact_ready_success_bonus,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
+        },
+    )
+    post_contact_ready_fail = RewTerm(
+        func=mdp.post_contact_ready_fail,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
+        },
+    )
+    deferred_recovery_outcome_bonus = RewTerm(
+        func=mdp.deferred_recovery_outcome_bonus,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "tier_multipliers": (0.5, 1.0, 1.3),
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
+        },
+    )
+    phase_action_overflow = RewTerm(
+        func=mdp.phase_action_overflow,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "waist_scale": 0.35,
+            "right_arm_scale": 0.15,
+            "leg_scale": 1.0,
+            "pre_strike_scale": 0.35,
+            "strike_scale": 0.10,
+            "recovery_scale": 1.0,
+            "hold_scale": 1.0,
+            "free_margin": 0.05,
+            "delta": 0.25,
+            "maximum": 4.0,
+        },
+    )
     strike_balance = RewTerm(
         func=mdp.strike_balance,
         weight=0.0,
@@ -957,6 +1308,46 @@ class RewardsCfg:
             "start_scale": 1.0,
         },
     )
+    one_sided_trunk_waist_strike = RewTerm(
+        func=mdp.one_sided_trunk_waist_stability,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "phase": "strike",
+            "pre_window_s": 0.34,
+            "post_window_s": 0.18,
+            "torso_backlean_tolerance": 0.06,
+            "torso_backlean_std": 0.12,
+            "waist_backfold_tolerance": 0.14,
+            "waist_backfold_std": 0.14,
+            "torso_pitch_rate_std": 1.40,
+            "waist_pitch_rate_std": 1.20,
+            "rate_weight": 0.0,
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
+        },
+    )
+    one_sided_trunk_waist_recovery = RewTerm(
+        func=mdp.one_sided_trunk_waist_stability,
+        weight=0.0,
+        params={
+            "command_name": "racket_target",
+            "phase": "recovery_hold",
+            "pre_window_s": 0.34,
+            "post_window_s": 0.18,
+            "torso_backlean_tolerance": 0.06,
+            "torso_backlean_std": 0.12,
+            "waist_backfold_tolerance": 0.14,
+            "waist_backfold_std": 0.14,
+            "torso_pitch_rate_std": 1.40,
+            "waist_pitch_rate_std": 1.20,
+            "rate_weight": 0.20,
+            "start_step": 0,
+            "warmup_steps": 0,
+            "start_scale": 1.0,
+        },
+    )
     prestrike_station_progress = RewTerm(
         func=mdp.prestrike_station_progress,
         weight=0.0,
@@ -965,10 +1356,21 @@ class RewardsCfg:
             "speed_scale": 0.35,
             "arrival_radius": 0.12,
             "stop_window_s": 0.10,
+            "include_no_command_ready": False,
             "start_step": 0,
             "warmup_steps": 0,
             "start_scale": 1.0,
         },
+    )
+    station_relocation_arrival_bonus = RewTerm(
+        func=mdp.station_relocation_arrival_bonus,
+        weight=0.0,
+        params={"command_name": "racket_target"},
+    )
+    station_relocation_settle_bonus = RewTerm(
+        func=mdp.station_relocation_settle_bonus,
+        weight=0.0,
+        params={"command_name": "racket_target"},
     )
     lower_body_support = RewTerm(
         func=mdp.lower_body_support,
@@ -1153,6 +1555,14 @@ class TerminationsCfg:
             "command_name": "racket_target",
             "enabled": False,
             "start_step": 0,
+        },
+    )
+    single_cycle_curriculum_timeout = DoneTerm(
+        func=mdp.single_cycle_curriculum_timeout,
+        time_out=True,
+        params={
+            "command_name": "racket_target",
+            "enabled": False,
         },
     )
 

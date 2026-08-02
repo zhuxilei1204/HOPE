@@ -1,0 +1,18 @@
+defaults:
+  - HOPEPingPongClosedLoopV3ScratchReadyPotentialV5MultiSkill114
+  - _self_
+
+name: HOPEPingPongClosedLoopV3ScratchSafetyBootstrapV6AMultiSkill114
+
+# V6A is the from-scratch safety/bootstrap reference. It preserves the 114-D
+# actor contract, all five clips, independent ball routes, and physical outcome
+# rewards. Only early READY coverage and strike-health credit assignment change.
+overrides:
+  commands.racket_target.healthy_stage1_ready_hold_prob: 0.45
+
+  # Tighten dense strike rewards once targeted attempts have actually been
+  # discovered, even while the global safety-gated curriculum remains at zero.
+  commands.racket_target.impact_health_floor_progress_source: targeted_attempt
+  commands.racket_target.impact_health_floor_targeted_attempt_threshold: 0.05
+
+  rewards.no_command_ready_progress.weight: 3.0

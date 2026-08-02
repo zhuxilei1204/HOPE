@@ -1,0 +1,15 @@
+defaults:
+  - HOPEPingPongClosedLoopV3ScratchPhaseCurriculumC7CommonMultiSkill114
+  - _self_
+
+name: HOPEPingPongClosedLoopV3ScratchPhaseEscrowC7BMultiSkill114
+
+# C7B treatment: immediate contact/alignment terms remain only as discovery
+# signals. The large tiered value is released after the same return recovers to
+# a reusable READY state.
+overrides:
+  rewards.health_gated_soft_ball_contact.weight: 0.8
+  rewards.exact_impact_planner_task_space_alignment.weight: 0.8
+  rewards.physical_outcome.weight: 0.4
+  rewards.cycle_v2_ready_success_bonus.weight: 16.0
+  rewards.cycle_v2_streak_bonus.weight: 3.0

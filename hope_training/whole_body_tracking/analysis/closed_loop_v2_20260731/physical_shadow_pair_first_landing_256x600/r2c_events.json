@@ -1,0 +1,228 @@
+{
+  "analytic_eval": {
+    "analytic_success_rate": 0.0,
+    "success_rate": 0.45776566757493187,
+    "task_contact_rate": 0.4673024523160763,
+    "task_net_cross_rate": 0.46321525885558584,
+    "task_opponent_bounce_rate": 0.45776566757493187
+  },
+  "contact_metric_means": {
+    "contact_face_radial_error": 0.06645556396779945,
+    "contact_outgoing_velocity_error": 1.981803838623638,
+    "contact_planner_normal_error_deg": 9.810734266230327,
+    "contact_planner_position_error": 0.06552188217495603,
+    "contact_planner_velocity_direction_error_deg": 17.87414402996368,
+    "contact_planner_velocity_error": 0.622280314817267,
+    "contact_time_to_strike": -0.01883775905027228,
+    "contact_true_target_error": 0.046763667182829996
+  },
+  "contact_metric_quantiles": {
+    "contact_face_radial_error": {
+      "p50": 0.0684627965092659,
+      "p90": 0.10026833415031433
+    },
+    "contact_outgoing_velocity_error": {
+      "p50": 1.9170868396759033,
+      "p90": 2.8084306716918945
+    },
+    "contact_planner_normal_error_deg": {
+      "p50": 8.031453132629395,
+      "p90": 18.682680130004883
+    },
+    "contact_planner_position_error": {
+      "p50": 0.06380075216293335,
+      "p90": 0.10105562955141068
+    },
+    "contact_planner_velocity_direction_error_deg": {
+      "p50": 16.293899536132812,
+      "p90": 27.13636589050293
+    },
+    "contact_planner_velocity_error": {
+      "p50": 0.5599516034126282,
+      "p90": 0.960058331489563
+    },
+    "contact_time_to_strike": {
+      "p50": -0.019999999552965164,
+      "p90": 0.015999754890799522
+    },
+    "contact_true_target_error": {
+      "p50": 0.04466491937637329,
+      "p90": 0.08235933631658554
+    }
+  },
+  "contact_sample_count": 413,
+  "duplicate_event_counts": {
+    "contact": 0,
+    "incoming_bounce": 0,
+    "net_cross": 0,
+    "opponent_bounce": 0,
+    "outgoing_landing": 0
+  },
+  "evaluation_seed": 20260731,
+  "event_counts": {
+    "abort": 0,
+    "contact": 413,
+    "incoming_bounce": 668,
+    "incoming_net_collision": 1,
+    "landing_long": 0,
+    "landing_no_net": 360,
+    "landing_short": 358,
+    "landing_side": 9,
+    "net_cross": 42,
+    "opponent_bounce": 34,
+    "outgoing_landing": 402,
+    "reset_abort": 0,
+    "route_invalid": 49,
+    "route_unalignable": 122,
+    "serve": 700,
+    "timeout": 217
+  },
+  "event_order_violations": {
+    "bounce_without_serve": 0,
+    "contact_without_bounce": 0,
+    "landing_without_contact": 0,
+    "net_without_contact": 0,
+    "opponent_bounce_without_net": 0
+  },
+  "event_rates_per_serve": {
+    "abort": 0.0,
+    "contact": 0.59,
+    "incoming_bounce": 0.9542857142857143,
+    "incoming_net_collision": 0.0014285714285714286,
+    "landing_long": 0.0,
+    "landing_no_net": 0.5142857142857142,
+    "landing_short": 0.5114285714285715,
+    "landing_side": 0.012857142857142857,
+    "net_cross": 0.06,
+    "opponent_bounce": 0.04857142857142857,
+    "outgoing_landing": 0.5742857142857143,
+    "reset_abort": 0.0,
+    "timeout": 0.31
+  },
+  "landing_metric_means": {
+    "landing_target_error": 0.9970987044756685,
+    "landing_target_x_error": -0.8581907357742538,
+    "landing_target_y_error": -0.0802189366734443
+  },
+  "landing_metric_quantiles": {
+    "landing_target_error": {
+      "p10": 0.5461127758026123,
+      "p50": 0.9721370935440063,
+      "p90": 1.457985281944275
+    },
+    "landing_target_x_error": {
+      "p10": -1.2961995601654053,
+      "p50": -0.8360071182250977,
+      "p90": -0.4414789378643036
+    },
+    "landing_target_y_error": {
+      "p10": -0.8980227708816528,
+      "p50": 0.04573345184326172,
+      "p90": 0.4699142277240753
+    }
+  },
+  "landing_sample_count": 402,
+  "mean_abs_launch_timing_error_s": 0.00505979265485491,
+  "num_envs": 256,
+  "num_steps": 600,
+  "physical_contact_recovery": {
+    "counts": {
+      "attempts": 413,
+      "failure": 15,
+      "interrupted_by_next_contact": 0,
+      "reset_failure": 0,
+      "resolved": 383,
+      "success": 368,
+      "success_with_net_cross": 38,
+      "success_with_opponent_bounce": 31
+    },
+    "deadline_s": 1.1,
+    "pending_at_eval_end": 30,
+    "rates_per_resolved": {
+      "failure": 0.0391644908616188,
+      "reset_failure": 0.0,
+      "success": 0.9608355091383812,
+      "success_with_net_cross": 0.09921671018276762,
+      "success_with_opponent_bounce": 0.08093994778067885
+    },
+    "required_consecutive_steps": 15,
+    "resolved_metric_summary": {
+      "minimum_feet_contact": {
+        "mean": 0.942558765411377,
+        "p50": 1.0,
+        "p90": 1.0
+      },
+      "peak_base_ang_vel": {
+        "mean": 0.879163920879364,
+        "p50": 0.7826211452484131,
+        "p90": 1.0278738737106323
+      },
+      "peak_base_tilt": {
+        "mean": 0.08474070578813553,
+        "p50": 0.07876734435558319,
+        "p90": 0.10636760294437408
+      },
+      "peak_com_x": {
+        "mean": 0.03517995402216911,
+        "p50": 0.031875282526016235,
+        "p90": 0.05718081817030907
+      },
+      "peak_com_y": {
+        "mean": 0.02233152464032173,
+        "p50": 0.020754897966980934,
+        "p90": 0.03403046354651451
+      },
+      "peak_height_error": {
+        "mean": 0.012807524763047695,
+        "p50": 0.012050151824951172,
+        "p90": 0.0174420103430748
+      },
+      "peak_station_error": {
+        "mean": 0.06049975007772446,
+        "p50": 0.05307619646191597,
+        "p90": 0.10126223415136337
+      },
+      "peak_torso_ang_vel": {
+        "mean": 0.6757234334945679,
+        "p50": 0.6436166167259216,
+        "p90": 0.8376574516296387
+      }
+    }
+  },
+  "policy_reset_count": 0,
+  "resolved_cycles": {
+    "active_at_eval_end": 80,
+    "counts": {
+      "contact": 402,
+      "contact_no_net": 360,
+      "landing_long": 0,
+      "landing_no_net": 360,
+      "landing_short": 358,
+      "landing_side": 9,
+      "net_cross": 42,
+      "net_no_opponent_bounce": 8,
+      "no_contact": 218,
+      "opponent_bounce": 34,
+      "total": 620
+    },
+    "rates": {
+      "contact": 0.6483870967741936,
+      "contact_no_net": 0.5806451612903226,
+      "landing_long": 0.0,
+      "landing_no_net": 0.5806451612903226,
+      "landing_short": 0.5774193548387097,
+      "landing_side": 0.014516129032258065,
+      "net_cross": 0.06774193548387097,
+      "net_no_opponent_bounce": 0.012903225806451613,
+      "no_contact": 0.35161290322580646,
+      "opponent_bounce": 0.054838709677419356
+    }
+  },
+  "route_generation": {
+    "attempts": 871,
+    "invalid": 49,
+    "served": 700,
+    "served_rate": 0.8036739380022963,
+    "unalignable": 122
+  }
+}

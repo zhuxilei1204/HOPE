@@ -1,0 +1,40 @@
+# Deployment-aligned dynamic-station continuation from R2D model_24492.
+#
+# The actor receives the same station lifecycle intended for hardware:
+# planner-derived station during pre-strike/impact, fixed ready station during
+# recovery and no-command. X stays fixed and the forehand lateral shift is
+# capped at 10 cm. A small support-foot slip penalty prevents Isaac foot sliding
+# from masquerading as learned stepping.
+
+defaults:
+  - HOPEPingPongM23993ForehandDeferredHitAnchorR2D
+  - _self_
+
+name: HOPEPingPongM24492DeployStationStepV1
+
+overrides:
+  commands.racket_target.station_mode: dynamic_from_motion
+  commands.racket_target.dynamic_station_xy_clip: [[0.0, 0.0], [-0.10, 0.10]]
+  commands.racket_target.dynamic_station_blend: 1.0
+
+  # Keep all validated racket/contact/net/recovery objectives inherited from
+  # R2D, and only make the body command more informative before impact.
+  rewards.pre_strike_station.weight: 1.20
+  rewards.pre_strike_station.params:
+    command_name: racket_target
+    station_std: 0.08
+    stop_window_s: 0.10
+  rewards.prestrike_station_progress.weight: 0.25
+  rewards.prestrike_station_progress.params:
+    command_name: racket_target
+    speed_scale: 0.20
+    arrival_radius: 0.04
+    stop_window_s: 0.10
+    include_no_command_ready: false
+    start_step: 0
+    warmup_steps: 600
+    start_scale: 0.30
+
+  # This stays weaker than the station objective. It removes the high-slip
+  # shortcut while leaving hip, knee, and ankle corrections available.
+  rewards.feet_contact_slip.weight: -0.06

@@ -1,0 +1,15 @@
+# Preserve the validated model_23993 collision policy while allowing small
+# stage-1 recovery updates. Physical eval, not Isaac return, decides whether
+# this branch is usable.
+
+defaults:
+  - HOPEPingPongM23993ForehandDeferredHitAbilityGuardR2CStage1
+  - _self_
+
+name: HOPEPingPongM23993ForehandDeferredHitAnchorR2D
+
+overrides:
+  # Freeze level 1 for this short trust-region experiment. The unanchored
+  # continuation regressed in MuJoCo before and after its level-2 transition.
+  commands.racket_target.post_contact_ready_curriculum_min_resolved_events:
+    [16384, 1000000000, 1000000000, 1000000000, 1000000000, 1000000000]

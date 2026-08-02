@@ -76,6 +76,16 @@ class ClampedJointPositionAction(JointPositionAction):
         self._applied_raw_actions = torch.zeros_like(self._raw_actions)
         self._effective_raw_actions = torch.zeros_like(self._raw_actions)
         self._feedback_actions = torch.zeros_like(self._raw_actions)
+        self._unclamped_processed_actions = torch.zeros_like(self._processed_actions)
+        self._q_des_velocity = torch.zeros_like(self._processed_actions)
+        self._q_des_acceleration = torch.zeros_like(self._processed_actions)
+        self._previous_q_des_velocity = torch.zeros_like(self._processed_actions)
+        self._previous_processed_actions = self._asset.data.default_joint_pos[
+            :, _action_joint_ids_in_column_order(self)
+        ].clone()
+        self._step_dt = float(env.step_dt)
+        if self._step_dt <= 0.0:
+            raise RuntimeError(f"Environment step_dt must be positive, got {self._step_dt}")
 
         # Explicit per-joint clamp from the shared action-adapter config (exact joint names).
         # When absent, process_actions falls back to the articulation soft joint limits.
@@ -102,6 +112,53 @@ class ClampedJointPositionAction(JointPositionAction):
             self._clamp_lower = lo.unsqueeze(0)
             self._clamp_upper = hi.unsqueeze(0)
 
+        self._operational_lower: torch.Tensor | None = None
+        self._operational_upper: torch.Tensor | None = None
+        margin_cfg = self.cfg.operational_margin_fraction
+        if margin_cfg is not None:
+            if self._clamp_lower is None or self._clamp_upper is None:
+                raise RuntimeError(
+                    "operational_margin_fraction requires an explicit position_clamp"
+                )
+            action_joint_names = list(self._joint_names)
+            missing = [name for name in action_joint_names if name not in margin_cfg]
+            if missing:
+                raise RuntimeError(
+                    "operational_margin_fraction is missing joints resolved by the "
+                    f"action term: {missing}"
+                )
+            margin = torch.tensor(
+                [float(margin_cfg[name]) for name in action_joint_names],
+                dtype=torch.float32,
+                device=self.device,
+            ).unsqueeze(0)
+            if torch.any((margin < 0.0) | (margin >= 0.5)):
+                raise RuntimeError(
+                    "operational margin fractions must lie in [0, 0.5)"
+                )
+            span = self._clamp_upper - self._clamp_lower
+            self._operational_lower = self._clamp_lower + margin * span
+            self._operational_upper = self._clamp_upper - margin * span
+            default_q = self._asset.data.default_joint_pos[
+                :, _action_joint_ids_in_column_order(self)
+            ]
+            if torch.any(
+                (default_q < self._operational_lower)
+                | (default_q > self._operational_upper)
+            ):
+                raise RuntimeError(
+                    "default_q must lie inside every configured operational range"
+                )
+
+        self._q_des_velocity_limit = self._resolve_positive_joint_map(
+            self.cfg.q_des_velocity_limit,
+            "q_des_velocity_limit",
+        )
+        self._q_des_acceleration_limit = self._resolve_positive_joint_map(
+            self.cfg.q_des_acceleration_limit,
+            "q_des_acceleration_limit",
+        )
+
         passive_names = tuple(self.cfg.passive_joint_names)
         passive_cols = resolve_action_columns_by_joint_name(self, passive_names)
         action_joint_ids = _action_joint_ids_in_column_order(self)
@@ -111,9 +168,30 @@ class ClampedJointPositionAction(JointPositionAction):
             [action_joint_ids[c] for c in passive_cols], dtype=torch.long, device=self.device
         )
 
+    def _resolve_positive_joint_map(
+        self,
+        values: dict[str, float] | None,
+        field: str,
+    ) -> torch.Tensor | None:
+        if values is None:
+            return None
+        action_joint_names = list(self._joint_names)
+        missing = [name for name in action_joint_names if name not in values]
+        if missing:
+            raise RuntimeError(f"{field} is missing joints: {missing}")
+        tensor = torch.tensor(
+            [float(values[name]) for name in action_joint_names],
+            dtype=torch.float32,
+            device=self.device,
+        ).unsqueeze(0)
+        if torch.any(tensor <= 0.0):
+            raise RuntimeError(f"{field} must be positive for every joint")
+        return tensor
+
     def process_actions(self, actions: torch.Tensor):
         super().process_actions(actions)
         self._applied_raw_actions.copy_(self._raw_actions)
+        self._unclamped_processed_actions.copy_(self._processed_actions)
         if self._clamp_lower is not None:
             # Shared-adapter clamp: identical bounds to the deploy ActionAdapter.
             self._processed_actions = torch.clamp(
@@ -127,6 +205,9 @@ class ClampedJointPositionAction(JointPositionAction):
         if self._passive_action_cols.numel() > 0:
             default_q = self._asset.data.default_joint_pos.index_select(-1, self._passive_joint_ids)
             self._processed_actions.index_copy_(-1, self._passive_action_cols, default_q)
+            self._unclamped_processed_actions.index_copy_(
+                -1, self._passive_action_cols, default_q
+            )
             self._applied_raw_actions.index_fill_(-1, self._passive_action_cols, 0.0)
         scale = torch.as_tensor(self._scale, device=self.device, dtype=self._processed_actions.dtype)
         offset = torch.as_tensor(self._offset, device=self.device, dtype=self._processed_actions.dtype)
@@ -139,6 +220,16 @@ class ClampedJointPositionAction(JointPositionAction):
             self._feedback_actions.copy_(self._effective_raw_actions)
         else:
             self._feedback_actions.copy_(self._applied_raw_actions)
+        self._q_des_velocity.copy_(
+            (self._processed_actions - self._previous_processed_actions)
+            / self._step_dt
+        )
+        self._q_des_acceleration.copy_(
+            (self._q_des_velocity - self._previous_q_des_velocity)
+            / self._step_dt
+        )
+        self._previous_processed_actions.copy_(self._processed_actions)
+        self._previous_q_des_velocity.copy_(self._q_des_velocity)
 
     def reset(self, env_ids=None):
         super().reset(env_ids)
@@ -146,10 +237,29 @@ class ClampedJointPositionAction(JointPositionAction):
             self._applied_raw_actions.zero_()
             self._effective_raw_actions.zero_()
             self._feedback_actions.zero_()
+            self._unclamped_processed_actions.zero_()
+            self._q_des_velocity.zero_()
+            self._q_des_acceleration.zero_()
+            self._previous_q_des_velocity.zero_()
+            self._previous_processed_actions.copy_(
+                self._asset.data.default_joint_pos[
+                    :, _action_joint_ids_in_column_order(self)
+                ]
+            )
         else:
             self._applied_raw_actions[env_ids] = 0.0
             self._effective_raw_actions[env_ids] = 0.0
             self._feedback_actions[env_ids] = 0.0
+            self._unclamped_processed_actions[env_ids] = 0.0
+            self._q_des_velocity[env_ids] = 0.0
+            self._q_des_acceleration[env_ids] = 0.0
+            self._previous_q_des_velocity[env_ids] = 0.0
+            action_joint_ids = _action_joint_ids_in_column_order(self)
+            self._previous_processed_actions[env_ids] = (
+                self._asset.data.default_joint_pos[
+                    env_ids
+                ][:, action_joint_ids]
+            )
 
     @property
     def applied_raw_actions(self) -> torch.Tensor:
@@ -170,6 +280,49 @@ class ClampedJointPositionAction(JointPositionAction):
     def overflow_actions(self) -> torch.Tensor:
         """Raw residual erased by the joint-position clamp."""
         return self._applied_raw_actions - self._effective_raw_actions
+
+    @property
+    def unclamped_processed_actions(self) -> torch.Tensor:
+        """Joint targets before the shared mechanical-position clamp."""
+        return self._unclamped_processed_actions
+
+    @property
+    def operational_excess(self) -> torch.Tensor:
+        """Raw q-des excess outside the configured operational range, normalized by hard span."""
+        if self._operational_lower is None or self._operational_upper is None:
+            return torch.zeros_like(self._processed_actions)
+        if self._clamp_lower is None or self._clamp_upper is None:
+            raise RuntimeError("Operational bounds require explicit mechanical clamps")
+        span = (self._clamp_upper - self._clamp_lower).clamp_min(1.0e-6)
+        lower = torch.relu(self._operational_lower - self._unclamped_processed_actions)
+        upper = torch.relu(self._unclamped_processed_actions - self._operational_upper)
+        return (lower + upper) / span
+
+    @property
+    def q_des_velocity(self) -> torch.Tensor:
+        return self._q_des_velocity
+
+    @property
+    def q_des_acceleration(self) -> torch.Tensor:
+        return self._q_des_acceleration
+
+    @property
+    def q_des_velocity_excess_ratio(self) -> torch.Tensor:
+        if self._q_des_velocity_limit is None:
+            return torch.zeros_like(self._q_des_velocity)
+        return torch.relu(
+            torch.abs(self._q_des_velocity) / self._q_des_velocity_limit - 1.0
+        )
+
+    @property
+    def q_des_acceleration_excess_ratio(self) -> torch.Tensor:
+        if self._q_des_acceleration_limit is None:
+            return torch.zeros_like(self._q_des_acceleration)
+        return torch.relu(
+            torch.abs(self._q_des_acceleration)
+            / self._q_des_acceleration_limit
+            - 1.0
+        )
 
     @property
     def feedback_mode(self) -> str:
@@ -205,3 +358,12 @@ class ClampedJointPositionActionCfg(JointPositionActionCfg):
     exactly the same bounds as the deploy ActionAdapter. ``None`` falls back to the articulation's
     soft joint limits.
     """
+
+    operational_margin_fraction: dict[str, float] | None = None
+    """Per-joint soft margin as a fraction of the mechanical position span."""
+
+    q_des_velocity_limit: dict[str, float] | None = None
+    """Optional per-joint target slew limits in rad/s; diagnostics and rewards only."""
+
+    q_des_acceleration_limit: dict[str, float] | None = None
+    """Optional per-joint target acceleration limits in rad/s^2; diagnostics and rewards only."""

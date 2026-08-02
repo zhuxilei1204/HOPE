@@ -1,0 +1,35 @@
+name: HOPEPingPongStage2PhysicalQualityA114
+gym_task: HOPE-PingPong-Stage2-Physical-AgibotA3-v0
+experiment_name: hope_pingpong_stage2_physical114
+actor_obs_contract: hope_pingpong_normal114
+
+defaults:
+  - /base/env_base@_here_
+  - /base/sim_base@_here_
+  - /base/randomization_base@_here_
+  - _self_
+
+motion_manifest: hope_training/motions/stage1_core_two_motion_20260801/manifest.tsv
+
+env:
+  num_envs: 256
+  env_spacing: 6.0
+  episode_length_s: 12.0
+
+motion:
+  wrap_teleport: false
+
+actor_obs:
+  racket_target_normal_w: true
+  stability_feedback: false
+
+runtime:
+  prune_zero_weight_rewards: true
+
+domain_rand:
+  link_mass_range: [0.97, 1.03]
+  pd_gain_range: [0.97, 1.03]
+
+overrides:
+  commands.racket_target.impact_inverse_command_start_blend: 0.10
+  rewards.physical_outcome_events.params.impact_inverse_quality_floor: 0.10

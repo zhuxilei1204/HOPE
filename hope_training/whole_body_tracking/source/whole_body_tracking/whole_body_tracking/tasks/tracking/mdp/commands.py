@@ -50,6 +50,12 @@ from isaaclab.utils.math import (
     yaw_quat,
 )
 
+from whole_body_tracking.tasks.tracking.mdp.ready_recovery import (
+    motion_lifecycle_fractions,
+)
+from whole_body_tracking.tasks.tracking.mdp.command_metrics import (
+    batched_metric_means_and_clear,
+)
 from whole_body_tracking.utils.action_adapter_config import load_joint_order, resolve_joint_order_mapping
 
 if TYPE_CHECKING:
@@ -186,6 +192,15 @@ class MotionCommand(CommandTerm):
         # Pre-swing hold: while hold_counter > 0 the reference clock is frozen at the swing's first
         # frame ("waiting for the ball"); ``in_hold`` is exposed for rewards.
         self.hold_counter = torch.zeros(self.num_envs, dtype=torch.long, device=self.device)
+        # A true no-ball regression episode remains in READY for its complete lifetime. This is
+        # sampled only on an environment reset, never on an intra-episode motion wrap.
+        self.stand_episode = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
+        # Distinguish a deploy-entry default stand from RSI/motion starts and intra-episode wraps.
+        # The racket command uses this flag to expose the real no-command READY observation during
+        # the initial hold instead of leaking the upcoming strike command.
+        self.default_stand_reset = torch.zeros(
+            self.num_envs, dtype=torch.bool, device=self.device
+        )
         self._resampling_from_wrap = False
 
         # Anchor-re-anchored reference body targets (recomputed each step in _update_command).
@@ -196,6 +211,21 @@ class MotionCommand(CommandTerm):
         # A small set of logging metrics (the training runner logs success_rate only, but the base
         # CommandTerm expects this dict to exist and be populated each step).
         self.motion_start_reset = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
+        self.motion_start_prestrike_reset = torch.zeros(
+            self.num_envs, dtype=torch.bool, device=self.device
+        )
+        self.motion_start_recovery_reset = torch.zeros(
+            self.num_envs, dtype=torch.bool, device=self.device
+        )
+        self.motion_start_rsi_reset = torch.zeros(
+            self.num_envs, dtype=torch.bool, device=self.device
+        )
+        # True only for episode resets selected by the racket command's
+        # ability-driven one-swing bootstrap curriculum.  It persists across
+        # the first intra-episode wrap and is replaced only on a true reset.
+        self.single_cycle_reset = torch.zeros(
+            self.num_envs, dtype=torch.bool, device=self.device
+        )
         for key in (
             "error_joint_pos",
             "error_joint_vel",
@@ -204,9 +234,19 @@ class MotionCommand(CommandTerm):
             "motion_phase",
             "in_hold",
             "motion_start_warmup_prob",
+            "motion_start_lifecycle_progress",
+            "motion_start_effective_prestrike_fraction",
+            "motion_start_effective_recovery_fraction",
+            "motion_start_effective_rsi_fraction",
             "motion_start_reset",
+            "motion_start_prestrike_reset",
+            "motion_start_recovery_reset",
+            "motion_start_rsi_reset",
+            "single_cycle_reset",
             "motion_clip_id",
             "motion_supplemental_clip",
+            "stand_episode",
+            "default_stand_reset",
         ):
             self.metrics[key] = torch.zeros(self.num_envs, device=self.device)
         for group_name in self._diagnostic_body_groups:
@@ -219,9 +259,20 @@ class MotionCommand(CommandTerm):
                 "robot_body_lin_speed",
             ):
                 self.metrics[f"{prefix}_{group_name}"] = torch.zeros(self.num_envs, device=self.device)
+
         for group_name in self._diagnostic_joint_groups:
             for prefix in ("error_joint_pos", "error_joint_vel", "reference_joint_speed"):
                 self.metrics[f"{prefix}_{group_name}"] = torch.zeros(self.num_envs, device=self.device)
+
+    def reset(self, env_ids: Sequence[int] | None = None) -> dict[str, float]:
+        if not bool(self.cfg.batched_metric_reset_logging):
+            return super().reset(env_ids=env_ids)
+        if env_ids is None:
+            env_ids = slice(None)
+        extras = batched_metric_means_and_clear(self.metrics, env_ids)
+        self.command_counter[env_ids] = 0
+        self._resample(env_ids)
+        return extras
 
     # --- reference (target) state, hold-aware ------------------------------------------------- #
     @property
@@ -361,8 +412,35 @@ class MotionCommand(CommandTerm):
         self.metrics["motion_start_warmup_prob"] = torch.full_like(
             self.metrics["motion_start_warmup_prob"], self._motion_start_warmup_prob()
         )
+        prestrike_fraction, recovery_fraction, rsi_fraction, lifecycle_progress = (
+            self._motion_start_lifecycle_fractions()
+        )
+        self.metrics["motion_start_lifecycle_progress"] = torch.full_like(
+            self.metrics["motion_start_lifecycle_progress"], lifecycle_progress
+        )
+        self.metrics["motion_start_effective_prestrike_fraction"] = torch.full_like(
+            self.metrics["motion_start_effective_prestrike_fraction"],
+            prestrike_fraction,
+        )
+        self.metrics["motion_start_effective_recovery_fraction"] = torch.full_like(
+            self.metrics["motion_start_effective_recovery_fraction"],
+            recovery_fraction,
+        )
+        self.metrics["motion_start_effective_rsi_fraction"] = torch.full_like(
+            self.metrics["motion_start_effective_rsi_fraction"], rsi_fraction
+        )
         self.metrics["motion_start_reset"] = self.motion_start_reset.float()
+        self.metrics["motion_start_prestrike_reset"] = (
+            self.motion_start_prestrike_reset.float()
+        )
+        self.metrics["motion_start_recovery_reset"] = (
+            self.motion_start_recovery_reset.float()
+        )
+        self.metrics["motion_start_rsi_reset"] = self.motion_start_rsi_reset.float()
+        self.metrics["single_cycle_reset"] = self.single_cycle_reset.float()
         self.metrics["motion_clip_id"] = self.clip_id.float()
+        self.metrics["stand_episode"] = self.stand_episode.float()
+        self.metrics["default_stand_reset"] = self.default_stand_reset.float()
         core_count = int(self.cfg.core_clip_count)
         if core_count > 0:
             self.metrics["motion_supplemental_clip"] = (self.clip_id >= core_count).float()
@@ -388,6 +466,78 @@ class MotionCommand(CommandTerm):
             seg_len = self.motion.seg_len[new_clip]
             frac = sample_uniform(0.0, 1.0, (n,), device=self.device)
             self.time_steps[env_ids] = seg_start + (frac * (seg_len - 1).float()).long()
+
+    def _move_motion_start_to_prestrike(self, env_ids: torch.Tensor) -> None:
+        """Move seeded scratch resets to a short, audited pre-impact horizon."""
+        if len(env_ids) == 0:
+            return
+        if not bool(self.cfg.motion_start_warmup_prestrike_enabled):
+            return
+        phases = tuple(
+            float(value) for value in self.cfg.motion_start_warmup_phase_per_clip
+        )
+        if not phases:
+            return
+        if len(phases) != self.motion.num_segments:
+            raise ValueError(
+                "motion_start_warmup_phase_per_clip length must match motion clips: "
+                f"{len(phases)} != {self.motion.num_segments}"
+            )
+        lo, hi = (
+            int(value)
+            for value in self.cfg.motion_start_warmup_prestrike_steps_range
+        )
+        if lo < 1 or hi < lo:
+            raise ValueError(
+                "motion_start_warmup_prestrike_steps_range must satisfy 1 <= lo <= hi"
+            )
+        clip = self.clip_id[env_ids]
+        seg_start = self.motion.seg_start[clip]
+        seg_len = self.motion.seg_len[clip].clamp(min=2)
+        phase = torch.tensor(
+            phases, dtype=torch.float32, device=self.device
+        )[clip]
+        strike_offset = (phase * (seg_len - 1).float()).round().long()
+        lead = torch.randint(lo, hi + 1, (len(env_ids),), device=self.device)
+        start_offset = torch.clamp(strike_offset - lead, min=0)
+        self.time_steps[env_ids] = seg_start + start_offset
+        self.motion_start_prestrike_reset[env_ids] = True
+
+    def _move_motion_start_to_recovery(self, env_ids: torch.Tensor) -> None:
+        """Move seeded scratch resets to an audited post-impact recovery frame."""
+        if len(env_ids) == 0:
+            return
+        phases = tuple(
+            float(value) for value in self.cfg.motion_start_warmup_phase_per_clip
+        )
+        if not phases:
+            raise ValueError(
+                "recovery motion starts require motion_start_warmup_phase_per_clip"
+            )
+        if len(phases) != self.motion.num_segments:
+            raise ValueError(
+                "motion_start_warmup_phase_per_clip length must match motion clips: "
+                f"{len(phases)} != {self.motion.num_segments}"
+            )
+        lo, hi = (
+            int(value)
+            for value in self.cfg.motion_start_warmup_recovery_steps_range
+        )
+        if lo < 1 or hi < lo:
+            raise ValueError(
+                "motion_start_warmup_recovery_steps_range must satisfy 1 <= lo <= hi"
+            )
+        clip = self.clip_id[env_ids]
+        seg_start = self.motion.seg_start[clip]
+        seg_len = self.motion.seg_len[clip].clamp(min=2)
+        phase = torch.tensor(
+            phases, dtype=torch.float32, device=self.device
+        )[clip]
+        strike_offset = (phase * (seg_len - 1).float()).round().long()
+        lag = torch.randint(lo, hi + 1, (len(env_ids),), device=self.device)
+        start_offset = torch.minimum(strike_offset + lag, seg_len - 1)
+        self.time_steps[env_ids] = seg_start + start_offset
+        self.motion_start_recovery_reset[env_ids] = True
 
     @staticmethod
     def _linear_progress(value: float, lo: float, hi: float) -> float:
@@ -428,6 +578,68 @@ class MotionCommand(CommandTerm):
         progress = min(contact_progress, recovery_progress)
         return min_prob + (start_prob - min_prob) * (1.0 - progress)
 
+    def _single_cycle_bootstrap_probability(self) -> float:
+        """Read the cached continuous-pool curriculum probability."""
+        try:
+            command = self._env.command_manager.get_term(
+                str(self.cfg.motion_start_warmup_command_name)
+            )
+            probability_fn = getattr(
+                command, "single_cycle_curriculum_probability", None
+            )
+            if callable(probability_fn):
+                return min(max(float(probability_fn()), 0.0), 1.0)
+        except Exception:
+            pass
+        return 0.0
+
+    def _motion_start_lifecycle_fractions(
+        self,
+    ) -> tuple[float, float, float, float]:
+        """Return ability-gated phase probabilities within a motion reset."""
+        targeted_attempt = 0.0
+        try:
+            command = self._env.command_manager.get_term(
+                str(self.cfg.motion_start_warmup_command_name)
+            )
+            targeted_attempt_t = getattr(
+                command, "_ability_targeted_attempt_ema", None
+            )
+            if targeted_attempt_t is not None:
+                targeted_attempt = float(targeted_attempt_t.item())
+        except Exception:
+            pass
+
+        recovery_enabled = bool(self.cfg.motion_start_warmup_recovery_enabled)
+        recovery_start = (
+            float(self.cfg.motion_start_warmup_recovery_fraction)
+            if recovery_enabled
+            else 0.0
+        )
+        recovery_end = (
+            float(self.cfg.motion_start_warmup_lifecycle_recovery_fraction_end)
+            if recovery_enabled
+            else 0.0
+        )
+        return motion_lifecycle_fractions(
+            enabled=bool(self.cfg.motion_start_warmup_lifecycle_curriculum_enabled),
+            targeted_attempt_ema=targeted_attempt,
+            targeted_attempt_low=float(
+                self.cfg.motion_start_warmup_lifecycle_targeted_attempt_low
+            ),
+            targeted_attempt_high=float(
+                self.cfg.motion_start_warmup_lifecycle_targeted_attempt_high
+            ),
+            prestrike_start=float(
+                self.cfg.motion_start_warmup_prestrike_fraction
+            ),
+            prestrike_end=float(
+                self.cfg.motion_start_warmup_lifecycle_prestrike_fraction_end
+            ),
+            recovery_start=recovery_start,
+            recovery_end=recovery_end,
+        )
+
     def _write_motion_state_to_sim(self, env_ids: torch.Tensor, randomize: bool) -> None:
         root_pos = self.body_pos_w[:, 0].clone()
         root_ori = self.body_quat_w[:, 0].clone()
@@ -464,12 +676,71 @@ class MotionCommand(CommandTerm):
             env_ids=env_ids,
         )
 
+    def _write_default_stand_state_to_sim(self, env_ids: torch.Tensor) -> None:
+        """Reset into deploy-ready stand with optional active-balance perturbations."""
+        if len(env_ids) == 0:
+            return
+
+        root_state = self.robot.data.default_root_state[env_ids].clone()
+        root_state[:, :3] += self._env.scene.env_origins[env_ids]
+
+        pose_ranges = torch.tensor(
+            [
+                self.cfg.stand_start_pose_range.get(key, (0.0, 0.0))
+                for key in ("x", "y", "z", "roll", "pitch", "yaw")
+            ],
+            dtype=root_state.dtype,
+            device=self.device,
+        )
+        pose_noise = sample_uniform(
+            pose_ranges[:, 0], pose_ranges[:, 1], (len(env_ids), 6), device=self.device
+        )
+        root_state[:, :3] += pose_noise[:, :3]
+        root_state[:, 3:7] = quat_mul(
+            quat_from_euler_xyz(pose_noise[:, 3], pose_noise[:, 4], pose_noise[:, 5]),
+            root_state[:, 3:7],
+        )
+
+        velocity_ranges = torch.tensor(
+            [
+                self.cfg.stand_start_velocity_range.get(key, (0.0, 0.0))
+                for key in ("x", "y", "z", "roll", "pitch", "yaw")
+            ],
+            dtype=root_state.dtype,
+            device=self.device,
+        )
+        root_state[:, 7:] = sample_uniform(
+            velocity_ranges[:, 0],
+            velocity_ranges[:, 1],
+            (len(env_ids), 6),
+            device=self.device,
+        )
+        self.robot.write_root_state_to_sim(root_state, env_ids=env_ids)
+
+        joint_pos = self.robot.data.default_joint_pos[env_ids].clone()
+        joint_pos += sample_uniform(
+            *self.cfg.stand_start_joint_position_range,
+            joint_pos.shape,
+            joint_pos.device,
+        )
+        joint_limits = self.robot.data.soft_joint_pos_limits[env_ids]
+        joint_pos = torch.clamp(joint_pos, joint_limits[:, :, 0], joint_limits[:, :, 1])
+        self.robot.write_joint_state_to_sim(
+            joint_pos,
+            torch.zeros_like(self.robot.data.default_joint_vel[env_ids]),
+            env_ids=env_ids,
+        )
+
     def _resample_command(self, env_ids: Sequence[int]):
         if len(env_ids) == 0:
             return
         env_ids = torch.as_tensor(env_ids, dtype=torch.long, device=self.device)
         self.steps_since_resample[env_ids] = 0
         self.motion_start_reset[env_ids] = False
+        self.motion_start_prestrike_reset[env_ids] = False
+        self.motion_start_recovery_reset[env_ids] = False
+        self.motion_start_rsi_reset[env_ids] = False
+        self.default_stand_reset[env_ids] = False
 
         # Pre-swing hold (freeze the reference at the swing's first frame for U[lo, hi] control steps).
         lo, hi = self.cfg.hold_steps_range
@@ -481,6 +752,52 @@ class MotionCommand(CommandTerm):
             self._sample_clip_and_start(env_ids, at_segment_start=True)
             return
 
+        # This is a true environment reset.  Select the bootstrap population
+        # before the generic stand/RSI branches so these samples always begin
+        # from an audited pre-strike frame and contain one useful swing.
+        self.single_cycle_reset[env_ids] = False
+        single_cycle_probability = self._single_cycle_bootstrap_probability()
+        single_cycle_mask = torch.zeros(
+            len(env_ids), dtype=torch.bool, device=self.device
+        )
+        if single_cycle_probability > 0.0:
+            single_cycle_mask = (
+                torch.rand(len(env_ids), device=self.device)
+                < single_cycle_probability
+            )
+        single_cycle_ids = env_ids[single_cycle_mask]
+        if len(single_cycle_ids) > 0:
+            self.single_cycle_reset[single_cycle_ids] = True
+            self.stand_episode[single_cycle_ids] = False
+            self.hold_counter[single_cycle_ids] = 0
+            self.motion_start_reset[single_cycle_ids] = True
+            self._sample_clip_and_start(single_cycle_ids, at_segment_start=True)
+            self._move_motion_start_to_prestrike(single_cycle_ids)
+            self._write_motion_state_to_sim(single_cycle_ids, randomize=False)
+
+        env_ids = env_ids[~single_cycle_mask]
+        if len(env_ids) == 0:
+            return
+
+        # Dedicated no-ball episodes test active balance over a long deploy-style READY interval.
+        # They are distinct from ``stand_start_prob``, which only selects the reset state for an
+        # otherwise normal hitting episode.
+        stand_episode_prob = min(max(float(self.cfg.stand_episode_prob), 0.0), 1.0)
+        self.stand_episode[env_ids] = torch.rand(len(env_ids), device=self.device) < stand_episode_prob
+        stand_episode_ids = env_ids[self.stand_episode[env_ids]]
+        active_episode_ids = env_ids[~self.stand_episode[env_ids]]
+        if len(stand_episode_ids) > 0:
+            self._sample_clip_and_start(stand_episode_ids, at_segment_start=True)
+            self._write_default_stand_state_to_sim(stand_episode_ids)
+            self.default_stand_reset[stand_episode_ids] = True
+            self.hold_counter[stand_episode_ids] = max(
+                int(self.cfg.stand_episode_hold_steps),
+                int(self.cfg.stand_start_min_hold),
+            )
+        if len(active_episode_ids) == 0:
+            return
+        env_ids = active_episode_ids
+
         if bool(self.cfg.motion_start_warmup_enabled):
             prob = self._motion_start_warmup_prob()
             motion_start_mask = torch.rand(len(env_ids), device=self.device) < prob
@@ -489,24 +806,43 @@ class MotionCommand(CommandTerm):
 
             if len(stand_ids) > 0:
                 self._sample_clip_and_start(stand_ids, at_segment_start=True)
-                default_root = self.robot.data.default_root_state[stand_ids].clone()
-                default_root[:, :3] += self._env.scene.env_origins[stand_ids]
-                default_root[:, 7:] = 0.0
-                self.robot.write_root_state_to_sim(default_root, env_ids=stand_ids)
-                self.robot.write_joint_state_to_sim(
-                    self.robot.data.default_joint_pos[stand_ids],
-                    torch.zeros_like(self.robot.data.default_joint_vel[stand_ids]),
-                    env_ids=stand_ids,
-                )
+                self._write_default_stand_state_to_sim(stand_ids)
+                self.default_stand_reset[stand_ids] = True
                 self.hold_counter[stand_ids] = torch.clamp(
                     self.hold_counter[stand_ids], min=int(self.cfg.stand_start_min_hold)
                 )
 
             if len(motion_start_ids) > 0:
-                self._sample_clip_and_start(motion_start_ids, at_segment_start=True)
                 self.hold_counter[motion_start_ids] = 0
                 self.motion_start_reset[motion_start_ids] = True
-                self._write_motion_state_to_sim(motion_start_ids, randomize=False)
+                if bool(self.cfg.motion_start_warmup_prestrike_enabled):
+                    prestrike_fraction, recovery_fraction, _, _ = (
+                        self._motion_start_lifecycle_fractions()
+                    )
+                    draw = torch.rand(len(motion_start_ids), device=self.device)
+                    prestrike_mask = draw < prestrike_fraction
+                    recovery_mask = (
+                        (draw >= prestrike_fraction)
+                        & (draw < prestrike_fraction + recovery_fraction)
+                    )
+                    prestrike_ids = motion_start_ids[prestrike_mask]
+                    recovery_ids = motion_start_ids[recovery_mask]
+                    rsi_ids = motion_start_ids[~(prestrike_mask | recovery_mask)]
+                    if len(prestrike_ids) > 0:
+                        self._sample_clip_and_start(prestrike_ids, at_segment_start=True)
+                        self._move_motion_start_to_prestrike(prestrike_ids)
+                        self._write_motion_state_to_sim(prestrike_ids, randomize=False)
+                    if len(recovery_ids) > 0:
+                        self._sample_clip_and_start(recovery_ids, at_segment_start=True)
+                        self._move_motion_start_to_recovery(recovery_ids)
+                        self._write_motion_state_to_sim(recovery_ids, randomize=False)
+                    if len(rsi_ids) > 0:
+                        self._sample_clip_and_start(rsi_ids, at_segment_start=False)
+                        self.motion_start_rsi_reset[rsi_ids] = True
+                        self._write_motion_state_to_sim(rsi_ids, randomize=True)
+                else:
+                    self._sample_clip_and_start(motion_start_ids, at_segment_start=True)
+                    self._write_motion_state_to_sim(motion_start_ids, randomize=False)
             return
 
         # TRUE episode reset: DEFAULT STAND (deploy entry) or reference-state-init (RSI) onto the clip.
@@ -517,15 +853,8 @@ class MotionCommand(CommandTerm):
 
         if len(stand_ids) > 0:
             self._sample_clip_and_start(stand_ids, at_segment_start=True)
-            default_root = self.robot.data.default_root_state[stand_ids].clone()
-            default_root[:, :3] += self._env.scene.env_origins[stand_ids]
-            default_root[:, 7:] = 0.0  # zero linear/angular velocity
-            self.robot.write_root_state_to_sim(default_root, env_ids=stand_ids)
-            self.robot.write_joint_state_to_sim(
-                self.robot.data.default_joint_pos[stand_ids],
-                torch.zeros_like(self.robot.data.default_joint_vel[stand_ids]),
-                env_ids=stand_ids,
-            )
+            self._write_default_stand_state_to_sim(stand_ids)
+            self.default_stand_reset[stand_ids] = True
             # Give stand starts time to settle before the clip advances.
             self.hold_counter[stand_ids] = torch.clamp(
                 self.hold_counter[stand_ids], min=int(self.cfg.stand_start_min_hold)
@@ -550,6 +879,34 @@ class MotionCommand(CommandTerm):
 
         if self._multiseg:
             seg_end = self.motion.seg_start[self.clip_id] + self.motion.seg_len[self.clip_id]
+            poststrike_steps = int(self.cfg.single_cycle_poststrike_steps)
+            if poststrike_steps > 0 and bool(torch.any(self.single_cycle_reset)):
+                phases = tuple(
+                    float(value)
+                    for value in self.cfg.motion_start_warmup_phase_per_clip
+                )
+                if len(phases) != self.motion.num_segments:
+                    raise ValueError(
+                        "single-cycle early wrap requires one "
+                        "motion_start_warmup_phase_per_clip value per clip"
+                    )
+                phase = torch.tensor(
+                    phases, dtype=torch.float32, device=self.device
+                )[self.clip_id]
+                seg_start = self.motion.seg_start[self.clip_id]
+                seg_len = self.motion.seg_len[self.clip_id].clamp(min=2)
+                strike_step = seg_start + (
+                    phase * (seg_len - 1).float()
+                ).round().long()
+                bootstrap_end = torch.minimum(
+                    seg_end,
+                    strike_step + poststrike_steps + 1,
+                )
+                seg_end = torch.where(
+                    self.single_cycle_reset,
+                    bootstrap_end,
+                    seg_end,
+                )
             env_ids = torch.where(self.time_steps >= seg_end)[0]
         else:
             env_ids = torch.where(self.time_steps >= self.motion.time_step_total)[0]
@@ -618,9 +975,18 @@ class MotionCommandCfg(CommandTermCfg):
     # instead of reference-state-init onto the clip frame.
     stand_start_prob: float = 0.25
     stand_start_min_hold: int = 25
+    stand_start_pose_range: dict[str, tuple[float, float]] = {}
+    stand_start_velocity_range: dict[str, tuple[float, float]] = {}
+    stand_start_joint_position_range: tuple[float, float] = (0.0, 0.0)
+
+    # Fraction of true resets assigned to a complete no-ball READY regression episode. These
+    # episodes remain in the frozen hold for ``stand_episode_hold_steps`` and are never sampled on
+    # intra-episode clip wraps.
+    stand_episode_prob: float = 0.0
+    stand_episode_hold_steps: int = 100000
 
     # Scratch-training reset curriculum. When enabled, true episode resets use only two modes:
-    # DEFAULT STAND and MOTION FIRST FRAME. The motion-start probability fades out from measured
+    # DEFAULT STAND and a seeded MOTION start. The motion-start probability fades out from measured
     # contact/recovery ability, so the final reset distribution returns to deploy-style default ready.
     motion_start_warmup_enabled: bool = False
     motion_start_warmup_command_name: str = "racket_target"
@@ -630,6 +996,25 @@ class MotionCommandCfg(CommandTermCfg):
     motion_start_warmup_contact_high: float = 0.35
     motion_start_warmup_recovery_low: float = 0.60
     motion_start_warmup_recovery_high: float = 0.78
+    # When phases are supplied, seeded starts use a short pre-impact horizon
+    # instead of the first frame. Empty preserves the historical first-frame start.
+    motion_start_warmup_prestrike_enabled: bool = False
+    motion_start_warmup_prestrike_fraction: float = 1.0
+    motion_start_warmup_phase_per_clip: tuple[float, ...] = ()
+    motion_start_warmup_prestrike_steps_range: tuple[int, int] = (12, 24)
+    # Optional explicit post-impact starts expose the braking and settling part
+    # of each clip before full cycles are discovered. Fractions are conditional
+    # on selecting a motion-seeded reset; the remainder remains unbiased RSI.
+    motion_start_warmup_recovery_enabled: bool = False
+    motion_start_warmup_recovery_fraction: float = 0.0
+    motion_start_warmup_recovery_steps_range: tuple[int, int] = (8, 30)
+    # Optional measured-capability curriculum for the conditional phase mix.
+    # Disabled preserves the fixed fractions above exactly.
+    motion_start_warmup_lifecycle_curriculum_enabled: bool = False
+    motion_start_warmup_lifecycle_targeted_attempt_low: float = 0.01
+    motion_start_warmup_lifecycle_targeted_attempt_high: float = 0.05
+    motion_start_warmup_lifecycle_prestrike_fraction_end: float = 0.50
+    motion_start_warmup_lifecycle_recovery_fraction_end: float = 0.15
 
     # Pre-swing hold: freeze the reference at the swing's first frame for U[lo, hi] control steps.
     hold_steps_range: tuple[int, int] = (0, 0)
@@ -638,6 +1023,14 @@ class MotionCommandCfg(CommandTermCfg):
     # only labels clips for diagnostics; clips at indices >= this value are reported as supplemental.
     clip_sampling_weights: tuple[float, ...] = ()
     core_clip_count: int = 0
+
+    # Runtime-only logging optimization. It preserves every metric mean and
+    # reset, but batches device-to-host synchronization during episode reset.
+    batched_metric_reset_logging: bool = False
+    # For selected one-swing bootstrap episodes, wrap this many motion frames
+    # after impact instead of requiring the complete long clip. Zero preserves
+    # the natural segment end for every existing task.
+    single_cycle_poststrike_steps: int = 0
 
     # Teleport the robot onto the new clip frame at intra-episode wraps. MUST be False for the
     # continuous-rally lifecycle (the policy physically transitions swing -> swing).

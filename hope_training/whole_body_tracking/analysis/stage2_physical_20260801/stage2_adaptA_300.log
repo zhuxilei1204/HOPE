@@ -1,0 +1,254 @@
+[INFO][AppLauncher]: Using device: cuda:0
+[INFO][AppLauncher]: Loading experience file: /mnt/ssd/zxl/IsaacLab/apps/isaaclab.python.headless.kit
+[2026-08-01 19:39:37,272][asyncio][DEBUG] - Using selector: EpollSelector
+[2026-08-01 19:39:38,934][trimesh.util][DEBUG] - falling back to hashlib hashing: `pip install xxhash`for 50x faster cache checks
+[2026-08-01 19:39:39,166][h5py._conv][DEBUG] - Creating converter from 7 to 5
+[2026-08-01 19:39:39,167][h5py._conv][DEBUG] - Creating converter from 5 to 7
+[2026-08-01 19:39:39,167][h5py._conv][DEBUG] - Creating converter from 7 to 5
+[2026-08-01 19:39:39,167][h5py._conv][DEBUG] - Creating converter from 5 to 7
+[2026-08-01 19:39:39,205][matplotlib][DEBUG] - matplotlib data path: /home/zxl/miniconda3/envs/zxl-pace/lib/python3.10/site-packages/matplotlib/mpl-data
+[2026-08-01 19:39:39,208][matplotlib][DEBUG] - CONFIGDIR=/home/zxl/.config/matplotlib
+[2026-08-01 19:39:39,209][matplotlib][DEBUG] - interactive is False
+[2026-08-01 19:39:39,209][matplotlib][DEBUG] - platform is linux
+[2026-08-01 19:39:39,246][matplotlib][DEBUG] - CACHEDIR=/home/zxl/.cache/matplotlib
+[2026-08-01 19:39:39,248][matplotlib.font_manager][DEBUG] - Using fontManager instance from /home/zxl/.cache/matplotlib/fontlist-v390.json
+[Warning] [simulation_app.simulation_app] Modules: ['omni.kit_app'] were loaded before SimulationApp was started and might not be loaded correctly.
+[Warning] [simulation_app.simulation_app] Please check to make sure no extra omniverse or pxr modules are imported before the call to SimulationApp(...)
+Loading user config located at: '/home/zxl/miniconda3/envs/zxl-pace/lib/python3.10/site-packages/omni/data/Kit/Isaac-Sim/4.5/user.config.json'
+[Info] [carb] Logging to file: /home/zxl/miniconda3/envs/zxl-pace/lib/python3.10/site-packages/omni/logs/Kit/Isaac-Sim/4.5/kit_20260801_193937.log
+2026-08-01 11:39:37 [0ms] [Warning] [omni.kit.app.plugin] No crash reporter present, dumps uploading isn't available.
+2026-08-01 11:39:37 [1ms] [Warning] [omni.ext.plugin] [ext: rendering_modes] Extensions config 'extension.toml' doesn't exist '/mnt/ssd/zxl/IsaacLab/apps/rendering_modes' or '/mnt/ssd/zxl/IsaacLab/apps/rendering_modes/config'
+2026-08-01 11:39:37 [72ms] [Warning] [omni.usd_config.extension] Enable omni.materialx.libs extension to use MaterialX
+2026-08-01 11:39:37 [124ms] [Warning] [omni.platforminfo.plugin] failed to open the default display.  Can't verify X Server version.
+2026-08-01 11:39:37 [272ms] [Warning] [omni.datastore] OmniHub is inaccessible
+2026-08-01 11:39:37 [329ms] [Warning] [omni.isaac.dynamic_control] omni.isaac.dynamic_control is deprecated as of Isaac Sim 4.5. No action is needed from end-users.
+2026-08-01 11:39:40 [2,873ms] [Warning] [carb.cudainterop.plugin] CUDA_VISIBLE_DEVICES environment variable is set.
+2026-08-01 11:39:40 [2,873ms] [Warning] [carb.cudainterop.plugin] Note CUDA device enumeration and Omniverse device enumeration are different.
+2026-08-01 11:39:40 [2,873ms] [Warning] [carb.cudainterop.plugin] Setting CUDA_VISIBLE_DEVICES can lead to undesired behavior or crashes.
+2026-08-01 11:39:40 [2,881ms] [Warning] [gpu.foundation.plugin] Skipping NVIDIA GPU due CUDA being in bad state: NVIDIA GeForce RTX 5090
+2026-08-01 11:39:40 [2,881ms] [Warning] [gpu.foundation.plugin] Please restart your system if CUDA is known to work in your system.
+2026-08-01 11:39:40 [2,881ms] [Warning] [gpu.foundation.plugin] Skipping NVIDIA GPU due CUDA being in bad state: NVIDIA GeForce RTX 5090
+2026-08-01 11:39:40 [2,881ms] [Warning] [gpu.foundation.plugin] Please restart your system if CUDA is known to work in your system.
+
+|---------------------------------------------------------------------------------------------|
+| Driver Version: 580.105.08    | Graphics API: Vulkan
+|=============================================================================================|
+| GPU | Name                             | Active | LDA | GPU Memory | Vendor-ID | LUID       |
+|     |                                  |        |     |            | Device-ID | UUID       |
+|     |                                  |        |     |            | Bus-ID    |            |
+|---------------------------------------------------------------------------------------------|
+| 0   | NVIDIA GeForce RTX 5090          | Yes: 0 |     | 32607   MB | 10de      | 0          |
+|     |                                  |        |     |            | 2b85      | c2a01bc3.. |
+|     |                                  |        |     |            | 1         |            |
+|---------------------------------------------------------------------------------------------|
+| 1   | NVIDIA GeForce RTX 5090          |        |     | 32607   MB | 10de      | 0          |
+|     |                                  |        |     |            | 2b85      | 837a84cc.. |
+|     |                                  |        |     |            | 7         |            |
+|=============================================================================================|
+| OS: 24.04.2 LTS (Noble Numbat) ubuntu, Version: 24.04.2, Kernel: 6.17.0-35-generic
+| Processor: Intel(R) Core(TM) i9-14900K
+| Bare Metal Cores: 24 | Bare Metal Logical Cores: 48
+| Available Cores:  32 
+|---------------------------------------------------------------------------------------------|
+| Total Memory (MB): 128491 | [2026-08-01 19:39:40,923][git.cmd][DEBUG] - Popen(['git', 'version'], cwd=/mnt/ssd/zxl/HOPE_latest_20260721/hope_training/whole_body_tracking, stdin=None, shell=False, universal_newlines=False)
+[2026-08-01 19:39:40,925][git.cmd][DEBUG] - Popen(['git', 'version'], cwd=/mnt/ssd/zxl/HOPE_latest_20260721/hope_training/whole_body_tracking, stdin=None, shell=False, universal_newlines=False)
+[INFO]: Parsing configuration from: <class 'whole_body_tracking.tasks.tracking.config.agibot_a3.hope_stage2_physical_env_cfg.HOPEStage2PhysicalEnvCfg'>
+[train.py] motion clip 0: /mnt/ssd/zxl/HOPE_latest_20260721/hope_training/motions/user_four_motion_manual_hits_a3fk_yaw_leg_stabilized_20260724/user_forehand_raised_30fps_contact075_50hz_a3fk_aligned.npz
+[train.py] motion clip 1: /mnt/ssd/zxl/HOPE_latest_20260721/hope_training/motions/user_four_motion_manual_hits_a3fk_yaw_leg_stabilized_20260724/user_backhand_raised_30fps_contact040_50hz_a3fk_aligned.npz
+[train.py] runtime reward pruning: removed 73 stateless zero-weight term(s); kept 0 stateful zero-weight term(s).
+[train.py]     pruned rewards: ['action_rate', 'active_ready_survival_milestone_bonus', 'active_ready_sustained_bonus', 'backhand_racket_position', 'backhand_soft_ball_contact', 'balanced_ball_contact', 'balanced_net_cross', 'balanced_opponent_bounce', 'balanced_soft_ball_contact', 'ball_contact', 'contact_net_margin', 'cycle_contact_ready', 'cycle_net_ready', 'cycle_return_ready', 'cycle_success_bonus', 'cycle_v2_ready_fail', 'cycle_v2_ready_success_bonus', 'cycle_v2_streak_bonus', 'deferred_recovery_outcome_bonus', 'exact_impact_outgoing_velocity_alignment', 'exact_impact_planner_task_space_alignment', 'exact_impact_racket_velocity_alignment', 'follow_through_recovery', 'functional_no_command_ready', 'health_gated_backhand_soft_ball_contact', 'health_gated_ball_contact', 'health_gated_net_cross', 'health_gated_opponent_bounce', 'health_gated_soft_ball_contact', 'impact_forward_lift', 'impact_outgoing_velocity', 'motion_anchor_height', 'motion_body_ang_vel', 'motion_body_lin_vel', 'motion_body_ori', 'motion_body_pos', 'motion_global_anchor_ori', 'motion_global_anchor_pos', 'net_cross', 'next_ball_readiness', 'next_prestrike_reachable', 'next_swing_ready_bonus', 'no_command_forehand_joint_anchor', 'no_command_ready_balance', 'no_command_ready_progress', 'one_sided_trunk_waist_recovery', 'one_sided_trunk_waist_strike', 'opponent_bounce', 'phase_action_rate', 'phase_lower_body_motion_prior', 'post_contact_arm_racket_ready', 'post_contact_directional_recovery', 'post_contact_ready_fail', 'post_contact_ready_region', 'post_contact_ready_success_bonus', 'post_contact_recovery_ready', 'post_net_arm_racket_ready', 'post_net_recovery_ready', 'post_return_arm_racket_ready', 'post_return_recovery_ready', 'post_strike_lower_body_action_rate', 'prestrike_blade_direction', 'racket_velocity_projection', 'racket_wrist_motion_ori', 'racket_wrist_motion_pos', 'robust_contact_net_margin', 'soft_ball_contact', 'station_relocation_arrival_bonus', 'station_relocation_settle_bonus', 'strike_inactivity', 'targeted_strike_attempt', 'torso_com_balance', 'torso_com_recovery_balance']
+[train.py] task=HOPE-PingPong-Stage2-Physical-AgibotA3-v0 num_envs=256 — applied 10 task override(s):
+[train.py]     episode_length_s = 12.0
+[train.py]     commands.motion.wrap_teleport = False
+[train.py]     events.link_mass = (0.97, 1.03)
+[train.py]     events.pd_gains = (0.97, 1.03)
+[train.py]     observations.policy.racket_target_normal_w = enabled
+[train.py]     commands.racket_target.strike_phase_per_clip = (0.4, 0.4)
+[train.py]     commands.motion.motion_start_warmup_phase_per_clip = (0.4, 0.4)
+[train.py]     commands.racket_target.swing_side_per_clip = (1.0, -1.0)
+[train.py]     commands.racket_target.mount_normal_sign_per_clip = (1.0, -1.0)
+[train.py]     commands.racket_target.racket_pos_range_per_clip = from motion metadata
+[train.py] experiment=hope_pingpong_stage2_physical114 | log_dir=/mnt/ssd/zxl/HOPE_latest_20260721/hope_training/whole_body_tracking/logs/rsl_rl/hope_pingpong_stage2_physical114/2026-08-01_19-39-40_stage2phys_adaptA_anchor10_noise010_300
+Free Memory: 118945
+| Total Page/Swap (MB): 8191 | Free Page/Swap: 7149
+|---------------------------------------------------------------------------------------------|
+2026-08-01 11:39:40 [3,275ms] [Warning] [gpu.foundation.plugin] IOMMU is enabled.
+2026-08-01 11:39:40 [3,275ms] [Warning] [gpu.foundation.plugin] Detected IOMMU is enabled. Running CUDA peer-to-peer bandwidth and latency validation.
+Unidirectional P2P=Enabled Bandwidth (P2P Writes) Matrix (GB/s)
+   D\D     0 
+     0 1525.88 
+P2P=Enabled Latency (P2P Writes) Matrix (us)
+   GPU     0 
+     0   2.08 
+
+   CPU     0 
+     0   1.24 
+2026-08-01 11:39:40 [3,765ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-08-01 11:39:40 [3,765ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-08-01 11:39:40 [3,766ms] [Error] [gpu.foundation.plugin] DriverShaderCacheManager::init() called without a shutdown()!
+2026-08-01 11:39:41 [3,815ms] [Warning] [gpu.foundation.plugin] Skipping NVIDIA GPU due CUDA being in bad state: NVIDIA GeForce RTX 5090
+2026-08-01 11:39:41 [3,815ms] [Warning] [gpu.foundation.plugin] Please restart your system if CUDA is known to work in your system.
+2026-08-01 11:39:41 [3,815ms] [Warning] [gpu.foundation.plugin] Skipping NVIDIA GPU due CUDA being in bad state: NVIDIA GeForce RTX 5090
+2026-08-01 11:39:41 [3,815ms] [Warning] [gpu.foundation.plugin] Please restart your system if CUDA is known to work in your system.
+
+|---------------------------------------------------------------------------------------------|
+| Driver Version: 580.105.08    | Graphics API: Vulkan
+|=============================================================================================|
+| GPU | Name                             | Active | LDA | GPU Memory | Vendor-ID | LUID       |
+|     |                                  |        |     |            | Device-ID | UUID       |
+|     |                                  |        |     |            | Bus-ID    |            |
+|---------------------------------------------------------------------------------------------|
+| 0   | NVIDIA GeForce RTX 5090          | Yes: 0 |     | 32607   MB | 10de      | 0          |
+|     |                                  |        |     |            | 2b85      | c2a01bc3.. |
+|     |                                  |        |     |            | 1         |            |
+|---------------------------------------------------------------------------------------------|
+| 1   | NVIDIA GeForce RTX 5090          |        |     | 32607   MB | 10de      | 0          |
+|     |                                  |        |     |            | 2b85      | 837a84cc.. |
+|     |                                  |        |     |            | 7         |            |
+|=============================================================================================|
+| OS: 24.04.2 LTS (Noble Numbat) ubuntu, Version: 24.04.2, Kernel: 6.17.0-35-generic
+| Processor: Intel(R) Core(TM) i9-14900K
+| Bare Metal Cores: 24 | Bare Metal Logical Cores: 48
+| Available Cores:  32 
+|---------------------------------------------------------------------------------------------|
+| Total Memory (MB): 128491 | Free Memory: 118455
+| Total Page/Swap (MB): 8191 | Free Page/Swap: 7149
+|---------------------------------------------------------------------------------------------|
+Unidirectional P2P=Enabled Bandwidth (P2P Writes) Matrix (GB/s)
+   D\D     0 
+     0 1420.45 
+P2P=Enabled Latency (P2P Writes) Matrix (us)
+   GPU     0 
+     0   2.08 
+
+   CPU     0 
+     0   1.20 
+2026-08-01 11:39:41 [4,286ms] [Warning] [gpu.foundation.plugin] IOMMU is enabled.
+2026-08-01 11:39:41 [4,286ms] [Warning] [gpu.foundation.plugin] Detected IOMMU is enabled. Running CUDA peer-to-peer bandwidth and latency validation.
+Unidirectional P2P=Enabled Bandwidth (P2P Writes) Matrix (GB/s)
+   D\D     0 
+     0 1402.60 
+P2P=Enabled Latency (P2P Writes) Matrix (us)
+   GPU     0 
+     0   2.10 
+
+   CPU     0 
+     0   1.33 
+2026-08-01 11:39:41 [4,507ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-08-01 11:39:41 [4,507ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-08-01 11:39:41 [4,521ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-08-01 11:39:41 [4,521ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-08-01 11:39:41 [4,528ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-08-01 11:39:41 [4,528ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-08-01 11:39:41 [4,534ms] [Warning] [carb.windowing-glfw.plugin] GLFW initializatiSetting seed: 8211
+[INFO]: Base environment:
+	Environment device    : cuda:0
+	Environment seed      : 8211
+	Physics step-size     : 0.0025
+	Rendering step-size   : 0.02
+	Environment step-size : 0.02
+[2026-08-01 19:39:41,885][AutoNode][DEBUG] - Defining data type 'any' as 'Any'
+[2026-08-01 19:39:41,885][AutoNode][DEBUG] - Defining data type 'bool' as 'Bool' and array 'BoolArray
+[2026-08-01 19:39:41,885][AutoNode][DEBUG] - Defining data type 'bundle' as 'Bundle'
+[2026-08-01 19:39:41,885][AutoNode][DEBUG] - Defining data type 'colord[3]' as 'Color3d' and array 'Color3dArray
+[2026-08-01 19:39:41,885][AutoNode][DEBUG] - Defining data type 'colorf[3]' as 'Color3f' and array 'Color3fArray
+[2026-08-01 19:39:41,885][AutoNode][DEBUG] - Defining data type 'colorh[3]' as 'Color3h' and array 'Color3hArray
+[2026-08-01 19:39:41,885][AutoNode][DEBUG] - Defining data type 'colord[4]' as 'Color4d' and array 'Color4dArray
+[2026-08-01 19:39:41,885][AutoNode][DEBUG] - Defining data type 'colorf[4]' as 'Color4f' and array 'Color4fArray
+[2026-08-01 19:39:41,885][AutoNode][DEBUG] - Defining data type 'colorh[4]' as 'Color4h' and array 'Color4hArray
+[2026-08-01 19:39:41,885][AutoNode][DEBUG] - Defining data type 'double' as 'Double' and array 'DoubleArray
+[2026-08-01 19:39:41,885][AutoNode][DEBUG] - Defining data type 'double[2]' as 'Double2' and array 'Double2Array
+[2026-08-01 19:39:41,885][AutoNode][DEBUG] - Defining data type 'double[3]' as 'Double3' and array 'Double3Array
+[2026-08-01 19:39:41,885][AutoNode][DEBUG] - Defining data type 'double[4]' as 'Double4' and array 'Double4Array
+[2026-08-01 19:39:41,885][AutoNode][DEBUG] - Defining data type 'execution' as 'Execution'
+[2026-08-01 19:39:41,885][AutoNode][DEBUG] - Defining data type 'float' as 'Float' and array 'FloatArray
+[2026-08-01 19:39:41,885][AutoNode][DEBUG] - Defining data type 'float[2]' as 'Float2' and array 'Float2Array
+[2026-08-01 19:39:41,885][AutoNode][DEBUG] - Defining data type 'float[3]' as 'Float3' and array 'Float3Array
+[2026-08-01 19:39:41,885][AutoNode][DEBUG] - Defining data type 'float[4]' as 'Float4' and array 'Float4Array
+[2026-08-01 19:39:41,885][AutoNode][DEBUG] - Defining data type 'frame[4]' as 'Frame' and array 'FrameArray
+[2026-08-01 19:39:41,885][AutoNode][DEBUG] - Defining data type 'half' as 'Half' and array 'HalfArray
+[2026-08-01 19:39:41,885][AutoNode][DEBUG] - Defining data type 'half[2]' as 'Half2' and array 'Half2Array
+[2026-08-01 19:39:41,885][AutoNode][DEBUG] - Defining data type 'half[3]' as 'Half3' and array 'Half3Array
+[2026-08-01 19:39:41,885][AutoNode][DEBUG] - Defining data type 'half[4]' as 'Half4' and array 'Half4Array
+[2026-08-01 19:39:41,886][AutoNode][DEBUG] - Defining data type 'int' as 'Int' and array 'IntArray
+[2026-08-01 19:39:41,886][AutoNode][DEBUG] - Defining data type 'int[2]' as 'Int2' and array 'Int2Array
+[2026-08-01 19:39:41,886][AutoNode][DEBUG] - Defining data type 'int[3]' as 'Int3' and array 'Int3Array
+[2026-08-01 19:39:41,886][AutoNode][DEBUG] - Defining data type 'int[4]' as 'Int4' and array 'Int4Array
+[2026-08-01 19:39:41,886][AutoNode][DEBUG] - Defining data type 'int64' as 'Int64' and array 'Int64Array
+[2026-08-01 19:39:41,886][AutoNode][DEBUG] - Defining data type 'matrixd[2]' as 'Matrix2d' and array 'Matrix2dArray
+[2026-08-01 19:39:41,886][AutoNode][DEBUG] - Defining data type 'matrixd[3]' as 'Matrix3d' and array 'Matrix3dArray
+[2026-08-01 19:39:41,886][AutoNode][DEBUG] - Defining data type 'matrixd[4]' as 'Matrix4d' and array 'Matrix4dArray
+[2026-08-01 19:39:41,886][AutoNode][DEBUG] - Defining data type 'normald[3]' as 'Normal3d' and array 'Normal3dArray
+[2026-08-01 19:39:41,886][AutoNode][DEBUG] - Defining data type 'normalf[3]' as 'Normal3f' and array 'Normal3fArray
+[2026-08-01 19:39:41,886][AutoNode][DEBUG] - Defining data type 'normalh[3]' as 'Normal3h' and array 'Normal3hArray
+[2026-08-01 19:39:41,886][AutoNode][DEBUG] - Defining data type 'objectId' as 'ObjectId' and array 'ObjectIdArray
+[2026-08-01 19:39:41,886][AutoNode][DEBUG] - Defining data type 'path' as 'Path'
+[2026-08-01 19:39:41,886][AutoNode][DEBUG] - Defining data type 'pointd[3]' as 'Point3d' and array 'Point3dArray
+[2026-08-01 19:39:41,886][AutoNode][DEBUG] - Defining data type 'pointf[3]' as 'Point3f' and array 'Point3fArray
+[2026-08-01 19:39:41,886][AutoNode][DEBUG] - Defining data type 'pointh[3]' as 'Point3h' and array 'Point3hArray
+[2026-08-01 19:39:41,886][AutoNode][DEBUG] - Defining data type 'quatd[4]' as 'Quatd' and array 'QuatdArray
+[2026-08-01 19:39:41,886][AutoNode][DEBUG] - Defining data type 'quatf[4]' as 'Quatf' and array 'QuatfArray
+[2026-08-01 19:39:41,886][AutoNode][DEBUG] - Defining data type 'quath[4]' as 'Quath' and array 'QuathArray
+[2026-08-01 19:39:41,886][AutoNode][DEBUG] - Defining data type 'string' as 'String'
+[2026-08-01 19:39:41,886][AutoNode][DEBUG] - Defining data type 'target' as 'Target'
+[2026-08-01 19:39:41,886][AutoNode][DEBUG] - Defining data type 'texcoordd[2]' as 'TexCoord2d' and array 'TexCoord2dArray
+[2026-08-01 19:39:41,886][AutoNode][DEBUG] - Defining data type 'texcoordf[2]' as 'TexCoord2f' and array 'TexCoord2fArray
+[2026-08-01 19:39:41,886][AutoNode][DEBUG] - Defining data type 'texcoordh[2]' as 'TexCoord2h' and array 'TexCoord2hArray
+[2026-08-01 19:39:41,886][AutoNode][DEBUG] - Defining data type 'texcoordd[3]' as 'TexCoord3d' and array 'TexCoord3dArray
+[2026-08-01 19:39:41,886][AutoNode][DEBUG] - Defining data type 'texcoordf[3]' as 'TexCoord3f' and array 'TexCoord3fArray
+[2026-08-01 19:39:41,886][AutoNode][DEBUG] - Defining data type 'texcoordh[3]' as 'TexCoord3h' and array 'TexCoord3hArray
+[2026-08-01 19:39:41,886][AutoNode][DEBUG] - Defining data type 'timecode' as 'Timecode' and array 'TimecodeArray
+[2026-08-01 19:39:41,886][AutoNode][DEBUG] - Defining data type 'token' as 'Token' and array 'TokenArray
+[2026-08-01 19:39:41,886][AutoNode][DEBUG] - Defining data type 'uchar' as 'UChar' and array 'UCharArray
+[2026-08-01 19:39:41,886][AutoNode][DEBUG] - Defining data type 'uint' as 'UInt' and array 'UIntArray
+[2026-08-01 19:39:41,886][AutoNode][DEBUG] - Defining data type 'uint64' as 'UInt64' and array 'UInt64Array
+[2026-08-01 19:39:41,886][AutoNode][DEBUG] - Defining data type 'vectord[3]' as 'Vector3d' and array 'Vector3dArray
+[2026-08-01 19:39:41,886][AutoNode][DEBUG] - Defining data type 'vectorf[3]' as 'Vector3f' and array 'Vector3fArray
+[2026-08-01 19:39:41,886][AutoNode][DEBUG] - Defining data type 'vectorh[3]' as 'Vector3h' and array 'Vector3hArray
+on failed.
+2026-08-01 11:39:41 [4,534ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-08-01 11:39:41 [4,535ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-08-01 11:39:41 [4,535ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-08-01 11:39:41 [4,536ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-08-01 11:39:41 [4,536ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-08-01 11:39:41 [4,762ms] [Warning] [omni.graph.visualization.nodes._impl.extension] No Viewport Window to add omni.graph.visualization.nodes-2.1.1 scene to
+2026-08-01 11:39:42 [4,807ms] [Warning] [isaacsim.asset.importer.urdf] The path 0000014503_A3T2.5-URDF-std-pingpang-0409 is not a valid usd path, modifying to a_0000014503_A3T2_5_URDF_std_pingpang_0409
+2026-08-01 11:39:42 [4,807ms] [Error] [isaacsim.asset.importer.urdf] *** Could not parse xyz string '0.0' 
+2026-08-01 11:39:42 [4,807ms] [Error] [isaacsim.asset.importer.urdf] *** xyz not specified for axis
+2026-08-01 11:39:42 [4,807ms] [Error] [isaacsim.asset.importer.urdf] *** Could not parse xyz string '' 
+2026-08-01 11:39:42 [4,807ms] [Error] [isaacsim.asset.importer.urdf] *** xyz not specified for axis
+2026-08-01 11:39:42 [4,807ms] [Error] [isaacsim.asset.importer.urdf] *** Could not parse xyz string '' 
+2026-08-01 11:39:42 [4,807ms] [Error] [isaacsim.asset.importer.urdf] *** xyz not specified for axis
+2026-08-01 11:39:42 [4,807ms] [Error] [isaacsim.asset.importer.urdf] *** Could not parse xyz string '' 
+2026-08-01 11:39:42 [4,807ms] [Error] [isaacsim.asset.importer.urdf] *** xyz not specified for axis
+2026-08-01 11:39:42 [4,808ms] [Error] [isaacsim.asset.importer.urdf] *** Could not parse xyz string '0.0' 
+2026-08-01 11:39:42 [4,808ms] [Error] [isaacsim.asset.importer.urdf] *** xyz not specified for axis
+2026-08-01 11:39:42 [4,808ms] [Error] [isaacsim.asset.importer.urdf] *** Could not parse xyz string '0.0' 
+2026-08-01 11:39:42 [4,808ms] [Error] [isaacsim.asset.importer.urdf] *** xyz not specified for axis
+2026-08-01 11:39:42 [5,148ms] [Warning] [isaacsim.asset.importer.urdf] std_head_stereo_camera_joint: Joint Axis is not body aligned with X, Y or Z primary axis. Adjusting PhysX joint alignment to Axis X and reorienting bodies.
+2026-08-01 11:39:42 [5,324ms] [Warning] [isaacsim.asset.importer.urdf] right_hand_pingpang_joint: Joint Axis is not body aligned with X, Y or Z primary axis. Adjusting PhysX joint alignment to Axis X and reorienting bodies.
+2026-08-01 11:39:42 [5,331ms] [Warning] [isaacsim.asset.importer.urdf] pingbang_ball_joint: Joint Axis is not body aligned with X, Y or Z primary axis. Adjusting PhysX joint alignment to Axis X and reorienting bodies.
+2026-08-01 11:39:42 [5,337ms] [Warning] [isaacsim.asset.importer.urdf] pingpang_black_joint: Joint Axis is not body aligned with X, Y or Z primary axis. Adjusting PhysX joint alignment to Axis X and reorienting bodies.
+2026-08-01 11:39:42 [5,343ms] [Warning] [isaacsim.asset.importer.urdf] pingpang_red_joint: Joint Axis is not body aligned with X, Y or Z primary axis. Adjusting PhysX joint alignment to Axis X and reorienting bodies.
+2026-08-01 11:39:50 [12,823ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPreviewSurface.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-08-01 11:39:50 [12,823ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdUVTexture.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-08-01 11:39:50 [12,823ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_float.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-08-01 11:39:50 [12,823ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_float2.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-08-01 11:39:50 [12,823ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_float3.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-08-01 11:39:50 [12,823ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_float4.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-08-01 11:39:50 [12,823ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_int.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-08-01 11:39:50 [12,823ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_string.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-08-01 11:39:50 [12,823ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_normal.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-08-01 11:39:50 [12,823ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_point.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-08-01 11:39:50 [12,823ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of malloc(): invalid size (unsorted)
+scripts/launch_stage2_physical_member.sh: line 38: 3302626 Aborted                 (core dumped) python scripts/train.py task="${TASK}" algo=ppo_stage2_physical device="cuda:0" num_envs=256 max_iterations="${ITERATIONS}" seed="${SEED}" run_name="${RUN_NAME}" checkpoint_path="${CHECKPOINT}" checkpoint_actor_only=true checkpoint_load_optimizer=false actor_anchor_coefficient="${ANCHOR}" actor_anchor_checkpoint_path="${CHECKPOINT}" action_noise_std_global="${NOISE}" headless=true

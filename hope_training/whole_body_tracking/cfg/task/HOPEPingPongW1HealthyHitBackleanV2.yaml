@@ -1,0 +1,61 @@
+# W1 capability-preserving fine-tune with one-sided trunk/waist hit health.
+#
+# Unlike OneSidedStrikeHitV1, this task does not add outcome reward on top of
+# the baseline budget. It redistributes the same maximum physical-outcome
+# reward toward healthy impact, so a backward-folded hit is less profitable
+# while a healthy hit remains fully rewarded. Arms and legs are not part of
+# the health envelope.
+
+defaults:
+  - HOPEPingPongGuard23499WristPrepTimingV1
+  - _self_
+
+name: HOPEPingPongW1HealthyHitBackleanV2
+actor_obs_contract: hope_pingpong_stability122
+
+overrides:
+  # Tighten only the one-sided backward envelope. Forward weight transfer is
+  # free, and no fixed-station retreat term is enabled.
+  commands.racket_target.impact_health_backlean_tolerance: 0.04
+  commands.racket_target.impact_health_backlean_std: 0.10
+  commands.racket_target.impact_health_include_waist_backfold: true
+  commands.racket_target.impact_health_waist_backfold_tolerance: 0.10
+  commands.racket_target.impact_health_waist_backfold_std: 0.11
+  commands.racket_target.impact_health_max_waist_backfold: 0.22
+
+  # Preserve each W1 event maximum while changing the raw/health split from
+  # 40/60 to 25/75. Exploration is still possible, but healthy contact,
+  # net-clear and opponent-bounce outcomes dominate.
+  rewards.ball_contact.weight: 0.375
+  rewards.health_gated_ball_contact.weight: 1.125
+  rewards.net_cross.weight: 0.45
+  rewards.health_gated_net_cross.weight: 1.35
+  rewards.opponent_bounce.weight: 0.55
+  rewards.health_gated_opponent_bounce.weight: 1.65
+
+  # A small continuous posture gradient prevents the event gate from becoming
+  # sparse. This is deliberately below the failed V1 value (0.28).
+  rewards.one_sided_trunk_waist_strike.weight: 0.10
+  rewards.one_sided_trunk_waist_strike.params:
+    command_name: racket_target
+    phase: strike
+    pre_window_s: 0.34
+    post_window_s: 0.18
+    torso_backlean_tolerance: 0.04
+    torso_backlean_std: 0.10
+    waist_backfold_tolerance: 0.10
+    waist_backfold_std: 0.11
+    torso_pitch_rate_std: 1.40
+    waist_pitch_rate_std: 1.20
+    rate_weight: 0.0
+    start_step: 0
+    warmup_steps: 1000
+    start_scale: 0.20
+
+  # Recover W1's remaining physical bottleneck without increasing generic
+  # contact reward. Backhand receives a small health-gated dense contact slope;
+  # speed and pre-impact blade preparation are raised conservatively.
+  rewards.health_gated_backhand_soft_ball_contact.weight: 0.30
+  rewards.racket_velocity_projection.weight: 2.15
+  rewards.prestrike_blade_direction.weight: 0.36
+

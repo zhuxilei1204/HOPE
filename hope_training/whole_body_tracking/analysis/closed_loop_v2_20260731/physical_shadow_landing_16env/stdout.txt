@@ -1,0 +1,416 @@
+[Warning] [simulation_app.simulation_app] Modules: ['omni.kit_app'] were loaded before SimulationApp was started and might not be loaded correctly.
+[Warning] [simulation_app.simulation_app] Please check to make sure no extra omniverse or pxr modules are imported before the call to SimulationApp(...)
+Loading user config located at: '/home/zxl/miniconda3/envs/zxl-pace/lib/python3.10/site-packages/omni/data/Kit/Isaac-Sim/4.5/user.config.json'
+[Info] [carb] Logging to file: /home/zxl/miniconda3/envs/zxl-pace/lib/python3.10/site-packages/omni/logs/Kit/Isaac-Sim/4.5/kit_20260731_104624.log
+2026-07-31 02:46:24 [0ms] [Warning] [omni.kit.app.plugin] No crash reporter present, dumps uploading isn't available.
+2026-07-31 02:46:24 [1ms] [Warning] [omni.ext.plugin] [ext: rendering_modes] Extensions config 'extension.toml' doesn't exist '/mnt/ssd/zxl/IsaacLab/apps/rendering_modes' or '/mnt/ssd/zxl/IsaacLab/apps/rendering_modes/config'
+2026-07-31 02:46:24 [67ms] [Warning] [omni.usd_config.extension] Enable omni.materialx.libs extension to use MaterialX
+2026-07-31 02:46:24 [114ms] [Warning] [omni.platforminfo.plugin] failed to open the default display.  Can't verify X Server version.
+2026-07-31 02:46:24 [252ms] [Warning] [omni.datastore] OmniHub is inaccessible
+2026-07-31 02:46:24 [307ms] [Warning] [omni.isaac.dynamic_control] omni.isaac.dynamic_control is deprecated as of Isaac Sim 4.5. No action is needed from end-users.
+
+|---------------------------------------------------------------------------------------------|
+| Driver Version: 580.105.08    | Graphics API: Vulkan
+|=============================================================================================|
+| GPU | Name                             | Active | LDA | GPU Memory | Vendor-ID | LUID       |
+|     |                                  |        |     |            | Device-ID | UUID       |
+|     |                                  |        |     |            | Bus-ID    |            |
+|---------------------------------------------------------------------------------------------|
+| 0   | NVIDIA GeForce RTX 5090          | Yes: 0 |     | 32607   MB | 10de      | 0          |
+|     |                                  |        |     |            | 2b85      | c2a01bc3.. |
+|     |                                  |        |     |            | 1         |            |
+|---------------------------------------------------------------------------------------------|
+| 1   | NVIDIA GeForce RTX 5090          | Yes: 1 |     | 32607   MB | 10de      | 0          |
+|     |                                  |        |     |            | 2b85      | 837a84cc.. |
+|     |                                  |        |     |            | 7         |            |
+|=============================================================================================|
+| OS: 24.04.2 LTS (Noble Numbat) ubuntu, Version: 24.04.2, Kernel: 6.17.0-35-generic
+| Processor: Intel(R) Core(TM) i9-14900K
+| Bare Metal Cores: 24 | Bare Metal Logical Cores: 48
+| Available Cores:  32 
+|---------------------------------------------------------------------------------------------|
+| Total Memory (MB): 128491 | Free Memory: 118845
+| Total Page/Swap (MB): 8191 | Free Page/Swap: 7149
+|---------------------------------------------------------------------------------------------|
+2026-07-31 02:46:27 [3,216ms] [Warning] [gpu.foundation.plugin] IOMMU is enabled.
+2026-07-31 02:46:27 [3,216ms] [Warning] [gpu.foundation.plugin] Detected IOMMU is enabled. Running CUDA peer-to-peer bandwidth and latency validation.
+Unidirectional P2P=Enabled Bandwidth (P2P Writes) Matrix (GB/s)
+   D\D     0      1 
+     0 1522.90   6.82 
+     1   6.96 1556.27 
+P2P=Enabled Latency (P2P Writes) Matrix (us)
+   GPU     0      1 
+     0   2.07  20.10 
+     1  20.35   2.07 
+
+   CPU     0      1 
+     0   1.27   3.44 
+     1   3.35   1.20 
+2026-07-31 02:46:27 [3,466ms] [Warning] [gpu.foundation.plugin] CUDA peer-to-peer observed bandwidth: 6.8 GB/s.
+2026-07-31 02:46:27 [3,466ms] [Warning] [gpu.foundation.plugin] CUDA peer-to-peer observed latency: 20.4 us.
+2026-07-31 02:46:27 [3,466ms] [Warning] [gpu.foundation.plugin] Please verify if observed bandwidth and latency are expected.
+2026-07-31 02:46:28 [3,938ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-07-31 02:46:28 [3,938ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+
+|---------------------------------------------------------------------------------------------|
+| Driver Version: 580.105.08    | Graphics API: Vulkan
+|=============================================================================================|
+| GPU | Name                             | Active | LDA | GPU Memory | Vendor-ID | LUID       |
+|     |                                  |        |     |            | Device-ID | UUID       |
+|     |                                  |        |     |            | Bus-ID    |            |
+|---------------------------------------------------------------------------------------------|
+| 0   | NVIDIA GeForce RTX 5090          | Yes: 0 |     | 32607   MB | 10de      | 0          |
+|     |                                  |        |     |            | 2b85      | c2a01bc3.. |
+|     |                                  |        |     |            | 1         |            |
+|---------------------------------------------------------------------------------------------|
+| 1   | NVIDIA GeForce RTX 5090          | Yes: 1 |     | 32607   MB | 10de      | 0          |
+|     |                                  |        |     |            | 2b85      | 837a84cc.. |
+|     |                                  |        |     |            | 7         |            |
+|=============================================================================================|
+| OS: 24.04.2 LTS (Noble Numbat) ubuntu, Version: 24.04.2, Kernel: 6.17.0-35-generic
+| Processor: Intel(R) Core(TM) i9-14900K
+| Bare Metal Cores: 24 | Bare Metal Logical Cores: 48
+| Available Cores:  32 
+|---------------------------------------------------------------------------------------------|
+| Total Memory (MB): 128491 | Free Memory: 118530
+| Total Page/Swap (MB): 8191 | Free Page/Swap: 7149
+|---------------------------------------------------------------------------------------------|
+Unidirectional P2P=Enabled Bandwidth (P2P Writes) Matrix (GB/s)
+   D\D     0      1 
+     0 1528.86   6.81 
+     1   6.94 1548.56 
+P2P=Enabled Latency (P2P Writes) Matrix (us)
+   GPU     0      1 
+     0   2.07  19.71 
+     1  21.10   2.10 
+
+   CPU     0      1 
+     0   1.27   3.47 
+     1   3.29   1.21 
+2026-07-31 02:46:28 [4,733ms] [Warning] [gpu.foundation.plugin] CUDA peer-to-peer observed bandwidth: 6.8 GB/s.
+2026-07-31 02:46:28 [4,733ms] [Warning] [gpu.foundation.plugin] CUDA peer-to-peer observed latency: 21.1 us.
+2026-07-31 02:46:28 [4,733ms] [Warning] [gpu.foundation.plugin] Please verify if observed bandwidth and latency are expected.
+2026-07-31 02:46:28 [4,734ms] [Warning] [gpu.foundation.plugin] IOMMU is enabled.
+2026-07-31 02:46:28 [4,734ms] [Warning] [gpu.foundation.plugin] Detected IOMMU is enabled. Running CUDA peer-to-peer bandwidth and latency validation.
+Unidirectional P2P=Enabled Bandwidth (P2P Writes) Matrix (GB/s)
+   D\D     0      1 
+     0 1519.94   6.82 
+     1   6.95 1542.45 
+P2P=Enabled Latency (P2P Writes) Matrix (us)
+   GPU     0      1 
+     0   2.07  21.65 
+     1  18.91   2.10 
+
+   CPU     0      1 
+     0   1.31   3.44 
+     1   3.21   1.16 
+2026-07-31 02:46:29 [4,984ms] [Warning] [gpu.foundation.plugin] CUDA peer-to-peer observed bandwidth: 6.8 GB/s.
+2026-07-31 02:46:29 [4,984ms] [Warning] [gpu.foundation.plugin] CUDA peer-to-peer observed latency: 21.6 us.
+2026-07-31 02:46:29 [4,984ms] [Warning] [gpu.foundation.plugin] Please verify if observed bandwidth and latency are expected.
+2026-07-31 02:46:29 [5,230ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-07-31 02:46:29 [5,230ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-07-31 02:46:29 [5,250ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-07-31 02:46:29 [5,250ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-07-31 02:46:29 [5,259ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-07-31 02:46:29 [5,259ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-07-31 02:46:29 [5,264ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-07-31 02:46:29 [5,264ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-07-31 02:46:29 [5,265ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-07-31 02:46:29 [5,265ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-07-31 02:46:29 [5,266ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-07-31 02:46:29 [5,266ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-07-31 02:46:29 [5,479ms] [Warning] [omni.graph.visualization.nodes._impl.extension] No Viewport Window to add omni.graph.visualization.nodes-2.1.1 scene to
+2026-07-31 02:46:29 [5,523ms] [Warning] [isaacsim.asset.importer.urdf] The path 0000014503_A3T2.5-URDF-std-pingpang-0409 is not a valid usd path, modifying to a_0000014503_A3T2_5_URDF_std_pingpang_0409
+[INFO][AppLauncher]: Using device: cuda:0
+[INFO][AppLauncher]: Loading experience file: /mnt/ssd/zxl/IsaacLab/apps/isaaclab.python.headless.kit
+[INFO]: Parsing configuration from: <class 'whole_body_tracking.tasks.tracking.config.agibot_a3.hope_physical_eval_env_cfg.HOPEClosedLoopV2PhysicalShadowEnvCfg'>
+Setting seed: 20260731
+[INFO]: Base environment:
+	Environment device    : cuda:0
+	Environment seed      : 20260731
+	Physics step-size     : 0.0025
+	Rendering step-size   : 0.02
+	Environment step-size : 0.02
+[INFO]: Time taken for scene creation : 11.856540 seconds
+[INFO]: Scene manager:  <class InteractiveScene>
+	Number of environments: 16
+	Environment spacing   : 6.0
+	Source prim name      : /World/envs/env_0
+	Global prim paths     : ['/World/ground']
+	Replicate physics     : True
+[INFO]: Starting the simulation. This may take a few seconds. Please wait...
+[INFO]: Time taken for simulation start : 0.448611 seconds
+[INFO] Command Manager:  <CommandManager> contains 3 active terms.
++-----------------------------------------------------+
+|                 Active Command Terms                |
++-------+-----------------+---------------------------+
+| Index | Name            |            Type           |
++-------+-----------------+---------------------------+
+|   0   | motion          |       MotionCommand       |
+|   1   | racket_target   |    RacketTargetCommand    |
+|   2   | physical_shadow | PhysicalBallShadowCommand |
++-------+-----------------+---------------------------+
+
+[INFO] Event Manager:  <EventManager> contains 2 active terms.
++---------------------------------------+
+| Active Event Terms in Mode: 'startup' |
++---------+-----------------------------+
+|  Index  | Name                        |
++---------+-----------------------------+
+|    0    | physics_material            |
+|    1    | base_com                    |
+|    2    | link_mass                   |
+|    3    | joint_default_pos           |
+|    4    | racket_material             |
++---------+-----------------------------+
++-------------------------------------+
+| Active Event Terms in Mode: 'reset' |
++--------------+----------------------+
+|    Index     | Name                 |
++--------------+----------------------+
+|      0       | pd_gains             |
++--------------+----------------------+
+
+[INFO] Recorder Manager:  <RecorderManager> contains 0 active terms.
++-----------------------+
+| Active Recorder Terms |
++------------+----------+
+|   Index    | Name     |
++------------+----------+
++------------+----------+
+
+[INFO] Action Manager:  <ActionManager> contains 1 active terms.
++---------------------------------+
+| Active Action Terms (shape: 31) |
++-------+-----------+-------------+
+| Index | Name      |   Dimension |
++-------+-----------+-------------+
+|   0   | joint_pos |          31 |
++-------+-----------+-------------+
+
+[INFO] Observation Manager: <ObservationManager> contains 2 groups.
++-------------------------------------------------------------+
+| Active Observation Terms in Group: 'policy' (shape: (114,)) |
++----------+--------------------------------------+-----------+
+|  Index   | Name                                 |   Shape   |
++----------+--------------------------------------+-----------+
+|    0     | base_ang_vel                         |    (3,)   |
+|    1     | joint_pos                            |   (31,)   |
+|    2     | joint_vel                            |   (31,)   |
+|    3     | last_action                          |   (31,)   |
+|    4     | projected_gravity                    |    (3,)   |
+|    5     | base_forward_xy                      |    (2,)   |
+|    6     | fixed_station_error_xy               |    (2,)   |
+|    7     | racket_target_rel_base               |    (3,)   |
+|    8     | racket_target_vel_w                  |    (3,)   |
+|    9     | time_to_strike                       |    (1,)   |
+|    10    | swing_side                           |    (1,)   |
+|    11    | racket_target_normal_w               |    (3,)   |
++----------+--------------------------------------+-----------+
++-------------------------------------------------------------+
+| Active Observation Terms in Group: 'critic' (shape: (324,)) |
++----------+--------------------------------------+-----------+
+|  Index   | Name                                 |   Shape   |
++----------+--------------------------------------+-----------+
+|    0     | base_ang_vel                         |    (3,)   |
+|    1     | joint_pos                            |   (31,)   |
+|    2     | joint_vel                            |   (31,)   |
+|    3     | last_action                          |   (31,)   |
+|    4     | projected_gravity                    |    (3,)   |
+|    5     | base_forward_xy                      |    (2,)   |
+|    6     | fixed_station_error_xy               |    (2,)   |
+|    7     | racket_target_rel_base               |    (3,)   |
+|    8     | racket_target_vel_w                  |    (3,)   |
+|    9     | time_to_strike                       |    (1,)   |
+|    10    | swing_side                           |    (1,)   |
+|    11    | base_lin_vel                         |    (3,)   |
+|    12    | motion_command                       |   (62,)   |
+|    13    | motion_anchor_pos_b                  |    (3,)   |
+|    14    | motion_anchor_ori_b                  |    (6,)   |
+|    15    | robot_body_pos_b                     |   (42,)   |
+|    16    | robot_body_ori_b                     |   (84,)   |
+|    17    | racket_pos_b                         |    (3,)   |
+|    18    | racket_lin_vel_w                     |    (3,)   |
+|    19    | racket_normal_w                      |    (3,)   |
+|    20    | racket_target_normal_w               |    (3,)   |
+|    21    | episode_time_left                    |    (1,)   |
++----------+--------------------------------------+-----------+
+
+[INFO] Termination Manager:  <TerminationManager> contains 5 active terms.
++-----------------------------------------------+
+|            Active Termination Terms           |
++-------+----------------------------+----------+
+| Index | Name                       | Time Out |
++-------+----------------------------+----------+
+|   0   | time_out                   |   True   |
+|   1   | base_too_low               |  False   |
+|   2   | base_tilted                |  False   |
+|   3   | table_touch                |  False   |
+|   4   | persistent_action_overflow |  False   |
++-------+----------------------------+----------+
+
+[INFO] Reward Manager:  <RewardManager> contains 113 active terms.
++------------------------------------------------------------+
+|                    Active Reward Terms                     |
++-------+-------------------------------------------+--------+
+| Index | Name                                      | Weight |
++-------+-------------------------------------------+--------+
+|   0   | motion_global_anchor_pos                  |    0.0 |
+|   1   | motion_anchor_height                      |    0.0 |
+|   2   | motion_global_anchor_ori                  |    0.0 |
+|   3   | motion_body_pos                           |    0.0 |
+|   4   | motion_body_ori                           |    0.0 |
+|   5   | motion_body_lin_vel                       |    0.0 |
+|   6   | motion_body_ang_vel                       |    0.0 |
+|   7   | undesired_contacts                        |   -0.1 |
+|   8   | feet_contact_slip                         |  -0.05 |
+|   9   | table_no_touch                            |   -1.0 |
+|   10  | alive                                     |    0.0 |
+|   11  | upright                                   |  -0.15 |
+|   12  | imitation                                 |   0.55 |
+|   13  | phase_lower_body_motion_prior             |    0.0 |
+|   14  | racket_wrist_motion_pos                   |    0.1 |
+|   15  | racket_wrist_motion_ori                   |   0.08 |
+|   16  | racket_position                           |    2.0 |
+|   17  | backhand_racket_position                  |    0.0 |
+|   18  | racket_velocity                           |    0.0 |
+|   19  | racket_velocity_projection                |    1.0 |
+|   20  | impact_forward_lift                       |    0.0 |
+|   21  | impact_outgoing_velocity                  |    0.0 |
+|   22  | planner_racket_task_space_crossfade       |    1.0 |
+|   23  | exact_impact_planner_task_space_alignment |    1.5 |
+|   24  | exact_impact_racket_velocity_alignment    |    0.0 |
+|   25  | exact_impact_outgoing_velocity_alignment  |    0.0 |
+|   26  | blade_direction                           |    0.0 |
+|   27  | prestrike_blade_direction                 |   0.35 |
+|   28  | soft_ball_contact                         |    0.0 |
+|   29  | backhand_soft_ball_contact                |    0.0 |
+|   30  | contact_net_margin                        |    0.0 |
+|   31  | robust_contact_net_margin                 |    0.0 |
+|   32  | balanced_soft_ball_contact                |    0.0 |
+|   33  | balanced_ball_contact                     |    0.0 |
+|   34  | balanced_net_cross                        |    0.0 |
+|   35  | balanced_opponent_bounce                  |    0.0 |
+|   36  | health_gated_soft_ball_contact            |    3.0 |
+|   37  | health_gated_backhand_soft_ball_contact   |    0.0 |
+|   38  | health_gated_ball_contact                 |    0.0 |
+|   39  | health_gated_net_cross                    |    0.0 |
+|   40  | health_gated_opponent_bounce              |    0.0 |
+|   41  | healthy_trunk_support                     |    0.0 |
+|   42  | targeted_strike_attempt                   |    0.0 |
+|   43  | strike_inactivity                         |    0.0 |
+|   44  | ball_contact                              |    0.0 |
+|   45  | net_cross                                 |    0.0 |
+|   46  | opponent_bounce                           |    0.0 |
+|   47  | pre_strike_station                        |    0.0 |
+|   48  | follow_through_recovery                   |    0.0 |
+|   49  | recovery_health                           |    0.0 |
+|   50  | next_ball_readiness                       |    0.0 |
+|   51  | next_swing_ready_bonus                    |    0.0 |
+|   52  | no_command_ready_stability                |    0.0 |
+|   53  | next_prestrike_reachable                  |    0.0 |
+|   54  | post_contact_recovery_ready               |    0.0 |
+|   55  | post_net_recovery_ready                   |    0.0 |
+|   56  | post_return_recovery_ready                |    0.0 |
+|   57  | post_contact_arm_racket_ready             |    0.0 |
+|   58  | post_net_arm_racket_ready                 |    0.0 |
+|   59  | post_return_arm_racket_ready              |    0.0 |
+|   60  | cycle_contact_ready                       |    0.0 |
+|   61  | cycle_net_ready                           |    0.0 |
+|   62  | cycle_return_ready                        |    0.0 |
+|   63  | cycle_success_bonus                       |    0.0 |
+|   64  | cycle_v2_ready_success_bonus              |    0.0 |
+|   65  | cycle_v2_streak_bonus                     |    0.0 |
+|   66  | cycle_v2_ready_fail                       |    0.0 |
+|   67  | post_strike_base_ang_vel                  |    0.0 |
+|   68  | no_command_ready_balance                  |    0.0 |
+|   69  | functional_no_command_ready               |    0.0 |
+|   70  | no_command_forehand_joint_anchor          |    0.0 |
+|   71  | active_ready_sustained_bonus              |    0.0 |
+|   72  | post_contact_directional_recovery         |    0.0 |
+|   73  | post_contact_ready_region                 |    0.0 |
+|   74  | post_contact_ready_success_bonus          |    0.0 |
+|   75  | post_contact_ready_fail                   |    0.0 |
+|   76  | deferred_recovery_outcome_bonus           |    0.0 |
+|   77  | phase_action_overflow                     |  -0.15 |
+|   78  | strike_balance                            |    0.0 |
+|   79  | torso_com_balance                         |    0.0 |
+|   80  | torso_com_recovery_balance                |    0.0 |
+|   81  | one_sided_trunk_waist_strike              |    0.0 |
+|   82  | one_sided_trunk_waist_recovery            |    0.0 |
+|   83  | prestrike_station_progress                |    0.0 |
+|   84  | station_relocation_arrival_bonus          |    0.0 |
+|   85  | station_relocation_settle_bonus           |    0.0 |
+|   86  | lower_body_support                        |    0.0 |
+|   87  | post_strike_lower_body_action_rate        |    0.0 |
+|   88  | termination_penalty                       |  -24.0 |
+|   89  | action_rate                               |    0.0 |
+|   90  | phase_action_rate                         |    0.0 |
+|   91  | phase_action_rate_waist                   |  -0.04 |
+|   92  | phase_action_rate_upper                   | -0.008 |
+|   93  | phase_action_rate_legs                    | -0.004 |
+|   94  | joint_limit                               |   -0.8 |
+|   95  | physical_outcome                          |    1.0 |
+|   96  | closed_cycle_success                      |    0.0 |
+|   97  | recovery_progress                         |    0.0 |
+|   98  | recovery_resolved                         |    0.0 |
+|   99  | recovery_failed                           |    0.0 |
+|  100  | durable_cycle_success                     |    0.0 |
+|  101  | durable_recovery_progress                 |    0.0 |
+|  102  | durable_recovery_resolved                 |    0.0 |
+|  103  | durable_recovery_failed                   |    0.0 |
+|  104  | durable_outcome_bonus                     |    0.0 |
+|  105  | no_command_instability                    |   -0.4 |
+|  106  | safe_strike_inactivity                    |   -6.0 |
+|  107  | planner_velocity_band                     |    6.0 |
+|  108  | terminal_quality_window                   |    4.0 |
+|  109  | safe_terminal_quality                     |    2.0 |
+|  110  | unsafe_terminal_recovery                  |  -12.0 |
+|  111  | safe_terminal_outcome                     |    8.0 |
+|  112  | safe_terminal_cycle                       |   24.0 |
++-------+-------------------------------------------+--------+
+
+[INFO] Curriculum Manager:  <CurriculumManager> contains 0 active terms.
++-------------------------+
+| Active Curriculum Terms |
++-------------+-----------+
+|    Index    | Name      |
++-------------+-----------+
++-------------+-----------+
+
+[INFO]: Completed setting up the environment...
+Actor MLP: Sequential(
+  (0): Linear(in_features=114, out_features=512, bias=True)
+  (1): ELU(alpha=1.0)
+  (2): Linear(in_features=512, out_features=256, bias=True)
+  (3): ELU(alpha=1.0)
+  (4): Linear(in_features=256, out_features=128, bias=True)
+  (5): ELU(alpha=1.0)
+  (6): Linear(in_features=128, out_features=31, bias=True)
+)
+2026-07-31 02:46:39 [15,725ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPreviewSurface.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-07-31 02:46:39 [15,726ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdUVTexture.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-07-31 02:46:39 [15,726ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_float.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-07-31 02:46:39 [15,726ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_float2.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-07-31 02:46:39 [15,726ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_float3.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-07-31 02:46:39 [15,726ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_float4.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-07-31 02:46:39 [15,726ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_int.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-07-31 02:46:39 [15,726ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_string.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-07-31 02:46:39 [15,726ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_normal.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-07-31 02:46:39 [15,726ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_point.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-07-31 02:46:39 [15,726ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_vector.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-07-31 02:46:39 [15,726ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_matrix.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-07-31 02:46:39 [15,726ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdTransform2d.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+

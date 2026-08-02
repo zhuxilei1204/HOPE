@@ -38,6 +38,7 @@ from .observation import (
 from .onnx_policy import OnnxPolicy
 from .racket_command import RacketCommandSource
 from .sim_bridge import SimBridge
+from .station import StationCommand
 
 _HEAD_IDX = list(HEAD_INDICES)
 
@@ -65,6 +66,7 @@ class PingPongReferenceRunner:
                 f"policy={policy_feedback_mode!r}"
             )
         self.lifecycle = SwingLifecycle(cfg.lifecycle)
+        self.station = StationCommand(cfg.station)
 
         self.default_q = cfg.action_adapter.default_q.copy()
         self.kp = cfg.sim_kp.copy()
@@ -91,19 +93,24 @@ class PingPongReferenceRunner:
                 state = self.bridge.read_state()
                 cmd = self.source.poll()
                 target = self.lifecycle.update(cmd, state)
+                station_xy = self.station.update(
+                    self.fixed_station_xy,
+                    target,
+                    self.lifecycle.phase,
+                )
 
                 policy_obs_dim = getattr(self.policy, "obs_dim", 111)
                 if policy_obs_dim == OBS_DIM_STABILITY122:
                     obs = build_observation_stability122(
-                        state, target, self.last_action, self.default_q, self.fixed_station_xy
+                        state, target, self.last_action, self.default_q, station_xy
                     )
                 elif policy_obs_dim == OBS_DIM_NORMAL114:
                     obs = build_observation_normal114(
-                        state, target, self.last_action, self.default_q, self.fixed_station_xy
+                        state, target, self.last_action, self.default_q, station_xy
                     )
                 else:
                     obs = build_observation(
-                        state, target, self.last_action, self.default_q, self.fixed_station_xy
+                        state, target, self.last_action, self.default_q, station_xy
                     )
                 raw_action = self.policy.infer(obs)
                 # The APPLIED action: with a passive neck the head columns are never

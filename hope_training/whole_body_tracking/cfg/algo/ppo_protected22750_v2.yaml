@@ -1,0 +1,29 @@
+name: ppo_protected22750_v2
+
+runner:
+  num_steps_per_env: 24
+  max_iterations: 10000
+  save_interval: 250
+  empirical_normalization: false
+
+policy:
+  actor_hidden_dims: [512, 256, 128]
+  critic_hidden_dims: [512, 256, 128]
+  activation: elu
+  init_noise_std: 0.35
+  noise_std_type: log
+
+algorithm:
+  learning_rate: 0.00003
+  schedule: adaptive
+  desired_kl: 0.0012
+  entropy_coef: 0.0
+  num_learning_epochs: 2
+  num_mini_batches: 4
+  gamma: 0.99
+  lam: 0.95
+  clip_param: 0.2
+  value_loss_coef: 1.0
+  use_clipped_value_loss: true
+  max_grad_norm: 1.0
+

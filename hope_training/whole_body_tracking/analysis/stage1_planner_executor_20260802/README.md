@@ -219,3 +219,30 @@ driven rather than iteration driven and does not add any hold-phase or
 right-arm penalty. Same scratch seeds 9751/9752 are the isolated final screen;
 they must retain command exploration while reducing recovery angular velocity
 before any long run is accepted.
+
+## Table-touch root cause
+
+The ability-scaled retest was stopped at iterations 136/145 after auditing the
+table failure itself. Before the targeted-attempt EMA reaches 0.20, the new
+peak term has exactly the old effective weight. Same-seed checkpoints confirm
+the trajectories are identical: at seed-9751 iteration 74, old and new both
+reported episode length 70.83, tilt termination 49.875, and table termination
+8.3438; seed-9752 iteration 89 was also identical. The new peak term therefore
+did not create early table entry.
+
+The tracking scene contains only the robot and a flat floor. It has no rigid
+table. `table_touch` tests whether torso/arm/wrist link origins or the analytic
+racket center enter an axis-aligned table zone; it is not a PhysX table-contact
+event. B+deploy had this termination disabled, its table proximity reward was
+zero, and its target remained motion-box conditioned. Stage1 PlannerExecutor
+instead enables the analytic termination after 25 steps, samples on the fixed
+table `x=+0.20 m` plane, and limits dynamic-station x to [-0.02, +0.05] m.
+
+The audited reference clips themselves never place an upper-body link origin
+inside the table zone. Entry is learned/fall behavior: initially random forward
+falls, and later unsafe forward command execution. As command tracking improves,
+the first hard-failure label often moves from tilt to table entry; a higher
+table count alone does not mean total hard failures increased. A deployment
+candidate needs a rigid-table-only Stage1 scene, real per-link contact metrics,
+and impact credit that is invalidated or escrowed by table contact. Increasing
+the global table penalty alone previously produced the inactive local optimum.

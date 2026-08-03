@@ -1,0 +1,743 @@
+{
+  "attempts": 10,
+  "by_side": {
+    "backhand": {
+      "attempts": 0,
+      "contact": 0,
+      "contact_rate": 0.0,
+      "success": 0,
+      "success_rate": 0.0
+    },
+    "forehand": {
+      "attempts": 10,
+      "contact": 2,
+      "contact_rate": 0.2,
+      "success": 0,
+      "success_rate": 0.0
+    }
+  },
+  "checkpoint": "/mnt/ssd/zxl/HOPE_latest_20260721/hope_training/whole_body_tracking/logs/rsl_rl/hope_pingpong/2026-07-31_18-47-44_M25991_ACTUATOR_AB_ROBUST_LIGHT_4096x500_20260731/model_26490.pt",
+  "completed_without_fall": true,
+  "contact": 2,
+  "contact_rate": 0.2,
+  "fall": 0,
+  "healthy_ready": 9,
+  "healthy_ready_rate": 0.9,
+  "incoming_bounce": 10,
+  "incoming_bounce_rate": 1.0,
+  "motion_manifest": "/mnt/ssd/zxl/HOPE_latest_20260721/hope_training/motions/model19495_forehand_active_ready_20260729/manifest.tsv",
+  "net_cross": 0,
+  "net_cross_rate": 0.0,
+  "opponent_bounce": 0,
+  "physical_recovery_diagnostics": {
+    "attempts": 2,
+    "mean_observed_duration_s": 1.6099999999999661,
+    "outcome_resolution": {
+      "contact": {
+        "attempts": 2,
+        "ready_fail": 0,
+        "ready_success": 2,
+        "ready_success_rate": 1.0
+      },
+      "net_cross": {
+        "attempts": 0,
+        "ready_fail": 0,
+        "ready_success": 0,
+        "ready_success_rate": 0.0
+      },
+      "opponent_bounce": {
+        "attempts": 0,
+        "ready_fail": 0,
+        "ready_success": 0,
+        "ready_success_rate": 0.0
+      },
+      "targeted_miss": {
+        "attempts": 0,
+        "ready_fail": 0,
+        "ready_success": 0,
+        "ready_success_rate": 0.0
+      }
+    },
+    "phase_boundaries_s": [
+      0.1,
+      0.3,
+      0.6
+    ],
+    "phase_histograms": {
+      "brake_100_300ms": {
+        "attempts_reaching_phase": 2,
+        "histograms": {
+          "abs_pitch": [
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.1
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.2
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.35
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.5
+            }
+          ],
+          "base_ang_vel": [
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.8
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 1.2
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 1.6
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 2.0
+            }
+          ],
+          "com_x": [
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.08
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.12
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.16
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.2
+            }
+          ],
+          "com_y": [
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.1
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.14
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.18
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.22
+            }
+          ],
+          "leg_overflow": [
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 1.5
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 2.0
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 2.5
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 3.0
+            }
+          ],
+          "tilt": [
+            {
+              "count": 1,
+              "rate": 0.5,
+              "threshold": 0.1
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.2
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.35
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.5
+            }
+          ],
+          "waist_overflow": [
+            {
+              "count": 2,
+              "rate": 1.0,
+              "threshold": 0.5
+            },
+            {
+              "count": 1,
+              "rate": 0.5,
+              "threshold": 1.0
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 1.5
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 2.0
+            }
+          ]
+        }
+      },
+      "impact_0_100ms": {
+        "attempts_reaching_phase": 2,
+        "histograms": {
+          "abs_pitch": [
+            {
+              "count": 1,
+              "rate": 0.5,
+              "threshold": 0.1
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.2
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.35
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.5
+            }
+          ],
+          "base_ang_vel": [
+            {
+              "count": 2,
+              "rate": 1.0,
+              "threshold": 0.8
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 1.2
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 1.6
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 2.0
+            }
+          ],
+          "com_x": [
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.08
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.12
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.16
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.2
+            }
+          ],
+          "com_y": [
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.1
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.14
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.18
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.22
+            }
+          ],
+          "leg_overflow": [
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 1.5
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 2.0
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 2.5
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 3.0
+            }
+          ],
+          "tilt": [
+            {
+              "count": 1,
+              "rate": 0.5,
+              "threshold": 0.1
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.2
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.35
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.5
+            }
+          ],
+          "waist_overflow": [
+            {
+              "count": 1,
+              "rate": 0.5,
+              "threshold": 0.5
+            },
+            {
+              "count": 1,
+              "rate": 0.5,
+              "threshold": 1.0
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 1.5
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 2.0
+            }
+          ]
+        }
+      },
+      "ready_after_600ms": {
+        "attempts_reaching_phase": 2,
+        "histograms": {
+          "abs_pitch": [
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.1
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.2
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.35
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.5
+            }
+          ],
+          "base_ang_vel": [
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.8
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 1.2
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 1.6
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 2.0
+            }
+          ],
+          "com_x": [
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.08
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.12
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.16
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.2
+            }
+          ],
+          "com_y": [
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.1
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.14
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.18
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.22
+            }
+          ],
+          "leg_overflow": [
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 1.5
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 2.0
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 2.5
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 3.0
+            }
+          ],
+          "tilt": [
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.1
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.2
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.35
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.5
+            }
+          ],
+          "waist_overflow": [
+            {
+              "count": 1,
+              "rate": 0.5,
+              "threshold": 0.5
+            },
+            {
+              "count": 1,
+              "rate": 0.5,
+              "threshold": 1.0
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 1.5
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 2.0
+            }
+          ]
+        }
+      },
+      "settle_300_600ms": {
+        "attempts_reaching_phase": 2,
+        "histograms": {
+          "abs_pitch": [
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.1
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.2
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.35
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.5
+            }
+          ],
+          "base_ang_vel": [
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.8
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 1.2
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 1.6
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 2.0
+            }
+          ],
+          "com_x": [
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.08
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.12
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.16
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.2
+            }
+          ],
+          "com_y": [
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.1
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.14
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.18
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.22
+            }
+          ],
+          "leg_overflow": [
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 1.5
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 2.0
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 2.5
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 3.0
+            }
+          ],
+          "tilt": [
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.1
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.2
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.35
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.5
+            }
+          ],
+          "waist_overflow": [
+            {
+              "count": 1,
+              "rate": 0.5,
+              "threshold": 0.5
+            },
+            {
+              "count": 1,
+              "rate": 0.5,
+              "threshold": 1.0
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 1.5
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 2.0
+            }
+          ]
+        }
+      }
+    },
+    "trigger": "actual_physx_contact"
+  },
+  "physical_task": "HOPE-PingPong-PhysicalEval-AgibotA3-v0",
+  "planner_code_dir": "/mnt/ssd/zxl/HOPE_latest_20260721/analysis/external_alignment_packages_20260731/package1/real_robot_planner_rl_alignment_20260731/01_planner_V4_A4_plane_recorded/snapshot/hope_planner_code",
+  "planner_code_sha256": "fdc27255af5c7391e439ceb5666c3d4bef7f7305573307707bd2e5ed78ef033c",
+  "planner_command_rate": 1.0,
+  "planner_command_seen": 10,
+  "planner_commands": 250,
+  "planner_no_command": 289,
+  "planner_revision_gate_enabled": true,
+  "planner_revision_gate_reasons": {
+    "accepted_initial": 10,
+    "accepted_revision": 240,
+    "awaiting_convergence": 23,
+    "late_freeze": 39,
+    "position_jump": 8,
+    "strike_time_jump": 109
+  },
+  "planner_solve_calls": 718,
+  "planner_yaml": "/mnt/ssd/zxl/HOPE_latest_20260721/analysis/external_alignment_packages_20260731/package1/real_robot_planner_rl_alignment_20260731/01_planner_V4_A4_plane_recorded/snapshot/hope_planner.yaml",
+  "success": 0,
+  "success_rate": 0.0,
+  "task_yaml": "HOPEPingPongM25991ReplayControlV1",
+  "termination_terms": [
+    "time_out",
+    "base_too_low",
+    "base_tilted",
+    "anchor_pos",
+    "anchor_ori",
+    "ee_body_pos",
+    "table_touch"
+  ],
+  "trace_coordinate_frames": {
+    "ball_world_x_y_z": "isaac_world",
+    "ball_x_y_z": "canonical_table",
+    "intended_strike_table_x_y_z": "canonical_table",
+    "racket_x_y_z": "isaac_world",
+    "target_x_y_z": "isaac_world"
+  }
+}

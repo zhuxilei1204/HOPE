@@ -1,0 +1,420 @@
+[Warning] [simulation_app.simulation_app] Modules: ['omni.kit_app'] were loaded before SimulationApp was started and might not be loaded correctly.
+[Warning] [simulation_app.simulation_app] Please check to make sure no extra omniverse or pxr modules are imported before the call to SimulationApp(...)
+Loading user config located at: '/home/zxl/miniconda3/envs/zxl-pace/lib/python3.10/site-packages/omni/data/Kit/Isaac-Sim/4.5/user.config.json'
+[Info] [carb] Logging to file: /home/zxl/miniconda3/envs/zxl-pace/lib/python3.10/site-packages/omni/logs/Kit/Isaac-Sim/4.5/kit_20260731_191027.log
+2026-07-31 11:10:27 [0ms] [Warning] [omni.kit.app.plugin] No crash reporter present, dumps uploading isn't available.
+2026-07-31 11:10:27 [1ms] [Warning] [omni.ext.plugin] [ext: rendering_modes] Extensions config 'extension.toml' doesn't exist '/mnt/ssd/zxl/IsaacLab/apps/rendering_modes' or '/mnt/ssd/zxl/IsaacLab/apps/rendering_modes/config'
+2026-07-31 11:10:27 [71ms] [Warning] [omni.usd_config.extension] Enable omni.materialx.libs extension to use MaterialX
+2026-07-31 11:10:27 [123ms] [Warning] [omni.platforminfo.plugin] failed to open the default display.  Can't verify X Server version.
+2026-07-31 11:10:27 [264ms] [Warning] [omni.datastore] OmniHub is inaccessible
+2026-07-31 11:10:27 [283ms] [Warning] [omni.isaac.dynamic_control] omni.isaac.dynamic_control is deprecated as of Isaac Sim 4.5. No action is needed from end-users.
+
+|---------------------------------------------------------------------------------------------|
+| Driver Version: 580.105.08    | Graphics API: Vulkan
+|=============================================================================================|
+| GPU | Name                             | Active | LDA | GPU Memory | Vendor-ID | LUID       |
+|     |                                  |        |     |            | Device-ID | UUID       |
+|     |                                  |        |     |            | Bus-ID    |            |
+|---------------------------------------------------------------------------------------------|
+| 0   | NVIDIA GeForce RTX 5090          | Yes: 0 |     | 32607   MB | 10de      | 0          |
+|     |                                  |        |     |            | 2b85      | c2a01bc3.. |
+|     |                                  |        |     |            | 1         |            |
+|---------------------------------------------------------------------------------------------|
+| 1   | NVIDIA GeForce RTX 5090          | Yes: 1 |     | 32607   MB | 10de      | 0          |
+|     |                                  |        |     |            | 2b85      | 837a84cc.. |
+|     |                                  |        |     |            | 7         |            |
+|=============================================================================================|
+| OS: 24.04.2 LTS (Noble Numbat) ubuntu, Version: 24.04.2, Kernel: 6.17.0-35-generic
+| Processor: Intel(R) Core(TM) i9-14900K
+| Bare Metal Cores: 24 | Bare Metal Logical Cores: 48
+| Available Cores:  32 
+|---------------------------------------------------------------------------------------------|
+| Total Memory (MB): 128491 | Free Memory: 114277
+| Total Page/Swap (MB): 8191 | Free Page/Swap: 7149
+|---------------------------------------------------------------------------------------------|
+2026-07-31 11:10:30 [2,860ms] [Warning] [gpu.foundation.plugin] IOMMU is enabled.
+2026-07-31 11:10:30 [2,860ms] [Warning] [gpu.foundation.plugin] Detected IOMMU is enabled. Running CUDA peer-to-peer bandwidth and latency validation.
+Unidirectional P2P=Enabled Bandwidth (P2P Writes) Matrix (GB/s)
+   D\D     0      1 
+     0 1540.93   6.77 
+     1   6.99 1541.07 
+P2P=Enabled Latency (P2P Writes) Matrix (us)
+   GPU     0      1 
+     0   2.07  20.72 
+     1 189.56   2.06 
+
+   CPU     0      1 
+     0   1.26   3.27 
+     1   3.17   1.20 
+2026-07-31 11:10:30 [3,129ms] [Warning] [gpu.foundation.plugin] CUDA peer-to-peer observed bandwidth: 6.8 GB/s.
+2026-07-31 11:10:30 [3,129ms] [Warning] [gpu.foundation.plugin] CUDA peer-to-peer observed latency: 189.6 us.
+2026-[isaac_physical_eval] checkpoint=/mnt/ssd/zxl/HOPE_latest_20260721/hope_training/whole_body_tracking/logs/rsl_rl/hope_pingpong/2026-07-31_18-47-44_M25991_ACTUATOR_AB_ROBUST_LIGHT_4096x500_20260731/model_26490.pt
+[isaac_physical_eval] task_yaml=HOPEPingPongM25991ReplayControlV1 overrides=212
+[isaac_physical_eval] planner_yaml=/mnt/ssd/zxl/HOPE_latest_20260721/analysis/external_alignment_packages_20260731/package1/real_robot_planner_rl_alignment_20260731/01_planner_V4_A4_plane_recorded/snapshot/hope_planner.yaml
+07-31 11:10:30 [3,129ms] [Warning] [gpu.foundation.plugin] Please verify if observed bandwidth and latency are expected.
+2026-07-31 11:10:30 [3,222ms] [Warning] [omni.kvdb.plugin] Disabling key-value database because another kit process is locking it
+2026-07-31 11:10:32 [4,844ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-07-31 11:10:32 [4,844ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-07-31 11:10:32 [4,846ms] [Error] [gpu.foundation.plugin] DriverShaderCacheManager::init() called without a shutdown()!
+
+|---------------------------------------------------------------------------------------------|
+| Driver Version: 580.105.08    | Graphics API: Vulkan
+|=============================================================================================|
+| GPU | Name                             | Active | LDA | GPU Memory | Vendor-ID | LUID       |
+|     |                                  |        |     |            | Device-ID | UUID       |
+|     |                                  |        |     |            | Bus-ID    |            |
+|---------------------------------------------------------------------------------------------|
+| 0   | NVIDIA GeForce RTX 5090          | Yes: 0 |     | 32607   MB | 10de      | 0          |
+|     |                                  |        |     |            | 2b85      | c2a01bc3.. |
+|     |                                  |        |     |            | 1         |            |
+|---------------------------------------------------------------------------------------------|
+| 1   | NVIDIA GeForce RTX 5090          | Yes: 1 |     | 32607   MB | 10de      | 0          |
+|     |                                  |        |     |            | 2b85      | 837a84cc.. |
+|     |                                  |        |     |            | 7         |            |
+|=============================================================================================|
+| OS: 24.04.2 LTS (Noble Numbat) ubuntu, Version: 24.04.2, Kernel: 6.17.0-35-generic
+| Processor: Intel(R) Core(TM) i9-14900K
+| Bare Metal Cores: 24 | Bare Metal Logical Cores: 48
+| Available Cores:  32 
+|---------------------------------------------------------------------------------------------|
+| Total Memory (MB): 128491 | Free Memory: 113854
+| Total Page/Swap (MB): 8191 | Free Page/Swap: 7149
+|---------------------------------------------------------------------------------------------|
+Unidirectional P2P=Enabled Bandwidth (P2P Writes) Matrix (GB/s)
+   D\D     0      1 
+     0 1537.89   6.77 
+     1   6.91 1553.18 
+P2P=Enabled Latency (P2P Writes) Matrix (us)
+   GPU     0      1 
+     0   2.06  21.31 
+     1 193.90   2.05 
+
+   CPU     0      1 
+     0   1.27   3.36 
+     1   3.23   1.30 
+2026-07-31 11:10:32 [5,643ms] [Warning] [gpu.foundation.plugin] CUDA peer-to-peer observed bandwidth: 6.8 GB/s.
+2026-07-31 11:10:32 [5,643ms] [Warning] [gpu.foundation.plugin] CUDA peer-to-peer observed latency: 193.9 us.
+2026-07-31 11:10:32 [5,643ms] [Warning] [gpu.foundation.plugin] Please verify if observed bandwidth and latency are expected.
+2026-07-31 11:10:32 [5,656ms] [Warning] [gpu.foundation.plugin] IOMMU is enabled.
+2026-07-31 11:10:32 [5,656ms] [Warning] [gpu.foundation.plugin] Detected IOMMU is enabled. Running CUDA peer-to-peer bandwidth and latency validation.
+Unidirectional P2P=Enabled Bandwidth (P2P Writes) Matrix (GB/s)
+   D\D     0      1 
+     0 1408.29   6.77 
+     1   6.90 1550.10 
+P2P=Enabled Latency (P2P Writes) Matrix (us)
+   GPU     0      1 
+     0   2.06  23.65 
+     1 224.00   2.06 
+
+   CPU     0      1 
+     0   1.22   3.29 
+     1   3.25   1.17 
+2026-07-31 11:10:33 [5,932ms] [Warning] [gpu.foundation.plugin] CUDA peer-to-peer observed bandwidth: 6.8 GB/s.
+2026-07-31 11:10:33 [5,932ms] [Warning] [gpu.foundation.plugin] CUDA peer-to-peer observed latency: 224.0 us.
+2026-07-31 11:10:33 [5,932ms] [Warning] [gpu.foundation.plugin] Please verify if observed bandwidth and latency are expected.
+2026-07-31 11:10:33 [6,146ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-07-31 11:10:33 [6,146ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-07-31 11:10:33 [6,166ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-07-31 11:10:33 [6,166ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-07-31 11:10:33 [6,175ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-07-31 11:10:33 [6,175ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-07-31 11:10:33 [6,180ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-07-31 11:10:33 [6,180ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-07-31 11:10:33 [6,181ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-07-31 11:10:33 [6,181ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-07-31 11:10:33 [6,182ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-07-31 11:10:33 [6,182ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-07-31 11:10:33 [6,383ms] [Warning] [omni.graph.visualization.nodes._impl.extension] No Viewport Window to add omni.graph.visualization.nodes-2.1.1 scene to
+2026-07-31 11:10:33 [6,418ms] [Warning] [isaacsim.asset.importer.urdf] The path 0000014503_A3T2.5-URDF-std-pingpang-0409 is not a valid usd path, modifying to a_0000014503_A3T2_5_URDF_std_pingpang_0409
+2026-07-31 11:10:33 [6,419ms] [Error] [isaacsim.asset.importer.urdf] *** Could not parse xyz string '0.0' 
+2026-07-31 11:10:33 [6,419ms] [Error] [isaacsim.asset.importer.urdf] *** xyz not specified for axis
+2026-07-31 11:10:33 [6,419ms] [Error] [isaacsim.asset.importer.urdf] *** Could not parse xyz string '' 
+2026-07-31 11:10:33 [6,419ms] [Error] [isaacsim.asset.importer.urdf] *** xyz not specified for axis
+2026-07-31 11:10:33 [6,419ms] [Error] [isaacsim.asset.importer.urdf] *** Could not parse xyz string '' 
+2026-07-31 11:10:33 [6,419ms] [Error] [isaacsim.asset.importer.urdf] *** xyz not specified for axis
+2026-07-31 11:10:33 [6,419ms] [Error] [isaacsim.asset.importer.urdf] *** Could not parse xyz string '' 
+2026-07-31 11:10:33 [6,419ms] [Error] [isaacsim.asset.importer.urdf] *** xyz not specified for axis
+2026-07-31 11:10:33 [6,419ms] [Error] [isaacsim.asset.importer.urdf] *** Could not parse xyz string '0.0' 
+2026-07-31 11:10:33 [6,419ms] [Error] [isaacsim.asset.importer.urdf] *** xyz not specified for axis
+2026-07-31 11:10:33 [6,419ms] [Error] [isaacsim.asset.importer.urdf] *** Could not parse xyz string '0.0' 
+2026-07-31 11:10:33 [6,419ms] [Error] [isaacsim.asset.importer.urdf] *** xyz not specified for axis
+2026-07-31 11:10:34 [6,774ms] [Warning] [isaacsim.asset.importer.urdf] std_head_stereo_camera_joint: Joint Axis is not body aligned with X, Y or Z primary axis. Adjusting PhysX joint alignment to Axis X and reorienting bodies.
+2026-07-31 11:10:34 [6,955ms] [Warning] [isaacsim.asset.importer.urdf] right_hand_pingpang_joint: Joint Axis is not body aligned with X, Y or Z primary axis. Adjusting PhysX joint alignment to Axis X and reorienting bodies.
+2026-07-31 11:10:34 [6,965ms] [Warning] [isaacsim.asset.importer.urdf] pingbang_ball_joint: Joint Axis is not body aligned with X, Y or Z primary axis. Adjusting PhysX joint alignment to Axis X and reorienting bodies.
+2026-07-31 11:10:34 [6,972ms] [Warning] [isaacsim.asset.importer.urdf] pingpang_black_joint: Joint Axis is not body aligned with X, Y or Z primary axis. Adjusting PhysX joint alignment to Axis X and reorienting bodies.
+2026-07-31 11:10:34 [6,980ms] [Warning] [isaacsim.asset.importer.urdf] pingpang_red_joint: Joint Axis is not body aligned with X, Y or Z primary axis. Adjusting PhysX joint alignment to Axis X and reorienting bodies.
+2026-07-31 11:10:35 [8,444ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPreviewSurface.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-07-31 11:10:35 [8,444ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdUVTexture.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-07-31 11:10:35 [8,444ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_float.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-07-31 11:10:35 [8,444ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_float2.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-07-31 11:10:35 [8,444ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_float3.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-07-31 11:10:35 [8,444ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_float4.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-07-31 11:10:35 [8,444ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_int.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-07-31 11:10:35 [8,444ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_string.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-07-31 11:10:35 [8,444ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_normal.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-07-31 11:10:35 [8,444ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_point.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-07-31 11:10:35 [8,444ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omn[INFO][AppLauncher]: Using device: cuda:1
+[INFO][AppLauncher]: Loading experience file: /mnt/ssd/zxl/IsaacLab/apps/isaaclab.python.headless.kit
+[INFO]: Parsing configuration from: <class 'whole_body_tracking.tasks.tracking.config.agibot_a3.hope_physical_eval_env_cfg.HOPEPhysicalEvalEnvCfg'>
+Setting seed: 17
+[INFO]: Base environment:
+	Environment device    : cuda:1
+	Environment seed      : 17
+	Physics step-size     : 0.0025
+	Rendering step-size   : 0.02
+	Environment step-size : 0.02
+[INFO]: Time taken for scene creation : 3.656694 seconds
+[INFO]: Scene manager:  <class InteractiveScene>
+	Number of environments: 1
+	Environment spacing   : 6.0
+	Source prim name      : /World/envs/env_0
+	Global prim paths     : ['/World/ground']
+	Replicate physics     : True
+[INFO]: Starting the simulation. This may take a few seconds. Please wait...
+[INFO]: Time taken for simulation start : 0.444285 seconds
+[INFO] Command Manager:  <CommandManager> contains 2 active terms.
++---------------------------------------------+
+|             Active Command Terms            |
++-------+---------------+---------------------+
+| Index | Name          |         Type        |
++-------+---------------+---------------------+
+|   0   | motion        |    MotionCommand    |
+|   1   | racket_target | RacketTargetCommand |
++-------+---------------+---------------------+
+
+[INFO] Event Manager:  <EventManager> contains 1 active terms.
++---------------------------------------+
+| Active Event Terms in Mode: 'startup' |
++----------+----------------------------+
+|  Index   | Name                       |
++----------+----------------------------+
+|    0     | racket_material            |
++----------+----------------------------+
+
+[INFO] Recorder Manager:  <RecorderManager> contains 0 active terms.
++-----------------------+
+| Active Recorder Terms |
++------------+----------+
+|   Index    | Name     |
++------------+----------+
++------------+----------+
+
+[INFO] Action Manager:  <ActionManager> contains 1 active terms.
++---------------------------------+
+| Active Action Terms (shape: 31) |
++-------+-----------+-------------+
+| Index | Name      |   Dimension |
++-------+-----------+-------------+
+|   0   | joint_pos |          31 |
++-------+-----------+-------------+
+
+[INFO] Observation Manager: <ObservationManager> contains 2 groups.
++-------------------------------------------------------------+
+| Active Observation Terms in Group: 'policy' (shape: (114,)) |
++----------+--------------------------------------+-----------+
+|  Index   | Name                                 |   Shape   |
++----------+--------------------------------------+-----------+
+|    0     | base_ang_vel                         |    (3,)   |
+|    1     | joint_pos                            |   (31,)   |
+|    2     | joint_vel                            |   (31,)   |
+|    3     | last_action                          |   (31,)   |
+|    4     | projected_gravity                    |    (3,)   |
+|    5     | base_forward_xy                      |    (2,)   |
+|    6     | fixed_station_error_xy               |    (2,)   |
+|    7     | racket_target_rel_base               |    (3,)   |
+|    8     | racket_target_vel_w                  |    (3,)   |
+|    9     | time_to_strike                       |    (1,)   |
+|    10    | swing_side                           |    (1,)   |
+|    11    | racket_target_normal_w               |    (3,)   |
++----------+--------------------------------------+-----------+
++-------------------------------------------------------------+
+| Active Observation Terms in Group: 'critic' (shape: (324,)) |
++----------+--------------------------------------+-----------+
+|  Index   | Name                                 |   Shape   |
++----------+--------------------------------------+-----------+
+|    0     | base_ang_vel                         |    (3,)   |
+|    1     | joint_pos                            |   (31,)   |
+|    2     | joint_vel                            |   (31,)   |
+|    3     | last_action                          |   (31,)   |
+|    4     | projected_gravity                    |    (3,)   |
+|    5     | base_forward_xy                      |    (2,)   |
+|    6     | fixed_station_error_xy               |    (2,)   |
+|    7     | racket_target_rel_base               |    (3,)   |
+|    8     | racket_target_vel_w                  |    (3,)   |
+|    9     | time_to_strike                       |    (1,)   |
+|    10    | swing_side                           |    (1,)   |
+|    11    | base_lin_vel                         |    (3,)   |
+|    12    | motion_command                       |   (62,)   |
+|    13    | motion_anchor_pos_b                  |    (3,)   |
+|    14    | motion_anchor_ori_b                  |    (6,)   |
+|    15    | robot_body_pos_b                     |   (42,)   |
+|    16    | robot_body_ori_b                     |   (84,)   |
+|    17    | racket_pos_b                         |    (3,)   |
+|    18    | racket_lin_vel_w                     |    (3,)   |
+|    19    | racket_normal_w                      |    (3,)   |
+|    20    | racket_target_normal_w               |    (3,)   |
+|    21    | episode_time_left                    |    (1,)   |
++----------+--------------------------------------+-----------+
+
+[INFO] Termination Manager:  <TerminationManager> contains 7 active terms.
++---------------------------------+
+|     Active Termination Terms    |
++-------+--------------+----------+
+| Index | Name         | Time Out |
++-------+--------------+----------+
+|   0   | time_out     |   True   |
+|   1   | base_too_low |  False   |
+|   2   | base_tilted  |  False   |
+|   3   | anchor_pos   |  False   |
+|   4   | anchor_ori   |  False   |
+|   5   | ee_body_pos  |  False   |
+|   6   | table_touch  |  False   |
++-------+--------------+----------+
+
+[INFO] Reward Manager:  iverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_vector.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-07-31 11:10:35 [8,444ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_matrix.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-07-31 11:10:35 [8,444ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdTransform2d.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-07-31 11:10:36 [9,619ms] [Error] [omni.physx.tensors.plugin] CUDA error: an illegal memory access was encountered: ../../../extensions/runtime/source/omni.physx.tensors/plugins/gpu/GpuRigidBodyView.cpp: 815
+Traceback (most recent call last):
+  File "/mnt/ssd/zxl/HOPE_latest_20260721/hope_training/whole_body_tracking/source/whole_body_tracking/whole_body_tracking/tasks/table_tennis/table_tennis_env.py", line 73, in _apply_ball_aerodynamics
+    self._ball.write_data_to_sim()
+  File "/mnt/ssd/zxl/IsaacLab/source/isaaclab/isaaclab/assets/rigid_object/rigid_object.py", line 116, in write_data_to_sim
+    self.root_physx_view.apply_forces_and_torques_at_position(
+  File "/home/zxl/miniconda3/envs/zxl-pace/lib/python3.10/site-packages/isaacsim/extsPhysics/omni.physics.tensors/omni/physics/tensors/impl/api.py", line 3047, in apply_forces_and_torques_at_position
+    if not self._backend.apply_forces_and_torques_at_position(force_data_desc, torque_data_desc, position_data_desc, indices_desc, is_global):
+RuntimeError: copy_if failed on 2nd step: cudaErrorIllegalAddress: an illegal memory access was encountered
+2026-07-31 11:10:36 [9,620ms] [Error] [omni.physx.tensors.plugin] CUDA error: an illegal memory access was encountered: ../../../extensions/runtime/source/omni.physx.tensors/plugins/gpu/GpuArticulationView.cpp: 575
+2026-07-31 11:10:36 [9,620ms] [Error] [omni.physx.tensors.plugin] CUDA error: an illegal memory access was encountered: ../../../extensions/runtime/source/omni.physx.tensors/plugins/gpu/CudaKernels.cu: 589
+2026-07-31 11:10:36 [9,620ms] [Error] [omni.physx.tensors.plugin] Failed to fetch DOF velocity attribute
+[isaac_physical_eval] ERROR
+Traceback (most recent call last):
+  File "/mnt/ssd/zxl/HOPE_latest_20260721/hope_training/whole_body_tracking/scripts/isaac_physical_eval.py", line 1364, in main
+    if step_policy(target):
+  File "/mnt/ssd/zxl/HOPE_latest_20260721/hope_training/whole_body_tracking/scripts/isaac_physical_eval.py", line 1320, in step_policy
+    obs, _, dones, _ = env.step(action)
+  File "/mnt/ssd/zxl/IsaacLab/source/isaaclab_rl/isaaclab_rl/rsl_rl/vecenv_wrapper.py", line 176, in step
+    obs_dict, rew, terminated, truncated, extras = self.env.step(actions)
+  File "/home/zxl/miniconda3/envs/zxl-pace/lib/python3.10/site-packages/gymnasium/wrappers/common.py", line 392, in step
+    return super().step(action)
+  File "/home/zxl/miniconda3/envs/zxl-pace/lib/python3.10/site-packages/gymnasium/core.py", line 327, in step
+    return self.env.step(action)
+  File "/mnt/ssd/zxl/IsaacLab/source/isaaclab/isaaclab/envs/manager_based_rl_env.py", line 196, in step
+    self.scene.update(dt=self.physics_dt)
+  File "/mnt/ssd/zxl/IsaacLab/source/isaaclab/isaaclab/scene/interactive_scene.py", line 410, in update
+    articulation.update(dt)
+  File "/mnt/ssd/zxl/IsaacLab/source/isaaclab/isaaclab/assets/articulation/articulation.py", line 203, in update
+    self._data.update(dt)
+  File "/mnt/ssd/zxl/IsaacLab/source/isaaclab/isaaclab/assets/articulation/articulation_data.py", line 83, in update
+    self.joint_acc
+  File "/mnt/ssd/zxl/IsaacLab/source/isaaclab/isaaclab/assets/articulation/articulation_data.py", line 552, in joint_acc
+    self._joint_acc.data = (self.joint_vel - self._previous_joint_vel) / time_elapsed
+  File "/mnt/ssd/zxl/IsaacLab/source/isaaclab/isaaclab/assets/articulation/articulation_data.py", line 542, in joint_vel
+    self._joint_vel.data = self._root_physx_view.get_dof_velocities()
+  File "/home/zxl/miniconda3/envs/zxl-pace/lib/python3.10/site-packages/isaacsim/extsPhysics/omni.physics.tensors/omni/physics/tensors/impl/api.py", line 1433, in get_dof_velocities
+    raise Exception("Failed to get DOF velocities from backend")
+Exception: Failed to get DOF velocities from backend
+2026-07-31 11:10:37 [10,059ms] [Warning] [omni.physx.plugin] PhysX warning: /builds/omniverse/physics/physx/source/gpucommon/src/PxgCudaMemoryAllocator.cpp, FILE /builds/omniverse/physics/physx/source/gpucommon/src/PxgCudaMemoryAllocator.cpp, LINE 150
+2026-07-31 11:10:37 [10,059ms] [Warning] [omni.physx.plugin] PhysX warning: /builds/omniverse/physics/physx/source/gpucommon/src/PxgCudaMemoryAllocator.cpp, FILE /builds/omniverse/physics/physx/source/gpucommon/src/PxgCudaMemoryAllocator.cpp, LINE 150
+2026-07-31 11:10:37 [10,059ms] [Warning] [omni.physx.plugin] PhysX warning: /builds/omniverse/physics/physx/source/gpucommon/src/PxgCudaMemoryAllocator.cpp, FILE /builds/omniverse/physics/physx/source/gpucommon/src/PxgCudaMemoryAllocator.cpp, LINE 150
+2026-07-31 11:10:37 [10,059ms] [Warning] [omni.physx.plugin] PhysX warning: /builds/omniverse/physics/physx/source/gpucommon/src/PxgCudaMemoryAllocator.cpp, FILE /builds/omniverse/physics/physx/source/gpucommon/src/PxgCudaMemoryAllocator.cpp, LINE 150
+2026-07-31 11:10:37 [10,059ms] [Warning] [omni.physx.plugin] PhysX warning: /builds/omniverse/physics/physx/source/gpucommon/src/PxgCudaMemoryAllocator.cpp, FILE /builds/omniverse/physics/physx/source/gpucommon/src/PxgCudaMemoryAllocator.cpp, LINE 150
+2026-07-31 11:10:37 [10,059ms] [Warning] [omni.physx.plugin] PhysX warning: /builds/omniverse/physics/physx/source/gpucommon/src/PxgCudaMemoryAllocator.cpp, FILE /builds/omniverse/physics/physx/source/gpucommon/src/PxgCudaMemoryAllocator.cpp, LINE 150
+2026-07-31 11:10:37 [10,059ms] [Warning] [omni.physx.plugin] PhysX warning: /builds/omniverse/physics/physx/source/gpucommon/src/PxgCudaMemoryAllocator.cpp, FILE /builds/omniverse/physics/physx/source/gpucommon/src/PxgCudaMemoryAllocator.cpp, LINE 150
+2026-07-31 11:10:37 [10,059ms] [Warning] [omni.physx.plugin] PhysX warning: /builds/omniverse/physics/physx/source/gpucommon/src/PxgCudaMemoryAllocator.cpp, FILE /builds/omniverse/physics/physx/source/gpucommon/src/PxgCudaMemoryAllocator.cpp, LINE 150
+2026-07-31 11:10:37 [10,059ms] [Warning] [omni.physx.plugin] PhysX warning: /builds/omniverse/physics/physx/source/gpucommon/src/PxgCudaMemoryAllocator.cpp, FILE /builds/omniverse/physics/physx/source/gpucommon/src/PxgCudaMemoryAllocator.cpp, LINE 150
+2026-07-31 11:10:37 [10,059ms] [Warning] [omni.physx.plugin] PhysX warning: /builds/omniverse/physics/physx/source/gpucommon/src/PxgCudaMemoryAllocator.cpp, FILE /builds/omniverse/physics/physx/source/gpucommon/src/PxgCudaMemoryAllocator.cpp, LINE 150
+2026-07-31 11:10:37 [10,059ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,060ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,060ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,060ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,060ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,060ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,060ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,060ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,060ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,060ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,060ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,060ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,060ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,061ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,061ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,061ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,061ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,061ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,061ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,061ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,061ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,061ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,061ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,061ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,061ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,061ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,062ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,062ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,062ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,062ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,062ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,062ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,062ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,062ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,062ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,062ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,062ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,062ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,063ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,063ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,063ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,063ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,063ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,063ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,063ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,063ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,063ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,063ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,063ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,063ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,063ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,064ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,064ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,064ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,064ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,064ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,064ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,064ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,064ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,064ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,064ms] [Error] [omni.physx.plugin] PhysX error: Failed to unload CUDA module data, returned 700., FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 804
+2026-07-31 11:10:37 [10,064ms] [Warning] [omni.physx.plugin] PhysX warning: CUDA context validation failed, FILE /builds/omniverse/physics/physx/source/cudamanager/src/CudaContextManager.cpp, LINE 625
+2026-07-31 11:10:37 [10,064ms] [Error] [omni.physx.plugin] Failed to create Cuda Context Manager.
+2026-07-31 11:10:37 [10,064ms] [Error] [omni.physx.plugin] Unable to create PxCudaContextManager!
+2026-07-31 11:10:37 [10,065ms] [Error] [omni.physx.tensors.plugin] CUDA error: an illegal memory access was encountered: ../../../extensions/runtime/source/omni.physx.tensors/plugins/gpu/GpuArticulationView.cpp: 198
+2026-07-31 11:10:37 [10,065ms] [Error] [omni.physx.tensors.plugin] CUDA error: an illegal memory access was encountered: ../../../extensions/runtime/source/omni.physx.tensors/plugins/gpu/GpuArticulationView.cpp: 199
+2026-07-31 11:10:37 [10,065ms] [Error] [omni.physx.tensors.plugin] CUDA error: an illegal memory access was encountered: ../../../extensions/runtime/source/omni.physx.tensors/plugins/gpu/GpuArticulationView.cpp: 200
+2026-07-31 11:10:37 [10,065ms] [Error] [omni.physx.tensors.plugin] CUDA error: an illegal memory access was encountered: ../../../extensions/runtime/source/omni.physx.tensors/plugins/gpu/GpuArticulationView.cpp: 201
+2026-07-31 11:10:37 [10,065ms] [Error] [omni.physx.tensors.plugin] CUDA error: an illegal memory access was encountered: ../../../extensions/runtime/source/omni.physx.tensors/plugins/gpu/GpuArticulationView.cpp: 202
+2026-07-31 11:10:37 [10,065ms] [Error] [omni.physx.tensors.plugin] CUDA error: an illegal memory access was encountered: ../../../extensions/runtime/source/omni.physx.tensors/plugins/gpu/GpuArticulationView.cpp: 203
+2026-07-31 11:10:37 [10,065ms] [Error] [omni.physx.tensors.plugin] CUDA error: an illegal memory access was encountered: ../../../extensions/runtime/source/omni.physx.tensors/plugins/gpu/GpuArticulationView.cpp: 204
+2026-07-31 11:10:37 [10,065ms] [Error] [omni.physx.tensors.plugin] CUDA error: an illegal memory access was encountered: ../../../extensions/runtime/source/omni.physx.tensors/plugins/gpu/GpuArticulationView.cpp: 205
+2026-07-31 11:10:37 [10,065ms] [Error] [omni.physx.tensors.plugin] CUDA error: an illegal memory access was encountered: ../../../extensions/runtime/source/omni.physx.tensors/plugins/gpu/GpuRigidBodyView.cpp: 197
+2026-07-31 11:10:37 [10,065ms] [Error] [omni.physx.tensors.plugin] CUDA error: an illegal memory access was encountered: ../../../extensions/runtime/source/omni.physx.tensors/plugins/gpu/GpuRigidBodyView.cpp: 198
+2026-07-31 11:10:37 [10,065ms] [Error] [omni.physx.tensors.plugin] CUDA error: an illegal memory access was encountered: ../../../extensions/runtime/source/omni.physx.tensors/plugins/gpu/GpuRigidBodyView.cpp: 199
+2026-07-31 11:10:37 [10,065ms] [Error] [omni.physx.tensors.plugin] CUDA error: an illegal memory access was encountered: ../../../extensions/runtime/source/omni.physx.tensors/plugins/gpu/GpuRigidBodyView.cpp: 200
+2026-07-31 11:10:37 [10,065ms] [Error] [omni.physx.tensors.plugin] CUDA error: an illegal memory access was encountered: ../../../extensions/runtime/source/omni.physx.tensors/plugins/gpu/GpuRigidBodyView.cpp: 201
+2026-07-31 11:10:37 [10,065ms] [Error] [omni.physx.tensors.plugin] CUDA error: an illegal memory access was encountered: ../../../extensions/runtime/source/omni.physx.tensors/plugins/gpu/GpuRigidBodyView.cpp: 202
+2026-07-31 11:10:37 [10,065ms] [Error] [omni.physx.tensors.plugin] CUDA error: an illegal memory access was encountered: ../../../extensions/runtime/source/omni.physx.tensors/plugins/gpu/GpuRigidBodyView.cpp: 203
+2026-07-31 11:10:37 [10,065ms] [Error] [omni.physx.tensors.plugin] CUDA error: an illegal memory access was encountered: ../../../extensions/runtime/source/omni.physx.tensors/plugins/gpu/GpuRigidBodyView.cpp: 204
+2026-07-31 11:10:37 [10,065ms] [Error] [omni.physx.tensors.plugin] CUDA error: an illegal memory access was encountered: ../../../extensions/runtime/source/omni.physx.tensors/plugins/gpu/GpuRigidBodyView.cpp: 205
+2026-07-31 11:10:37 [10,065ms] [Error] [omni.physx.tensors.plugin] CUDA error: an illegal memory access was encountered: ../../../extensions/runtime/source/omni.physx.tensors/plugins/gpu/GpuRigidBodyView.cpp: 206

@@ -1,0 +1,326 @@
+{
+  "archive": "/mnt/ssd/zxl/A3_sessions_20260731_135740_592579588_20260731_125723_761563263.zip",
+  "session_id": "20260731_125723_761563263",
+  "archive_members": {
+    "policy": "A3_sessions_20260731_135740_592579588_20260731_125723_761563263/sessions/20260731_125723_761563263/raw_mdu/policy_trace.csv",
+    "tcp_samples": "A3_sessions_20260731_135740_592579588_20260731_125723_761563263/sessions/20260731_125723_761563263/raw_hdu/racket_tcp_samples.csv",
+    "tcp_events": "A3_sessions_20260731_135740_592579588_20260731_125723_761563263/sessions/20260731_125723_761563263/raw_hdu/racket_tcp_events.csv",
+    "hit_replay": "A3_sessions_20260731_135740_592579588_20260731_125723_761563263/sessions/20260731_125723_761563263/hit_replay.json"
+  },
+  "policy_frames": 11714,
+  "duration_s": 234.44029568000002,
+  "onnx": "/mnt/ssd/zxl/HOPE_deploy_models_20260730/04_hope_DeployStationStepV1_model25991_dynamic_station/policy/hope_pingpong.onnx",
+  "onnx_sha256": "751f664ddce9bdb017cea84e456e6bdbfa5eee56ce6a29a9a62cc9cde3422a2a",
+  "onnx_replay_raw_action_error": {
+    "max_abs": 3.8018432615416486e-06,
+    "rmse": 2.431282119928063e-07
+  },
+  "observation_contract": {
+    "current_station_error": {
+      "max_abs": 3.0359970093485344e-08,
+      "rmse": 3.2346771345289103e-09
+    },
+    "fixed_station_error": {
+      "max_abs": 0.1000000065262795,
+      "rmse": 0.017535723097893353
+    },
+    "target_relative_base": {
+      "max_abs": 1.898023238577906e-08,
+      "rmse": 1.1008363755653784e-08
+    },
+    "previous_applied_action": {
+      "max_abs": 4.995117208750344e-08,
+      "rmse": 2.400795372206733e-09
+    }
+  },
+  "command_output_filter": {
+    "instantaneous_adapter_target_vs_recorded_smoothed_q_des": {
+      "max_abs": 1.323394789125,
+      "rmse": 0.05988894209478051
+    },
+    "note": "Recorded q_des is the 500 Hz alpha=0.5 smoothed command, while expected_q_des is the instantaneous 50 Hz adapter target."
+  },
+  "policy_timing_s": {
+    "n": 11713,
+    "mean": 0.02001539278408606,
+    "median": 0.020000256,
+    "p95": 0.0200192,
+    "max": 0.038635264
+  },
+  "lifecycle": {
+    "phase_counts": {
+      "0": 8900,
+      "1": 1064,
+      "2": 750,
+      "3": 1000
+    },
+    "command_valid_frames": 734,
+    "revision_accept_frames": 165,
+    "dynamic_station_frames": 1214,
+    "active_task_count": 25
+  },
+  "latency_ms": {
+    "planner_age_ms": {
+      "n": 734,
+      "mean": 9.89910278002861,
+      "median": 7.716911795,
+      "p95": 23.01743114,
+      "max": 35.5660973
+    },
+    "command_header_age_ms": {
+      "n": 734,
+      "mean": 137.6719722876022,
+      "median": 103.9992905,
+      "p95": 344.35536955000003,
+      "max": 403.786835
+    },
+    "bridge_queue_age_ms": {
+      "n": 734,
+      "mean": 117.98679409594142,
+      "median": 80.838913,
+      "p95": 323.155884,
+      "max": 361.225677
+    },
+    "packet_age_ms": {
+      "n": 734,
+      "mean": 10.194422522737057,
+      "median": 8.138977525000001,
+      "p95": 23.30023186,
+      "max": 35.9410744
+    },
+    "actuation_lead_ms": {
+      "n": 734,
+      "mean": 40.0,
+      "median": 40.0,
+      "p95": 40.0,
+      "max": 40.0
+    }
+  },
+  "action_and_tracking": {
+    "raw_action_abs": {
+      "n": 363134,
+      "mean": 1.5377573283619288,
+      "median": 0.8293432295000001,
+      "p95": 4.584808204999999,
+      "max": 16.7267075
+    },
+    "raw_action_abs_active": {
+      "n": 56234,
+      "mean": 1.7086624223179017,
+      "median": 0.8949590325,
+      "p95": 5.5246771345,
+      "max": 16.7267075
+    },
+    "q_des_clamp_fraction_all": 0.08571216135090627,
+    "q_des_clamp_fraction_active": 0.08185439413877725,
+    "q_tracking_abs_rad": {
+      "n": 363134,
+      "mean": 0.10674709682636778,
+      "median": 0.06466964059999997,
+      "p95": 0.33528886304985,
+      "max": 3.044795213
+    },
+    "q_tracking_l2_active": {
+      "n": 1814,
+      "mean": 1.0729297406278893,
+      "median": 1.005412268126904,
+      "p95": 1.842758494277053,
+      "max": 2.7424343436802063
+    },
+    "highest_swing_follow_clamp_joints": [
+      {
+        "joint_name": "left_ankle_roll_joint",
+        "target_clamp_fraction_swing_follow": 0.8952590959206174
+      },
+      {
+        "joint_name": "right_ankle_roll_joint",
+        "target_clamp_fraction_swing_follow": 0.5843439911797134
+      },
+      {
+        "joint_name": "waist_pitch_joint",
+        "target_clamp_fraction_swing_follow": 0.5672546857772878
+      },
+      {
+        "joint_name": "waist_roll_joint",
+        "target_clamp_fraction_swing_follow": 0.2750826901874311
+      },
+      {
+        "joint_name": "right_ankle_pitch_joint",
+        "target_clamp_fraction_swing_follow": 0.12238147739801543
+      },
+      {
+        "joint_name": "left_ankle_pitch_joint",
+        "target_clamp_fraction_swing_follow": 0.04851157662624035
+      },
+      {
+        "joint_name": "right_hip_roll_joint",
+        "target_clamp_fraction_swing_follow": 0.015435501653803748
+      },
+      {
+        "joint_name": "left_hip_roll_joint",
+        "target_clamp_fraction_swing_follow": 0.013781697905181918
+      }
+    ]
+  },
+  "recorded_geometry": {
+    "hit_replay_summary": {
+      "frame_count": 13576,
+      "mdu_frame_count": 11714,
+      "task_count": 27,
+      "event_count": 66,
+      "ball_face_crossing_count": 11,
+      "mark_count": 0,
+      "mdu_accepted_revision_count": 165,
+      "mdu_effective_frame_count": 1814,
+      "mdu_effective_task_count": 25,
+      "global_min_distance_m": 0.018051668133844248
+    },
+    "racket_tcp_samples": 42002,
+    "tcp_contact_candidate_tasks": [
+      20,
+      23,
+      24,
+      29,
+      41,
+      42,
+      43,
+      44,
+      45
+    ],
+    "ball_face_crossing_tasks": [
+      22,
+      23,
+      25,
+      26,
+      27,
+      28,
+      33,
+      34,
+      35,
+      38,
+      39
+    ],
+    "high_confidence_impact_tasks": [
+      20,
+      23,
+      24,
+      29,
+      41,
+      42,
+      43,
+      44,
+      45
+    ],
+    "high_confidence_impact_count": 9,
+    "measured_net_clear_after_impact_count": 3,
+    "measured_return_success_count": 0,
+    "planner_aligned_impact_tasks": [
+      29,
+      42,
+      43,
+      45
+    ],
+    "planner_aligned_impact_count": 4,
+    "planner_aligned_net_clear_count": 3,
+    "impact_definition": "geometric contact_candidate plus measured ball vx reversal from incoming (<-0.2 m/s) to opponent-going (>0.2 m/s), with at least 1.0 m/s fitted velocity change"
+  },
+  "counterfactual_action_sensitivity": [
+    {
+      "variant": "fixed_station",
+      "samples": 1838,
+      "all_action_l2_median": 0.3246150016784668,
+      "all_action_l2_p95": 0.8042348355054855,
+      "all_action_max_abs": 0.6928501129150391,
+      "waist_l2_median": 0.10330967605113983,
+      "waist_l2_p95": 0.3222443431615829,
+      "left_arm_l2_median": 0.07143619656562805,
+      "left_arm_l2_p95": 0.25180753618478774,
+      "right_arm_l2_median": 0.1804095208644867,
+      "right_arm_l2_p95": 0.6685155183076859,
+      "legs_l2_median": 0.17348919808864594,
+      "legs_l2_p95": 0.4439362645149231
+    },
+    {
+      "variant": "position_to_ready",
+      "samples": 1838,
+      "all_action_l2_median": 2.490771770477295,
+      "all_action_l2_p95": 3.988915228843686,
+      "all_action_max_abs": 2.591287612915039,
+      "waist_l2_median": 0.5654681324958801,
+      "waist_l2_p95": 1.447255331277847,
+      "left_arm_l2_median": 0.8940889835357666,
+      "left_arm_l2_p95": 1.4948072135448456,
+      "right_arm_l2_median": 1.911353588104248,
+      "right_arm_l2_p95": 3.1952480792999265,
+      "legs_l2_median": 0.9861164093017578,
+      "legs_l2_p95": 1.5351865768432618
+    },
+    {
+      "variant": "zero_target_velocity",
+      "samples": 1838,
+      "all_action_l2_median": 1.283313512802124,
+      "all_action_l2_p95": 2.572835850715637,
+      "all_action_max_abs": 2.595545768737793,
+      "waist_l2_median": 0.2399233877658844,
+      "waist_l2_p95": 0.558460596203804,
+      "left_arm_l2_median": 0.4895821213722229,
+      "left_arm_l2_p95": 0.8168807297945022,
+      "right_arm_l2_median": 1.011803150177002,
+      "right_arm_l2_p95": 2.3574976444244378,
+      "legs_l2_median": 0.4557374119758606,
+      "legs_l2_p95": 0.7250215172767638
+    },
+    {
+      "variant": "ready_timing",
+      "samples": 1838,
+      "all_action_l2_median": 5.133517265319824,
+      "all_action_l2_p95": 8.694575119018554,
+      "all_action_max_abs": 6.346828937530518,
+      "waist_l2_median": 0.8918329477310181,
+      "waist_l2_p95": 1.4524412691593165,
+      "left_arm_l2_median": 1.7169594764709473,
+      "left_arm_l2_p95": 2.5829075217247004,
+      "right_arm_l2_median": 4.197552680969238,
+      "right_arm_l2_p95": 8.070674514770507,
+      "legs_l2_median": 1.423546314239502,
+      "legs_l2_p95": 2.28487604856491
+    },
+    {
+      "variant": "default_normal",
+      "samples": 1838,
+      "all_action_l2_median": 0.3674716353416443,
+      "all_action_l2_p95": 1.1419735193252563,
+      "all_action_max_abs": 1.350447654724121,
+      "waist_l2_median": 0.058734066784381866,
+      "waist_l2_p95": 0.15582721605896946,
+      "left_arm_l2_median": 0.12191522866487503,
+      "left_arm_l2_p95": 0.28379642367362945,
+      "right_arm_l2_median": 0.2855081558227539,
+      "right_arm_l2_p95": 1.080163288116455,
+      "legs_l2_median": 0.1294320821762085,
+      "legs_l2_p95": 0.2602041631937026
+    },
+    {
+      "variant": "zero_command_slice",
+      "samples": 1838,
+      "all_action_l2_median": 4.178918361663818,
+      "all_action_l2_p95": 7.6242515563964846,
+      "all_action_max_abs": 4.17816686630249,
+      "waist_l2_median": 0.8798530697822571,
+      "waist_l2_p95": 1.6809878170490264,
+      "left_arm_l2_median": 1.0009117126464844,
+      "left_arm_l2_p95": 2.5991260051727294,
+      "right_arm_l2_median": 3.3051905632019043,
+      "right_arm_l2_p95": 6.667080378532409,
+      "legs_l2_median": 1.8953512907028198,
+      "legs_l2_p95": 2.5385062456130982
+    }
+  ],
+  "outputs": {
+    "dataset_npz": "/mnt/ssd/zxl/HOPE_latest_20260721/analysis/real_session_replay_model25991_20260731/offline_audit/recorded_policy_replay.npz",
+    "task_summary_csv": "/mnt/ssd/zxl/HOPE_latest_20260721/analysis/real_session_replay_model25991_20260731/offline_audit/task_summary.csv",
+    "sensitivity_csv": "/mnt/ssd/zxl/HOPE_latest_20260721/analysis/real_session_replay_model25991_20260731/offline_audit/counterfactual_action_sensitivity.csv",
+    "joint_diagnostics_csv": "/mnt/ssd/zxl/HOPE_latest_20260721/analysis/real_session_replay_model25991_20260731/offline_audit/joint_diagnostics.csv",
+    "real_contact_kinematics_csv": "/mnt/ssd/zxl/HOPE_latest_20260721/analysis/real_session_replay_model25991_20260731/offline_audit/real_contact_kinematics.csv"
+  }
+}

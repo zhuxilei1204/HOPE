@@ -1,0 +1,160 @@
+{
+  "contract_name": "hope_pingpong_normal114",
+  "onnx_file": "hope_pingpong.onnx",
+  "obs_dim": 114,
+  "action_dim": 31,
+  "control_rate_hz": 50,
+  "observation_normalization": "none",
+  "onnx_signature": {
+    "input": {
+      "name": "observation",
+      "shape": [
+        1,
+        114
+      ],
+      "dtype": "float32"
+    },
+    "output": {
+      "name": "raw_action",
+      "shape": [
+        1,
+        31
+      ],
+      "dtype": "float32"
+    }
+  },
+  "observation_layout": [
+    {
+      "name": "base_ang_vel",
+      "slice": [
+        0,
+        3
+      ],
+      "dim": 3
+    },
+    {
+      "name": "joint_pos",
+      "slice": [
+        3,
+        34
+      ],
+      "dim": 31
+    },
+    {
+      "name": "joint_vel",
+      "slice": [
+        34,
+        65
+      ],
+      "dim": 31
+    },
+    {
+      "name": "last_action",
+      "slice": [
+        65,
+        96
+      ],
+      "dim": 31
+    },
+    {
+      "name": "projected_gravity",
+      "slice": [
+        96,
+        99
+      ],
+      "dim": 3
+    },
+    {
+      "name": "base_forward_xy",
+      "slice": [
+        99,
+        101
+      ],
+      "dim": 2
+    },
+    {
+      "name": "fixed_station_error_xy",
+      "slice": [
+        101,
+        103
+      ],
+      "dim": 2
+    },
+    {
+      "name": "racket_target_rel_base",
+      "slice": [
+        103,
+        106
+      ],
+      "dim": 3
+    },
+    {
+      "name": "racket_target_vel_w",
+      "slice": [
+        106,
+        109
+      ],
+      "dim": 3
+    },
+    {
+      "name": "time_to_strike",
+      "slice": [
+        109,
+        110
+      ],
+      "dim": 1
+    },
+    {
+      "name": "swing_side",
+      "slice": [
+        110,
+        111
+      ],
+      "dim": 1
+    },
+    {
+      "name": "racket_target_normal_w",
+      "slice": [
+        111,
+        114
+      ],
+      "dim": 3
+    }
+  ],
+  "joint_order_source": "hope_training/config/joint_order_agibot_a3.yaml",
+  "joint_order": [
+    "waist_yaw_joint",
+    "waist_roll_joint",
+    "waist_pitch_joint",
+    "head_yaw_joint",
+    "head_pitch_joint",
+    "left_shoulder_pitch_joint",
+    "left_shoulder_roll_joint",
+    "left_shoulder_yaw_joint",
+    "left_elbow_joint",
+    "left_wrist_roll_joint",
+    "left_wrist_pitch_joint",
+    "left_wrist_yaw_joint",
+    "right_shoulder_pitch_joint",
+    "right_shoulder_roll_joint",
+    "right_shoulder_yaw_joint",
+    "right_elbow_joint",
+    "right_wrist_roll_joint",
+    "right_wrist_pitch_joint",
+    "right_wrist_yaw_joint",
+    "left_hip_pitch_joint",
+    "left_hip_roll_joint",
+    "left_hip_yaw_joint",
+    "left_knee_joint",
+    "left_ankle_pitch_joint",
+    "left_ankle_roll_joint",
+    "right_hip_pitch_joint",
+    "right_hip_roll_joint",
+    "right_hip_yaw_joint",
+    "right_knee_joint",
+    "right_ankle_pitch_joint",
+    "right_ankle_roll_joint"
+  ],
+  "action_adapter_config": "a3_deploy/a3_deploy_example/config/action_adapter.yaml",
+  "last_action_feedback_mode": "raw"
+}

@@ -1,0 +1,30 @@
+{
+  "mode": "closed-loop",
+  "planner_used": false,
+  "command_source": "recorded final MDU lifecycle target",
+  "ball_source": "recorded Motive path, kinematic-guided until strike",
+  "table_to_mujoco_world_translation_xyz": [
+    0.5,
+    0.7625,
+    0.76
+  ],
+  "command_filter": {
+    "publish_hz": 500.0,
+    "alpha": 0.5
+  },
+  "attempts": 25,
+  "contact": 10,
+  "contact_rate": 0.4,
+  "net_clear": 2,
+  "net_clear_rate": 0.08,
+  "opponent_bounce": 2,
+  "opponent_bounce_rate": 0.08,
+  "success": 2,
+  "success_rate": 0.08,
+  "fall": 1,
+  "fall_rate": 0.04,
+  "min_ball_racket_distance_m": 0.03127898571094514,
+  "action_l2_vs_real_median": 2.4785429724834835,
+  "tasks_csv": "/mnt/ssd/zxl/HOPE_latest_20260721/analysis/real_session_replay_model25991_20260731/mujoco_all_tasks_final/closed-loop/tasks.csv",
+  "trace_csv": "/mnt/ssd/zxl/HOPE_latest_20260721/analysis/real_session_replay_model25991_20260731/mujoco_all_tasks_final/closed-loop/trace.csv"
+}

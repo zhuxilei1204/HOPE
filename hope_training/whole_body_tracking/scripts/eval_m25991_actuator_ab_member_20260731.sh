@@ -11,15 +11,18 @@ DEVICE=$2
 CHECKPOINT=$3
 OUTPUT_DIR=$4
 
-ROOT=/mnt/ssd/zxl/HOPE_latest_20260721
-WORK="${ROOT}/hope_training/whole_body_tracking"
-TASK=HOPEPingPongM25991ReplayControlV1
-MANIFEST="${ROOT}/hope_training/motions/model19495_forehand_active_ready_20260729/manifest.tsv"
-SNAPSHOT="${ROOT}/analysis/external_alignment_packages_20260731/package1/real_robot_planner_rl_alignment_20260731/01_planner_V4_A4_plane_recorded/snapshot"
-PLANNER="${SNAPSHOT}/hope_planner.yaml"
-PLANNER_CODE="${SNAPSHOT}/hope_planner_code"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+REPO="${REPO:-$(git -C "${SCRIPT_DIR}" rev-parse --show-toplevel)}"
+WORK="${WORK:-${REPO}/hope_training/whole_body_tracking}"
+TASK="${TASK:-HOPEPingPongM25991ReplayControlV1}"
+MANIFEST="${MANIFEST:-${REPO}/hope_training/motions/model19495_forehand_active_ready_20260729/manifest.tsv}"
+SNAPSHOT="${SNAPSHOT:-${REPO}/analysis/external_alignment_packages_20260731/package1/real_robot_planner_rl_alignment_20260731/01_planner_V4_A4_plane_recorded/snapshot}"
+PLANNER="${PLANNER:-${SNAPSHOT}/hope_planner.yaml}"
+PLANNER_CODE="${PLANNER_CODE:-${SNAPSHOT}/hope_planner_code}"
 NUM_SERVES="${NUM_SERVES:-40}"
 ISAAC_SERVES="${ISAAC_SERVES:-10}"
+CONDA_SH="${CONDA_SH:-/home/zxl/miniconda3/etc/profile.d/conda.sh}"
+CONDA_ENV="${CONDA_ENV:-zxl-pace}"
 
 for path in "${CHECKPOINT}" "${MANIFEST}" "${PLANNER}"; do
   if [[ ! -f "${path}" ]]; then
@@ -32,8 +35,8 @@ if [[ ! -d "${PLANNER_CODE}" ]]; then
   exit 2
 fi
 
-source /home/zxl/miniconda3/etc/profile.d/conda.sh
-conda activate zxl-pace
+source "${CONDA_SH}"
+conda activate "${CONDA_ENV}"
 cd "${WORK}"
 source setup_train_env.sh
 

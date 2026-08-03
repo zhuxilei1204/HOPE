@@ -1,0 +1,97 @@
+{
+  "dataset": "/mnt/ssd/zxl/HOPE_latest_20260721/analysis/real_session_replay_model25991_20260731/offline_audit/recorded_policy_replay.npz",
+  "onnx": "/mnt/ssd/zxl/HOPE_deploy_models_20260730/04_hope_DeployStationStepV1_model25991_dynamic_station/policy/hope_pingpong.onnx",
+  "planner_used": false,
+  "replayable_task_ids": [
+    23
+  ],
+  "modes": [
+    {
+      "mode": "closed-loop",
+      "planner_used": false,
+      "command_source": "recorded final MDU lifecycle target",
+      "ball_source": "recorded Motive path, kinematic-guided until strike",
+      "table_to_mujoco_world_translation_xyz": [
+        0.5,
+        0.7625,
+        0.76
+      ],
+      "command_filter": {
+        "publish_hz": 500.0,
+        "alpha": 0.5
+      },
+      "attempts": 1,
+      "contact": 1,
+      "contact_rate": 1.0,
+      "net_clear": 0,
+      "net_clear_rate": 0.0,
+      "opponent_bounce": 0,
+      "opponent_bounce_rate": 0.0,
+      "success": 0,
+      "success_rate": 0.0,
+      "fall": 0,
+      "fall_rate": 0.0,
+      "min_ball_racket_distance_m": 0.08049678391385558,
+      "action_l2_vs_real_median": 2.4304409551220476,
+      "tasks_csv": "/mnt/ssd/zxl/HOPE_latest_20260721/analysis/real_session_replay_model25991_20260731/mujoco_smoke_task23_v3/closed-loop/tasks.csv",
+      "trace_csv": "/mnt/ssd/zxl/HOPE_latest_20260721/analysis/real_session_replay_model25991_20260731/mujoco_smoke_task23_v3/closed-loop/trace.csv"
+    },
+    {
+      "mode": "open-loop-action",
+      "planner_used": false,
+      "command_source": "recorded final MDU lifecycle target",
+      "ball_source": "recorded Motive path, kinematic-guided until strike",
+      "table_to_mujoco_world_translation_xyz": [
+        0.5,
+        0.7625,
+        0.76
+      ],
+      "command_filter": {
+        "publish_hz": 500.0,
+        "alpha": 0.5
+      },
+      "attempts": 1,
+      "contact": 0,
+      "contact_rate": 0.0,
+      "net_clear": 0,
+      "net_clear_rate": 0.0,
+      "opponent_bounce": 0,
+      "opponent_bounce_rate": 0.0,
+      "success": 0,
+      "success_rate": 0.0,
+      "fall": 1,
+      "fall_rate": 1.0,
+      "min_ball_racket_distance_m": 0.10648780048361364,
+      "action_l2_vs_real_median": null,
+      "tasks_csv": "/mnt/ssd/zxl/HOPE_latest_20260721/analysis/real_session_replay_model25991_20260731/mujoco_smoke_task23_v3/open-loop-action/tasks.csv",
+      "trace_csv": "/mnt/ssd/zxl/HOPE_latest_20260721/analysis/real_session_replay_model25991_20260731/mujoco_smoke_task23_v3/open-loop-action/trace.csv"
+    },
+    {
+      "mode": "open-loop-qdes",
+      "planner_used": false,
+      "command_source": "recorded final MDU lifecycle target",
+      "ball_source": "recorded Motive path, kinematic-guided until strike",
+      "table_to_mujoco_world_translation_xyz": [
+        0.5,
+        0.7625,
+        0.76
+      ],
+      "command_filter": null,
+      "attempts": 1,
+      "contact": 0,
+      "contact_rate": 0.0,
+      "net_clear": 0,
+      "net_clear_rate": 0.0,
+      "opponent_bounce": 0,
+      "opponent_bounce_rate": 0.0,
+      "success": 0,
+      "success_rate": 0.0,
+      "fall": 1,
+      "fall_rate": 1.0,
+      "min_ball_racket_distance_m": 0.1162360860840076,
+      "action_l2_vs_real_median": null,
+      "tasks_csv": "/mnt/ssd/zxl/HOPE_latest_20260721/analysis/real_session_replay_model25991_20260731/mujoco_smoke_task23_v3/open-loop-qdes/tasks.csv",
+      "trace_csv": "/mnt/ssd/zxl/HOPE_latest_20260721/analysis/real_session_replay_model25991_20260731/mujoco_smoke_task23_v3/open-loop-qdes/trace.csv"
+    }
+  ]
+}

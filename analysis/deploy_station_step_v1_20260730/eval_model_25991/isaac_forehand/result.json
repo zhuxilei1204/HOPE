@@ -1,0 +1,37 @@
+{
+  "attempts": 10,
+  "by_side": {
+    "backhand": {
+      "attempts": 0,
+      "contact": 0,
+      "contact_rate": 0.0,
+      "success": 0,
+      "success_rate": 0.0
+    },
+    "forehand": {
+      "attempts": 10,
+      "contact": 7,
+      "contact_rate": 0.7,
+      "success": 0,
+      "success_rate": 0.0
+    }
+  },
+  "completed_without_fall": true,
+  "contact": 7,
+  "contact_rate": 0.7,
+  "fall": 0,
+  "healthy_ready": 10,
+  "healthy_ready_rate": 1.0,
+  "incoming_bounce": 10,
+  "incoming_bounce_rate": 1.0,
+  "net_cross": 0,
+  "net_cross_rate": 0.0,
+  "opponent_bounce": 0,
+  "planner_command_rate": 1.0,
+  "planner_command_seen": 10,
+  "planner_commands": 370,
+  "planner_no_command": 207,
+  "planner_solve_calls": 577,
+  "success": 0,
+  "success_rate": 0.0
+}

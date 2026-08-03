@@ -1,0 +1,1 @@
+/mnt/ssd/zxl/HOPE_latest_20260721/hope_training/whole_body_tracking/logs/rsl_rl/hope_pingpong/2026-07-30_13-41-29_M24492_DeployStationStepV1_4096x1500_20260730/model_25991.pt

@@ -1,0 +1,1164 @@
+[Warning] [simulation_app.simulation_app] Modules: ['omni.kit_app'] were loaded before SimulationApp was started and might not be loaded correctly.
+[Warning] [simulation_app.simulation_app] Please check to make sure no extra omniverse or pxr modules are imported before the call to SimulationApp(...)
+Loading user config located at: '/home/zxl/miniconda3/envs/zxl-pace/lib/python3.10/site-packages/omni/data/Kit/Isaac-Sim/4.5/user.config.json'
+[Info] [carb] Logging to file: /home/zxl/miniconda3/envs/zxl-pace/lib/python3.10/site-packages/omni/logs/Kit/Isaac-Sim/4.5/kit_20260731_191907.log
+2026-07-31 11:19:07 [0ms] [Warning] [omni.kit.app.plugin] No crash reporter present, dumps uploading isn't available.
+2026-07-31 11:19:07 [1ms] [Warning] [omni.ext.plugin] [ext: rendering_modes] Extensions config 'extension.toml' doesn't exist '/mnt/ssd/zxl/IsaacLab/apps/rendering_modes' or '/mnt/ssd/zxl/IsaacLab/apps/rendering_modes/config'
+2026-07-31 11:19:07 [68ms] [Warning] [omni.usd_config.extension] Enable omni.materialx.libs extension to use MaterialX
+2026-07-31 11:19:07 [115ms] [Warning] [omni.platforminfo.plugin] failed to open the default display.  Can't verify X Server version.
+2026-07-31 11:19:07 [257ms] [Warning] [omni.datastore] OmniHub is inaccessible
+2026-07-31 11:19:07 [275ms] [Warning] [omni.isaac.dynamic_control] omni.isaac.dynamic_control is deprecated as of Isaac Sim 4.5. No action is needed from end-users.
+2026-07-31 11:19:09 [2,553ms] [Warning] [carb.cudainterop.plugin] CUDA_VISIBLE_DEVICES environment variable is set.
+2026-07-31 11:19:09 [2,553ms] [Warning] [carb.cudainterop.plugin] Note CUDA device enumeration and Omniverse device enumeration are different.
+2026-07-31 11:19:09 [2,553ms] [Warning] [carb.cudainterop.plugin] Setting CUDA_VISIBLE_DEVICES can lead to undesired behavior or crashes.
+2026-07-31 11:19:09 [2,556ms] [Warning] [gpu.foundation.plugin] Skipping NVIDIA GPU due CUDA being in bad state: NVIDIA GeForce RTX 5090
+2026-07-31 11:19:09 [2,556ms] [Warning] [gpu.foundation.plugin] Please restart your system if CUDA is known to work in your system.
+2026-07-31 11:19:09 [2,558ms] [Warning] [gpu.foundation.plugin] Skipping NVIDIA GPU due CUDA being in bad state: NVIDIA GeForce RTX 5090
+2026-07-31 11:19:09 [2,558ms] [Warning] [gpu.foundation.plugin] Please restart your system if CUDA is known to work in your system.
+
+|---------------------------------------------------------------------------------------------|
+| Driver Version: 580.105.08    | Graphics API: Vulkan
+|=============================================================================================|
+| GPU | Name                             | Active | LDA | GPU Memory | Vendor-ID | LUID       |
+|     |                                  |        |     |            | Device-ID | UUID       |
+|     |                                  |        |     |            | Bus-ID    |            |
+|---------------------------------------------------------------------------------------------|
+| 0   | NVIDIA GeForce RTX 5090          |        |     | 32607   MB | 10de      | 0          |
+|     |                                  |        |     |            | 2b85      | c2a01bc3.. |
+|     |                                  |        |     |            | 1         |            |
+|---------------------------------------------------------------------------------------------|
+| 1   | NVIDIA GeForce RTX 5090          | Yes: 0 |     | 32607   MB | 10de      | 0          |
+|     |                                  |        |     |            | 2b85      | 837a84cc.. |
+|     |                                  |        |     |            | 7         |            |
+|=============================================================================================|
+| OS: 24.04.2 LTS (Noble Numbat) ubuntu, Version: 24.04.2, Kernel: 6.17.0-35-generic
+| Processor: Intel(R) Core(TM) i9-14900K
+| Bare Metal Cores: 24 | Bare Metal Logical Cores: 48
+| Available Cores:  32 
+|---------------------------------------------------------------------------------------------|
+| Total Memory (MB): 128491 | [isaac_physical_eval] checkpoint=/mnt/ssd/zxl/HOPE_latest_20260721/hope_training/whole_body_tracking/logs/rsl_rl/hope_pingpong/2026-07-31_18-47-44_M25991_ACTUATOR_AB_ROBUST_LIGHT_4096x500_20260731/model_26490.pt
+[isaac_physical_eval] task_yaml=HOPEPingPongM25991ReplayControlV1 overrides=212
+[isaac_physical_eval] planner_yaml=/mnt/ssd/zxl/HOPE_latest_20260721/analysis/external_alignment_packages_20260731/package1/real_robot_planner_rl_alignment_20260731/01_planner_V4_A4_plane_recorded/snapshot/hope_planner.yaml
+Free Memory: 119288
+| Total Page/Swap (MB): 8191 | Free Page/Swap: 7149
+|---------------------------------------------------------------------------------------------|
+2026-07-31 11:19:10 [2,809ms] [Warning] [gpu.foundation.plugin] IOMMU is enabled.
+2026-07-31 11:19:10 [2,809ms] [Warning] [gpu.foundation.plugin] Detected IOMMU is enabled. Running CUDA peer-to-peer bandwidth and latency validation.
+Unidirectional P2P=Enabled Bandwidth (P2P Writes) Matrix (GB/s)
+   D\D     0 
+     0 1512.58 
+P2P=Enabled Latency (P2P Writes) Matrix (us)
+   GPU     0 
+     0   2.12 
+
+   CPU     0 
+     0   1.23 
+2026-07-31 11:19:11 [4,503ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-07-31 11:19:11 [4,503ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-07-31 11:19:11 [4,505ms] [Error] [gpu.foundation.plugin] DriverShaderCacheManager::init() called without a shutdown()!
+2026-07-31 11:19:11 [4,548ms] [Warning] [gpu.foundation.plugin] Skipping NVIDIA GPU due CUDA being in bad state: NVIDIA GeForce RTX 5090
+2026-07-31 11:19:11 [4,548ms] [Warning] [gpu.foundation.plugin] Please restart your system if CUDA is known to work in your system.
+2026-07-31 11:19:11 [4,549ms] [Warning] [gpu.foundation.plugin] Skipping NVIDIA GPU due CUDA being in bad state: NVIDIA GeForce RTX 5090
+2026-07-31 11:19:11 [4,549ms] [Warning] [gpu.foundation.plugin] Please restart your system if CUDA is known to work in your system.
+
+|---------------------------------------------------------------------------------------------|
+| Driver Version: 580.105.08    | Graphics API: Vulkan
+|=============================================================================================|
+| GPU | Name                             | Active | LDA | GPU Memory | Vendor-ID | LUID       |
+|     |                                  |        |     |            | Device-ID | UUID       |
+|     |                                  |        |     |            | Bus-ID    |            |
+|---------------------------------------------------------------------------------------------|
+| 0   | NVIDIA GeForce RTX 5090          |        |     | 32607   MB | 10de      | 0          |
+|     |                                  |        |     |            | 2b85      | c2a01bc3.. |
+|     |                                  |        |     |            | 1         |            |
+|---------------------------------------------------------------------------------------------|
+| 1   | NVIDIA GeForce RTX 5090          | Yes: 0 |     | 32607   MB | 10de      | 0          |
+|     |                                  |        |     |            | 2b85      | 837a84cc.. |
+|     |                                  |        |     |            | 7         |            |
+|=============================================================================================|
+| OS: 24.04.2 LTS (Noble Numbat) ubuntu, Version: 24.04.2, Kernel: 6.17.0-35-generic
+| Processor: Intel(R) Core(TM) i9-14900K
+| Bare Metal Cores: 24 | Bare Metal Logical Cores: 48
+| Available Cores:  32 
+|---------------------------------------------------------------------------------------------|
+| Total Memory (MB): 128491 | Free Memory: 118990
+| Total Page/Swap (MB): 8191 | Free Page/Swap: 7149
+|---------------------------------------------------------------------------------------------|
+Unidirectional P2P=Enabled Bandwidth (P2P Writes) Matrix (GB/s)
+   D\D     0 
+     0 1394.00 
+P2P=Enabled Latency (P2P Writes) Matrix (us)
+   GPU     0 
+     0   2.12 
+
+   CPU     0 
+     0   1.21 
+2026-07-31 11:19:12 [4,821ms] [Warning] [gpu.foundation.plugin] IOMMU is enabled.
+2026-07-31 11:19:12 [4,821ms] [Warning] [gpu.foundation.plugin] Detected IOMMU is enabled. Running CUDA peer-to-peer bandwidth and latency validation.
+Unidirectional P2P=Enabled Bandwidth (P2P Writes) Matrix (GB/s)
+   D\D     0 
+     0 1390.12 
+P2P=Enabled Latency (P2P Writes) Matrix (us)
+   GPU     0 
+     0   2.14 
+
+   CPU     0 
+     0   1.30 
+2026-07-31 11:19:12 [4,966ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-07-31 11:19:12 [4,966ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-07-31 11:19:12 [4,980ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-07-31 11:19:12 [4,980ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-07-31 11:19:12 [4,986ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-07-31 11:19:12 [4,986ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-07-31 11:19:12 [4,991ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-07-31 11:19:12 [4,991ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-07-31 11:19:12 [4,992ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-07-31 11:19:12 [4,992ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-07-31 11:19:12 [4,993ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-07-31 11:19:12 [4,993ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-07-31 11:19:12 [5,196ms] [Warning] [omni.graph.visualization.nodes._impl.extension] No Viewport Window to add omni.graph.visualization.nodes-2.1.1 scene to
+2026-07-31 11:19:12 [5,230ms] [Warning] [isaacsim.asset.importer.urdf] The path 0000014503_A3T2.5-URDF-std-pingpang-0409 is not a valid usd path, modifying to a_0000014503_A3T2_5_URDF_std_pingpang_0409
+2026-07-31 11:19:12 [5,230ms] [Error] [isaacsim.asset.importer.urdf] *** Could not parse xyz string '0.0' 
+2026-07-31 11:19:12 [5,230ms] [Error] [isaacsim.asset.importer.urdf] *** xyz not specified for axis
+2026-07-31 11:19:12 [5,230ms] [Error] [isaacsim.asset.importer.urdf] *** Could not parse xyz string '' 
+2026-07-31 11:19:12 [5,230ms] [Error] [isaacsim.asset.importer.urdf] *** xyz not specified for axis
+2026-07-31 11:19:12 [5,231ms] [Error] [isaacsim.asset.importer.urdf] *** Could not parse xyz string '' 
+2026-07-31 11:19:12 [5,231ms] [Error] [isaacsim.asset.importer.urdf] *** xyz not specified for axis
+2026-07-31 11:19:12 [5,231ms] [Error] [isaacsim.asset.importer.urdf] *** Could not parse xyz string '' 
+2026-07-31 11:19:12 [5,231ms] [Error] [isaacsim.asset.importer.urdf] *** xyz not specified for axis
+2026-07-31 11:19:12 [5,231ms] [Error] [isaacsim.asset.importer.urdf] *** Could not parse xyz string '0.0' 
+2026-07-31 11:19:12 [5,231ms] [Error] [isaacsim.asset.importer.urdf] *** xyz not specified for axis
+2026-07-31 11:19:12 [5,231ms] [Error] [isaacsim.asset.importer.urdf] *** Could not parse xyz string '0.0' 
+2026-07-31 11:19:12 [5,231ms] [Error] [isaacsim.asset.importer.urdf] *** xyz not specified for axis
+2026-07-31 11:19:12 [5,531ms] [Warning] [isaacsim.asset.importer.urdf] std_head_stereo_camera_joint: Joint Axis is not body aligned with X, Y or Z primary axis. Adjusting PhysX joint alignment to Axis X and reorienting bodies.
+2026-07-31 11:19:13 [5,678ms] [Warning] [isaacsim.asset.importer.urdf] right_hand_pingpang_joint: Joint Axis is not body aligned with X, Y or Z primary axis. Adjusting PhysX joint alignment to Axis X and reorienting bodies.
+2026-07-31 11:19:13 [5,684ms] [Warning] [isaacsim.asset.importer.urdf] pingbang_ball_joint: Joint Axis is not body aligned with X, Y or Z primary axis. Adjusting PhysX joint alignment to Axis X and reorienting bodies.
+2026-07-31 11:19:13 [5,688ms] [Warning] [isaacsim.asset.importer.urdf] pingpang_black_joint: Joint Axis is not body aligned with X, Y or Z primary axis. Adjusting PhysX joint alignment to Axis X and reorienting bodies.
+2026-07-31 11:19:13 [5,694ms] [Warning] [isaacsim.asset.importer.urdf] pingpang_red_joint: Joint Axis is not body aligned with X, Y or Z primary axis. Adjusting PhysX joint alignment to Axis X and reorienting bodies.
+2026-07-31 11:19:14 [7,381ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPreviewSurface.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-07-31 11:19:14 [7,381ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdUVTexture.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-07-31 11:19:14 [7,381ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_float.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-07-31 11:19:14 [7,381ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_float2.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-07-31 11:19:14 [7,382ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_float3.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-07-31 11:19:14 [7,382ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_float4.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-07-31 11:19:14 [7,382ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_int.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-07-31 11:19:14 [7,382ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_string.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-07-31 11:19:14 [7,382ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_normal.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-07-31 11:19:14 [7,382ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_point.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-07-31 11:19:14 [7,382ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omn[INFO][AppLauncher]: Using device: cuda:0
+[INFO][AppLauncher]: Loading experience file: /mnt/ssd/zxl/IsaacLab/apps/isaaclab.python.headless.kit
+[INFO]: Parsing configuration from: <class 'whole_body_tracking.tasks.tracking.config.agibot_a3.hope_physical_eval_env_cfg.HOPEPhysicalEvalEnvCfg'>
+Setting seed: 17
+[INFO]: Base environment:
+	Environment device    : cuda:0
+	Environment seed      : 17
+	Physics step-size     : 0.0025
+	Rendering step-size   : 0.02
+	Environment step-size : 0.02
+[INFO]: Time taken for scene creation : 2.931808 seconds
+[INFO]: Scene manager:  <class InteractiveScene>
+	Number of environments: 1
+	Environment spacing   : 6.0
+	Source prim name      : /World/envs/env_0
+	Global prim paths     : ['/World/ground']
+	Replicate physics     : True
+[INFO]: Starting the simulation. This may take a few seconds. Please wait...
+[INFO]: Time taken for simulation start : 0.439123 seconds
+[INFO] Command Manager:  <CommandManager> contains 2 active terms.
++---------------------------------------------+
+|             Active Command Terms            |
++-------+---------------+---------------------+
+| Index | Name          |         Type        |
++-------+---------------+---------------------+
+|   0   | motion        |    MotionCommand    |
+|   1   | racket_target | RacketTargetCommand |
++-------+---------------+---------------------+
+
+[INFO] Event Manager:  <EventManager> contains 1 active terms.
++---------------------------------------+
+| Active Event Terms in Mode: 'startup' |
++----------+----------------------------+
+|  Index   | Name                       |
++----------+----------------------------+
+|    0     | racket_material            |
++----------+----------------------------+
+
+[INFO] Recorder Manager:  <RecorderManager> contains 0 active terms.
++-----------------------+
+| Active Recorder Terms |
++------------+----------+
+|   Index    | Name     |
++------------+----------+
++------------+----------+
+
+[INFO] Action Manager:  <ActionManager> contains 1 active terms.
++---------------------------------+
+| Active Action Terms (shape: 31) |
++-------+-----------+-------------+
+| Index | Name      |   Dimension |
++-------+-----------+-------------+
+|   0   | joint_pos |          31 |
++-------+-----------+-------------+
+
+[INFO] Observation Manager: <ObservationManager> contains 2 groups.
++-------------------------------------------------------------+
+| Active Observation Terms in Group: 'policy' (shape: (114,)) |
++----------+--------------------------------------+-----------+
+|  Index   | Name                                 |   Shape   |
++----------+--------------------------------------+-----------+
+|    0     | base_ang_vel                         |    (3,)   |
+|    1     | joint_pos                            |   (31,)   |
+|    2     | joint_vel                            |   (31,)   |
+|    3     | last_action                          |   (31,)   |
+|    4     | projected_gravity                    |    (3,)   |
+|    5     | base_forward_xy                      |    (2,)   |
+|    6     | fixed_station_error_xy               |    (2,)   |
+|    7     | racket_target_rel_base               |    (3,)   |
+|    8     | racket_target_vel_w                  |    (3,)   |
+|    9     | time_to_strike                       |    (1,)   |
+|    10    | swing_side                           |    (1,)   |
+|    11    | racket_target_normal_w               |    (3,)   |
++----------+--------------------------------------+-----------+
++-------------------------------------------------------------+
+| Active Observation Terms in Group: 'critic' (shape: (324,)) |
++----------+--------------------------------------+-----------+
+|  Index   | Name                                 |   Shape   |
++----------+--------------------------------------+-----------+
+|    0     | base_ang_vel                         |    (3,)   |
+|    1     | joint_pos                            |   (31,)   |
+|    2     | joint_vel                            |   (31,)   |
+|    3     | last_action                          |   (31,)   |
+|    4     | projected_gravity                    |    (3,)   |
+|    5     | base_forward_xy                      |    (2,)   |
+|    6     | fixed_station_error_xy               |    (2,)   |
+|    7     | racket_target_rel_base               |    (3,)   |
+|    8     | racket_target_vel_w                  |    (3,)   |
+|    9     | time_to_strike                       |    (1,)   |
+|    10    | swing_side                           |    (1,)   |
+|    11    | base_lin_vel                         |    (3,)   |
+|    12    | motion_command                       |   (62,)   |
+|    13    | motion_anchor_pos_b                  |    (3,)   |
+|    14    | motion_anchor_ori_b                  |    (6,)   |
+|    15    | robot_body_pos_b                     |   (42,)   |
+|    16    | robot_body_ori_b                     |   (84,)   |
+|    17    | racket_pos_b                         |    (3,)   |
+|    18    | racket_lin_vel_w                     |    (3,)   |
+|    19    | racket_normal_w                      |    (3,)   |
+|    20    | racket_target_normal_w               |    (3,)   |
+|    21    | episode_time_left                    |    (1,)   |
++----------+--------------------------------------+-----------+
+
+[INFO] Termination Manager:  <TerminationManager> contains 7 active terms.
++---------------------------------+
+|     Active Termination Terms    |
++-------+--------------+----------+
+| Index | Name         | Time Out |
++-------+--------------+----------+
+|   0   | time_out     |   True   |
+|   1   | base_too_low |  False   |
+|   2   | base_tilted  |  False   |
+|   3   | anchor_pos   |  False   |
+|   4   | anchor_ori   |  False   |
+|   5   | ee_body_pos  |  False   |
+|   6   | table_touch  |  False   |
++-------+--------------+----------+
+
+[INFO] Reward Manager:  <RewardManager> contains 95 active terms.
++------------------------------------------------------------+
+|                    Active Reward Terms                     |
++-------+-------------------------------------------+--------+
+| Index | Name                                      | Weight |
++-------+-------------------------------------------+--------+
+|   0   | motion_global_anchor_pos                  |    0.5 |
+|   1   | motion_anchor_height                      |    0.0 |
+|   2   | motion_global_anchor_ori                  |    0.5 |
+|   3   | motion_body_pos                           |    1.0 |
+|   4   | motion_body_ori                           |    1.0 |
+|   5   | motion_body_lin_vel                       |    1.0 |
+|   6   | motion_body_ang_vel                       |    1.0 |
+|   7   | undesired_contacts                        |   -0.1 |
+|   8   | feet_contact_slip                         |  -0.06 |
+|   9   | table_no_touch                            |    0.0 |
+|   10  | alive                                     |    0.1 |
+|   11  | upright                                   |   -1.0 |
+|   12  | imitation                                 |    1.0 |
+|   13  | phase_lower_body_motion_prior             |    0.0 |
+|   14  | racket_wrist_motion_pos                   |    0.3 |
+|   15  | racket_wrist_motion_ori                   |   0.18 |
+|   16  | racket_position                           |    4.5 |
+|   17  | backhand_racket_position                  |    0.0 |
+|   18  | racket_velocity                           |    2.4 |
+|   19  | racket_velocity_projection                |    2.2 |
+|   20  | impact_forward_lift                       |    2.5 |
+|   21  | impact_outgoing_velocity                  |    4.6 |
+|   22  | planner_racket_task_space_crossfade       |    0.0 |
+|   23  | exact_impact_planner_task_space_alignment |    0.0 |
+|   24  | exact_impact_racket_velocity_alignment    |    0.0 |
+|   25  | exact_impact_outgoing_velocity_alignment  |    0.0 |
+|   26  | blade_direction                           |    2.4 |
+|   27  | prestrike_blade_direction                 |    0.0 |
+|   28  | soft_ball_contact                         |    0.0 |
+|   29  | backhand_soft_ball_contact                |    0.0 |
+|   30  | contact_net_margin                        |    0.0 |
+|   31  | robust_contact_net_margin                 |   0.65 |
+|   32  | balanced_soft_ball_contact                |    0.0 |
+|   33  | balanced_ball_contact                     |    0.0 |
+|   34  | balanced_net_cross                        |    0.0 |
+|   35  | balanced_opponent_bounce                  |    0.0 |
+|   36  | health_gated_soft_ball_contact            |    7.0 |
+|   37  | health_gated_backhand_soft_ball_contact   |    0.0 |
+|   38  | health_gated_ball_contact                 |    3.0 |
+|   39  | health_gated_net_cross                    |    1.4 |
+|   40  | health_gated_opponent_bounce              |    1.5 |
+|   41  | healthy_trunk_support                     |    0.0 |
+|   42  | targeted_strike_attempt                   |    0.0 |
+|   43  | strike_inactivity                         |    0.0 |
+|   44  | ball_contact                              |    0.0 |
+|   45  | net_cross                                 |    0.0 |
+|   46  | opponent_bounce                           |    0.0 |
+|   47  | pre_strike_station                        |    1.2 |
+|   48  | follow_through_recovery                   |   1.48 |
+|   49  | recovery_health                           |   1.82 |
+|   50  | next_ball_readiness                       |   2.12 |
+|   51  | next_swing_ready_bonus                    |   2.35 |
+|   52  | no_command_ready_stability                |    0.0 |
+|   53  | next_prestrike_reachable                  |    0.0 |
+|   54  | post_contact_recovery_ready               |    1.9 |
+|   55  | post_net_recovery_ready                   |    0.0 |
+|   56  | post_return_recovery_ready                |    0.0 |
+|   57  | post_contact_arm_racket_ready             |   0.48 |
+|   58  | post_net_arm_racket_ready                 |   0.72 |
+|   59  | post_return_arm_racket_ready              |   0.92 |
+|   60  | cycle_contact_ready                       |    0.0 |
+|   61  | cycle_net_ready                           |   1.85 |
+|   62  | cycle_return_ready                        |   3.35 |
+|   63  | cycle_success_bonus                       |    0.0 |
+|   64  | cycle_v2_ready_success_bonus              |    5.0 |
+|   65  | cycle_v2_streak_bonus                     |    6.0 |
+|   66  | cycle_v2_ready_fail                       |   -2.4 |
+|   67  | post_strike_base_ang_vel                  |    0.9 |
+|   68  | no_command_ready_balance                  |   0.35 |
+|   69  | functional_no_command_ready               |    1.3 |
+|   70  | no_command_forehand_joint_anchor          |   0.35 |
+|   71  | active_ready_sustained_bonus              |    5.0 |
+|   72  | post_contact_directional_recovery         |   0.45 |
+|   73  | post_contact_ready_region                 |    1.1 |
+|   74  | post_contact_ready_success_bonus          |    4.0 |
+|   75  | post_contact_ready_fail                   |   -2.0 |
+|   76  | deferred_recovery_outcome_bonus           |    6.0 |
+|   77  | phase_action_overflow                     |  -0.06 |
+|   78  | strike_balance                            |    0.0 |
+|   79  | torso_com_balance                         |    0.0 |
+|   80  | torso_com_recovery_balance                |    0.0 |
+|   81  | one_sided_trunk_waist_strike              |    0.0 |
+|   82  | one_sided_trunk_waist_recovery            |    0.0 |
+|   83  | prestrike_station_progress                |   0.25 |
+|   84  | station_relocation_arrival_bonus          |    0.0 |
+|   85  | station_relocation_settle_bonus           |    0.0 |
+|   86  | lower_body_support                        |    0.0 |
+|   87  | post_strike_lower_body_action_rate        | -0.012 |
+|   88  | termination_penalty                       |  -12.0 |
+|   89  | action_rate                               | -0.004 |
+|   90  | phase_action_rate                         |  -0.46 |
+|   91  | phase_action_rate_waist                   |    0.0 |
+|   92  | phase_action_rate_upper                   |    0.0 |
+|   93  | phase_action_rate_legs                    |    0.0 |
+|   94  | joint_limit                               |  -10.0 |
++-------+-------------------------------------------+--------+
+
+[INFO] Curriculum Manager:  <CurriculumManager> contains 0 active terms.
++-------------------------+
+| Active Curriculum Terms |
++-------------+-----------+
+|    Index    | Name      |
++-------------+-----------+
++-------------+-----------+
+
+[INFO]: Completed setting up the environment...
+Actor MLP: Sequential(
+  (0): Linear(in_features=114, out_features=512, bias=True)
+  (1): ELU(alpha=1.0)
+  (2): Linear(in_features=512, out_features=256, bias=True)
+  (3): ELU(alpha=1.0)
+  (4): Linear(in_features=256, out_features=128, bias=True)
+  (5): ELU(alpha=1.0)
+  (6): Linear(in_features=128, out_features=31, bias=True)
+)
+Critic MLP: Sequential(
+  (0): Linear(in_features=324, out_features=512, bias=True)
+  (1): ELU(alpha=1.0)
+  (2): Linear(in_features=512, out_features=256, bias=True)
+  (3): ELU(alpha=1.0)
+  (4): Linear(in_features=256, out_features=128, bias=True)
+  (5): ELU(alpha=1.0)
+  (6): Linear(in_features=128, out_features=1, bias=True)
+)
+[train.py] actor-only warm start loaded; critic, exploration state, optimizer, and iteration remain fresh: /mnt/ssd/zxl/HOPE_latest_20260721/hope_training/whole_body_tracking/logs/rsl_rl/hope_pingpong/2026-07-31_18-47-44_M25991_ACTUATOR_AB_ROBUST_LIGHT_4096x500_20260731/model_26490.pt
+[isaac_physical_eval] trial=0 requested=forehand planner=yes side=forehand bounce=1 contact=0 net=0 success=0 fall=0 min_dist=0.169
+[isaac_physical_eval] trial=1 requested=forehand planner=yes side=forehand bounce=1 contact=0 net=0 success=0 fall=0 min_dist=0.235
+[isaac_physical_eval] trial=2 requested=forehand planner=yes side=forehand bounce=1 contact=1 net=0 success=0 fall=0 min_dist=0.067
+[isaac_physical_eval] trial=3 requested=forehand planner=yes side=forehand bounce=1 contact=0 net=0 success=0 fall=0 min_dist=0.109
+[isaac_physical_eval] trial=4 requested=forehand planner=yes side=forehand bounce=1 contact=0 net=0 success=0 fall=0 min_dist=0.096
+[isaac_physical_eval] trial=5 requested=forehand planner=yes side=forehand bounce=1 contact=0 net=0 success=0 fall=0 min_dist=0.125
+[isaac_physical_eval] trial=6 requested=forehand planner=yes side=forehand bounce=1 contact=0 net=0 success=0 fall=0 min_dist=0.098
+[isaac_physical_eval] trial=7 requested=forehand planner=yes side=forehand bounce=1 contact=1 net=0 success=0 fall=0 min_dist=0.097
+[isaac_physical_eval] trial=8 requested=forehand planner=yes side=forehand bounce=1 contact=0 net=0 success=0 fall=0 min_dist=0.134
+[isaac_physical_eval] trial=9 requested=forehand planner=yes side=forehand bounce=1 contact=0 net=0 success=0 fall=0 min_dist=0.151
+{
+  "attempts": 10,
+  "by_side": {
+    "backhand": {
+      "attempts": 0,
+      "contact": 0,
+      "contact_rate": 0.0,
+      "success": 0,
+      "success_rate": 0.0
+    },
+    "forehand": {
+      "attempts": 10,
+      "contact": 2,
+      "contact_rate": 0.2,
+      "success": 0,
+      "success_rate": 0.0
+    }
+  },
+  "checkpoint": "/mnt/ssd/zxl/HOPE_latest_20260721/hope_training/whole_body_tracking/logs/rsl_rl/hope_pingpong/2026-07-31_18-47-44_M25991_ACTUATOR_AB_ROBUST_LIGHT_4096x500_20260731/model_26490.pt",
+  "completed_without_fall": true,
+  "contact": 2,
+  "contact_rate": 0.2,
+  "fall": 0,
+  "healthy_ready": 9,
+  "healthy_ready_rate": 0.9,
+  "incoming_bounce": 10,
+  "incoming_bounce_rate": 1.0,
+  "motion_manifest": "/mnt/ssd/zxl/HOPE_latest_20260721/hope_training/motions/model19495_forehand_active_ready_20260729/manifest.tsv",
+  "net_cross": 0,
+  "net_cross_rate": 0.0,
+  "opponent_bounce": 0,
+  "physical_recovery_diagnostics": {
+    "attempts": 2,
+    "mean_observed_duration_s": 1.6099999999999661,
+    "outcome_resolution": {
+      "contact": {
+        "attempts": 2,
+        "ready_fail": 0,
+        "ready_success": 2,
+        "ready_success_rate": 1.0
+      },
+      "net_cross": {
+        "attempts": 0,
+        "ready_fail": 0,
+        "ready_success": 0,
+        "ready_success_rate": 0.0
+      },
+      "opponent_bounce": {
+        "attempts": 0,
+        "ready_fail": 0,
+        "ready_success": 0,
+        "ready_success_rate": 0.0
+      },
+      "targeted_miss": {
+        "attempts": 0,
+        "ready_fail": 0,
+        "ready_success": 0,
+        "ready_success_rate": 0.0
+      }
+    },
+    "phase_boundaries_s": [
+      0.1,
+      0.3,
+      0.6
+    ],
+    "phase_histograms": {
+      "brake_100_300ms": {
+        "attempts_reaching_phase": 2,
+        "histograms": {
+          "abs_pitch": [
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.1
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.2
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.35
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.5
+            }
+          ],
+          "base_ang_vel": [
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.8
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 1.2
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 1.6
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 2.0
+            }
+          ],
+          "com_x": [
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.08
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.12
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.16
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.2
+            }
+          ],
+          "com_y": [
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.1
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.14
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.18
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.22
+            }
+          ],
+          "leg_overflow": [
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 1.5
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 2.0
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 2.5
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 3.0
+            }
+          ],
+          "tilt": [
+            {
+              "count": 1,
+              "rate": 0.5,
+              "threshold": 0.1
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.2
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.35
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.5
+            }
+          ],
+          "waist_overflow": [
+            {
+              "count": 2,
+              "rate": 1.0,
+              "threshold": 0.5
+            },
+            {
+              "count": 1,
+              "rate": 0.5,
+              "threshold": 1.0
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 1.5
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 2.0
+            }
+          ]
+        }
+      },
+      "impact_0_100ms": {
+        "attempts_reaching_phase": 2,
+        "histograms": {
+          "abs_pitch": [
+            {
+              "count": 1,
+              "rate": 0.5,
+              "threshold": 0.1
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.2
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.35
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.5
+            }
+          ],
+          "base_ang_vel": [
+            {
+              "count": 2,
+              "rate": 1.0,
+              "threshold": 0.8
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 1.2
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 1.6
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 2.0
+            }
+          ],
+          "com_x": [
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.08
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.12
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.16
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.2
+            }
+          ],
+          "com_y": [
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.1
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.14
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.18
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.22
+            }
+          ],
+          "leg_overflow": [
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 1.5
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 2.0
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 2.5
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 3.0
+            }
+          ],
+          "tilt": [
+            {
+              "count": 1,
+              "rate": 0.5,
+              "threshold": 0.1
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.2
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.35
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.5
+            }
+          ],
+          "waist_overflow": [
+            {
+              "count": 1,
+              "rate": 0.5,
+              "threshold": 0.5
+            },
+            {
+              "count": 1,
+              "rate": 0.5,
+              "threshold": 1.0
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 1.5
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 2.0
+            }
+          ]
+        }
+      },
+      "ready_after_600ms": {
+        "attempts_reaching_phase": 2,
+        "histograms": {
+          "abs_pitch": [
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.1
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.2
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.35
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.5
+            }
+          ],
+          "base_ang_vel": [
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.8
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 1.2
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 1.6
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 2.0
+            }
+          ],
+          "com_x": [
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.08
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.12
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.16
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.2
+            }
+          ],
+          "com_y": [
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.1
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.14
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.18
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.22
+            }
+          ],
+          "leg_overflow": [
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 1.5
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 2.0
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 2.5
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 3.0
+            }
+          ],
+          "tilt": [
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.1
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.2
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.35
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.5
+            }
+          ],
+          "waist_overflow": [
+            {
+              "count": 1,
+              "rate": 0.5,
+              "threshold": 0.5
+            },
+            {
+              "count": 1,
+              "rate": 0.5,
+              "threshold": 1.0
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 1.5
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 2.0
+            }
+          ]
+        }
+      },
+      "settle_300_600ms": {
+        "attempts_reaching_phase": 2,
+        "histograms": {
+          "abs_pitch": [
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.1
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.2
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.35
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.5
+            }
+          ],
+          "base_ang_vel": [
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.8
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 1.2
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 1.6
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 2.0
+            }
+          ],
+          "com_x": [
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.08
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.12
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.16
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.2
+            }
+          ],
+          "com_y": [
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.1
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.14
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.18
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.22
+            }
+          ],
+          "leg_overflow": [
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 1.5
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 2.0
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 2.5
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 3.0
+            }
+          ],
+          "tilt": [
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.1
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.2
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.35
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 0.5
+            }
+          ],
+          "waist_overflow": [
+            {
+              "count": 1,
+              "rate": 0.5,
+              "threshold": 0.5
+            },
+            {
+              "count": 1,
+              "rate": 0.5,
+              "threshold": 1.0
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 1.5
+            },
+            {
+              "count": 0,
+              "rate": 0.0,
+              "threshold": 2.0
+            }
+          ]
+        }
+      }
+    },
+    "trigger": "actual_physx_contact"
+  },
+  "physical_task": "HOPE-PingPong-PhysicalEval-AgibotA3-v0",
+  "planner_code_dir": "/mnt/ssd/zxl/HOPE_latest_20260721/analysis/external_alignment_packages_20260731/package1/real_robot_planner_rl_alignment_20260731/01_planner_V4_A4_plane_recorded/snapshot/hope_planner_code",
+  "planner_code_sha256": "fdc27255af5c7391e439ceb5666c3d4bef7f7305573307707bd2e5ed78ef033c",
+  "planner_command_rate": 1.0,
+  "planner_command_seen": 10,
+  "planner_commands": 250,
+  "planner_no_command": 289,
+  "planner_revision_gate_enabled": true,
+  "planner_revision_gate_reasons": {
+    "accepted_initial": 10,
+    "accepted_revision": 240,
+    "awaiting_convergence": 23,
+    "late_freeze": 39,
+    "position_jump": 8,
+    "strike_time_jump": 109
+  },
+  "planner_solve_calls": 718,
+  "planner_yaml": "/mnt/ssd/zxl/HOPE_latest_20260721/analysis/external_alignment_packages_20260731/package1/real_robot_planner_rl_alignment_20260731/01_planner_V4_A4_plane_recorded/snapshot/hope_planner.yaml",
+  "success": 0,
+  "success_rate": 0.0,
+  "task_yaml": "HOPEPingPongM25991ReplayControlV1",
+  "termination_terms": [
+    "time_out",
+    "base_too_low",
+    "base_tilted",
+    "anchor_pos",
+    "anchor_ori",
+    "ee_body_pos",
+    "table_touch"
+  ],
+  "trace_coordinate_frames": {
+    "ball_world_x_y_z": "isaac_world",
+    "ball_x_y_z": "canonical_table",
+    "intended_strike_table_x_y_z": "canonical_table",
+    "racket_x_y_z": "isaac_world",
+    "target_x_y_z": "isaac_world"
+  }
+}iverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_vector.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-07-31 11:19:14 [7,382ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdPrimvarReader_matrix.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+
+2026-07-31 11:19:14 [7,382ms] [Warning] [omni.usd] Warning: in GetNodeDiscoveryResults at line 136 of /builds/omniverse/usd-ci/USD/pxr/usd/usdShade/shaderDefUtils.cpp -- Unable to resolve info:sourceAsset </UsdTransform2d.info:mdl:sourceAsset> with value @UsdPreviewSurface.mdl@.
+

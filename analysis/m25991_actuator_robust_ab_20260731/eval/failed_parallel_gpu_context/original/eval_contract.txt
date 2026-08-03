@@ -1,0 +1,15 @@
+label=original
+checkpoint=/mnt/ssd/zxl/HOPE_deploy_models_20260730/04_hope_DeployStationStepV1_model25991_dynamic_station/checkpoint/model_25991.pt
+checkpoint_sha256=402ef9118db5fa5bedb10580c3df398e7ed3fcab98123f388dcc6c1b3dfcadfb
+task=HOPEPingPongM25991ReplayControlV1
+manifest=/mnt/ssd/zxl/HOPE_latest_20260721/hope_training/motions/model19495_forehand_active_ready_20260729/manifest.tsv
+planner=/mnt/ssd/zxl/HOPE_latest_20260721/analysis/external_alignment_packages_20260731/package1/real_robot_planner_rl_alignment_20260731/01_planner_V4_A4_plane_recorded/snapshot/hope_planner.yaml
+planner_code=/mnt/ssd/zxl/HOPE_latest_20260721/analysis/external_alignment_packages_20260731/package1/real_robot_planner_rl_alignment_20260731/01_planner_V4_A4_plane_recorded/snapshot/hope_planner_code
+seed=17
+num_serves=40
+side_mode=forehand
+station_mode=dynamic-from-manifest
+dynamic_station_clip_x=0.0,0.0
+dynamic_station_clip_y=-0.10,0.10
+incoming_trajectory=one-bounce
+planner_x_hit=0.20

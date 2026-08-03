@@ -1,0 +1,623 @@
+[Warning] [simulation_app.simulation_app] Modules: ['omni.kit_app'] were loaded before SimulationApp was started and might not be loaded correctly.
+[Warning] [simulation_app.simulation_app] Please check to make sure no extra omniverse or pxr modules are imported before the call to SimulationApp(...)
+Loading user config located at: '/home/zxl/miniconda3/envs/zxl-pace/lib/python3.10/site-packages/omni/data/Kit/Isaac-Sim/4.5/user.config.json'
+[Info] [carb] Logging to file: /home/zxl/miniconda3/envs/zxl-pace/lib/python3.10/site-packages/omni/logs/Kit/Isaac-Sim/4.5/kit_20260731_191222.log
+2026-07-31 11:12:22 [0ms] [Warning] [omni.kit.app.plugin] No crash reporter present, dumps uploading isn't available.
+2026-07-31 11:12:22 [1ms] [Warning] [omni.ext.plugin] [ext: rendering_modes] Extensions config 'extension.toml' doesn't exist '/mnt/ssd/zxl/IsaacLab/apps/rendering_modes' or '/mnt/ssd/zxl/IsaacLab/apps/rendering_modes/config'
+2026-07-31 11:12:22 [74ms] [Warning] [omni.usd_config.extension] Enable omni.materialx.libs extension to use MaterialX
+2026-07-31 11:12:22 [120ms] [Warning] [omni.platforminfo.plugin] failed to open the default display.  Can't verify X Server version.
+2026-07-31 11:12:22 [250ms] [Warning] [omni.datastore] OmniHub is inaccessible
+2026-07-31 11:12:22 [313ms] [Warning] [omni.isaac.dynamic_control] omni.isaac.dynamic_control is deprecated as of Isaac Sim 4.5. No action is needed from end-users.
+2026-07-31 11:12:24 [2,586ms] [Warning] [carb.cudainterop.plugin] CUDA_VISIBLE_DEVICES environment variable is set.
+2026-07-31 11:12:24 [2,586ms] [Warning] [carb.cudainterop.plugin] Note CUDA device enumeration and Omniverse device enumeration are different.
+2026-07-31 11:12:24 [2,586ms] [Warning] [carb.cudainterop.plugin] Setting CUDA_VISIBLE_DEVICES can lead to undesired behavior or crashes.
+2026-07-31 11:12:24 [2,591ms] [Warning] [gpu.foundation.plugin] Skipping NVIDIA GPU due CUDA being in bad state: NVIDIA GeForce RTX 5090
+2026-07-31 11:12:24 [2,591ms] [Warning] [gpu.foundation.plugin] Please restart your system if CUDA is known to work in your system.
+2026-07-31 11:12:24 [2,591ms] [Warning] [gpu.foundation.plugin] Skipping NVIDIA GPU due CUDA being in bad state: NVIDIA GeForce RTX 5090
+2026-07-31 11:12:24 [2,591ms] [Warning] [gpu.foundation.plugin] Please restart your system if CUDA is known to work in your system.
+
+|---------------------------------------------------------------------------------------------|
+| Driver Version: 580.105.08    | Graphics API: Vulkan
+|=============================================================================================|
+| GPU | Name                             | Active | LDA | GPU Memory | Vendor-ID | LUID       |
+|     |                                  |        |     |            | Device-ID | UUID       |
+|     |                                  |        |     |            | Bus-ID    |            |
+|---------------------------------------------------------------------------------------------|
+| 0   | NVIDIA GeForce RTX 5090          | Yes: 0 |     | 32607   MB | 10de      | 0          |
+|     |                                  |        |     |            | 2b85      | c2a01bc3.. |
+|     |                                  |        |     |            | 1         |            |
+|---------------------------------------------------------------------------------------------|
+| 1   | NVIDIA GeForce RTX 5090          |        |     | 32607   MB | 10de      | 0          |
+|     |                                  |        |     |            | 2b85      | 837a84cc.. |
+|     |                                  |        |     |            | 7         |            |
+|=============================================================================================|
+| OS: 24.04.2 LTS (Noble Numbat) ubuntu, Version: 24.04.2, Kernel: 6.17.0-35-generic
+| Processor: Intel(R) Core(TM) i9-14900K
+| Bare Metal Cores: 24 | Bare Metal Logical Cores: 48
+| Available Cores:  32 
+|---------------------------------------------------------------------------------------------|
+| Total Memory (MB): 128491 | [INFO][AppLauncher]: Using device: cuda:0
+[INFO][AppLauncher]: Loading experience file: /mnt/ssd/zxl/IsaacLab/apps/isaaclab.python.headless.kit
+[INFO]: Parsing configuration from: <class 'whole_body_tracking.tasks.tracking.config.agibot_a3.hope_env_cfg.HOPEPingPongEnvCfg'>
+[export_onnx] applied 213 task override(s):
+[export_onnx]     episode_length_s = 45.0
+[export_onnx]     commands.motion.wrap_teleport = False
+[export_onnx]     observations.policy.racket_target_normal_w = enabled
+[export_onnx]     commands.motion.hold_steps_range = [100, 140]
+[export_onnx]     commands.motion.stand_start_prob = 0.55
+[export_onnx]     commands.motion.stand_start_min_hold = 100
+[export_onnx]     commands.racket_target.station_mode = dynamic_from_motion
+[export_onnx]     commands.racket_target.dynamic_station_xy_clip = [[0.0, 0.0], [-0.1, 0.1]]
+[export_onnx]     commands.racket_target.dynamic_station_blend = 1.0
+[export_onnx]     commands.racket_target.racket_pos_curriculum_start_scale = [1.0, 1.0, 1.0]
+[export_onnx]     commands.racket_target.racket_pos_curriculum_steps = 0
+[export_onnx]     rewards.pre_strike_station.weight = 1.2
+[export_onnx]     commands.racket_target.incoming_trajectory_mode = one_bounce
+[export_onnx]     commands.racket_target.racket_velocity_mode = impact_inverse_landing
+[export_onnx]     commands.racket_target.return_model = moving_racket_impact
+[export_onnx]     commands.racket_target.paddle_restitution = 0.654
+[export_onnx]     commands.racket_target.paddle_tangent_retain = 0.48
+[export_onnx]     commands.racket_target.impact_inverse_min_racket_speed = 0.3
+[export_onnx]     commands.racket_target.impact_inverse_max_racket_speed = 3.35
+[export_onnx]     commands.racket_target.impact_inverse_tangent_blend = 1.0
+[export_onnx]     commands.racket_target.one_bounce_post_time_range = [0.3, 0.42]
+[export_onnx]     commands.racket_target.one_bounce_lateral_jitter_range = [-0.12, 0.12]
+[export_onnx]     commands.racket_target.one_bounce_min_post_bounce_dx = 0.18
+[export_onnx]     commands.racket_target.one_bounce_max_post_bounce_dx = 0.72
+[export_onnx]     commands.racket_target.planner_target_pos_offset_range = [[0.0, 0.0], [-0.03, 0.03], [-0.02, 0.02]]
+[export_onnx]     commands.racket_target.planner_time_to_strike_offset_range = [-0.02, 0.02]
+[export_onnx]     commands.racket_target.planner_target_vel_scale_range = [0.95, 1.05]
+[export_onnx]     commands.racket_target.planner_target_vel_offset_range = [[0.0, 0.0], [-0.05, 0.05], [-0.05, 0.05]]
+[export_onnx]     commands.racket_target.planner_target_vel_yaw_deg_range = [-5.0, 5.0]
+[export_onnx]     rewards.racket_position.weight = 4.5
+[export_onnx]     rewards.racket_velocity.weight = 2.4
+[export_onnx]     rewards.racket_velocity.params = {'command_name': 'racket_target', 'std': 1.15}
+[export_onnx]     rewards.impact_outgoing_velocity.weight = 4.6
+[export_onnx]     rewards.impact_outgoing_velocity.params = {'command_name': 'racket_target', 'std': 1.45, 'start_step': 0, 'warmup_steps': 6000, 'start_scale': 0.45}
+[export_onnx]     rewards.blade_direction.weight = 2.4
+[export_onnx]     rewards.blade_direction.params = {'command_name': 'racket_target', 'std': 0.42, 'start_step': 0, 'warmup_steps': 6000, 'start_scale': 0.55}
+[export_onnx]     rewards.soft_ball_contact.weight = 0.0
+[export_onnx]     rewards.ball_contact.weight = 0.0
+[export_onnx]     rewards.net_cross.weight = 0.0
+[export_onnx]     rewards.net_cross.params = {'command_name': 'racket_target', 'start_step': 0, 'warmup_steps': 4000, 'start_scale': 0.5}
+[export_onnx]     rewards.opponent_bounce.weight = 0.0
+[export_onnx]     rewards.opponent_bounce.params = {'command_name': 'racket_target', 'start_step': 3000, 'warmup_steps': 9000, 'start_scale': 0.2}
+[export_onnx]     rewards.follow_through_recovery.weight = 1.48
+[export_onnx]     rewards.recovery_health.weight = 1.82
+[export_onnx]     rewards.recovery_health.params = {'command_name': 'racket_target', 'height_std': 0.095, 'upright_std': 0.26, 'lin_vel_std': 0.24, 'ang_vel_std': 0.7, 'station_std': 0.21}
+[export_onnx]     rewards.next_ball_readiness.weight = 2.12
+[export_onnx]     rewards.next_ball_readiness.params = {'command_name': 'racket_target', 'height_std': 0.095, 'upright_std': 0.26, 'lin_vel_std': 0.24, 'ang_vel_std': 0.7, 'station_std': 0.21, 'racket_vel_std': 0.68, 'arm_pos_std': 0.34, 'arm_ori_std': 0.78, 'arm_body_names': ['right_shoulder_roll_Link', 'right_elbow_Link', 'right_wrist_yaw_Link'], 'early_prestrike_window_steps': 18}
+[export_onnx]     rewards.next_swing_ready_bonus.weight = 2.35
+[export_onnx]     rewards.next_swing_ready_bonus.params = {'command_name': 'racket_target', 'window_steps': 18, 'height_std': 0.09, 'upright_std': 0.24, 'lin_vel_std': 0.22, 'ang_vel_std': 0.64, 'station_std': 0.19, 'racket_vel_std': 0.62, 'arm_pos_std': 0.32, 'arm_ori_std': 0.72, 'arm_body_names': ['right_shoulder_roll_Link', 'right_elbow_Link', 'right_wrist_yaw_Link']}
+[export_onnx]     rewards.action_rate.weight = -0.004
+[export_onnx]     rewards.phase_action_rate.weight = -0.46
+[export_onnx]     rewards.phase_action_rate.params = {'command_name': 'racket_target', 'pre_strike_scale': 0.024, 'strike_scale': 0.004, 'recovery_scale': 0.1, 'hold_scale': 0.075}
+[export_onnx]     rewards.termination_penalty.weight = -12.0
+[export_onnx]     commands.racket_target.impact_inverse_racket_speed_scale = 1.18
+[export_onnx]     commands.racket_target.impact_inverse_racket_speed_bias = 0.1
+[export_onnx]     commands.racket_target.target_outgoing_vel_scale = 1.04
+[export_onnx]     commands.racket_target.target_outgoing_vel_z_bias = 0.26
+[export_onnx]     commands.racket_target.net_margin = 0.06
+[export_onnx]     rewards.cycle_net_ready.weight = 1.85
+[export_onnx]     rewards.cycle_net_ready.params = {'command_name': 'racket_target', 'outcome': 'net_cross', 'window_steps': 18, 'height_std': 0.095, 'upright_std': 0.26, 'lin_vel_std': 0.24, 'ang_vel_std': 0.7, 'station_std': 0.21, 'racket_vel_std': 0.68, 'arm_pos_std': 0.34, 'arm_ori_std': 0.78, 'arm_body_names': ['right_shoulder_roll_Link', 'right_elbow_Link', 'right_wrist_yaw_Link'], 'start_step': 0, 'warmup_steps': 5000, 'start_scale': 0.35}
+[export_onnx]     rewards.cycle_return_ready.weight = 3.35
+[export_onnx]     rewards.cycle_return_ready.params = {'command_name': 'racket_target', 'outcome': 'opponent_bounce', 'window_steps': 18, 'height_std': 0.095, 'upright_std': 0.26, 'lin_vel_std': 0.24, 'ang_vel_std': 0.7, 'station_std': 0.21, 'racket_vel_std': 0.68, 'arm_pos_std': 0.34, 'arm_ori_std': 0.78, 'arm_body_names': ['right_shoulder_roll_Link', 'right_elbow_Link', 'right_wrist_yaw_Link'], 'start_step': 2000, 'warmup_steps': 9000, 'start_scale': 0.25}
+[export_onnx]     rewards.racket_wrist_motion_pos.weight = 0.3
+[export_onnx]     rewards.racket_wrist_motion_pos.params = {'motion_command_name': 'motion', 'racket_command_name': 'racket_target', 'std': 0.65, 'body_names': ['right_wrist_yaw_Link'], 'release_window_s': 0.14, 'release_scale': 0.4, 'hold_scale': 0.0}
+[export_onnx]     rewards.racket_wrist_motion_ori.weight = 0.18
+[export_onnx]     rewards.racket_wrist_motion_ori.params = {'motion_command_name': 'motion', 'racket_command_name': 'racket_target', 'std': 1.0, 'body_names': ['right_wrist_yaw_Link'], 'release_window_s': 0.14, 'release_scale': 0.4, 'hold_scale': 0.0}
+[export_onnx]     rewards.racket_position.params = {'command_name': 'racket_target', 'std': 0.24}
+[export_onnx]     rewards.racket_velocity_projection.weight = 2.2
+[export_onnx]     rewards.racket_velocity_projection.params = {'command_name': 'racket_target', 'min_speed_ratio': 0.84, 'speed_std': 0.3, 'lateral_std': 0.65, 'start_step': 0, 'warmup_steps': 4000, 'start_scale': 0.45}
+[export_onnx]     rewards.impact_forward_lift.weight = 2.5
+[export_onnx]     rewards.impact_forward_lift.params = {'command_name': 'racket_target', 'min_forward_speed': 2.1, 'min_upward_speed': 1.15, 'speed_std': 0.4, 'start_step': 0, 'warmup_steps': 4000, 'start_scale': 0.45}
+[export_onnx]     rewards.follow_through_recovery.params = {'command_name': 'racket_target', 'std': 0.46, 'station_std': 0.25}
+[export_onnx]     rewards.post_contact_recovery_ready.weight = 1.9
+[export_onnx]     rewards.post_contact_recovery_ready.params = {'command_name': 'racket_target', 'outcome': 'contact', 'height_std': 0.095, 'upright_std': 0.26, 'lin_vel_std': 0.24, 'ang_vel_std': 0.7, 'station_std': 0.21, 'racket_vel_std': 0.68, 'arm_pos_std': 0.34, 'arm_ori_std': 0.78, 'arm_body_names': ['right_shoulder_roll_Link', 'right_elbow_Link', 'right_wrist_yaw_Link'], 'start_step': 0, 'warmup_steps': 3000, 'start_scale': 0.35}
+[export_onnx]     rewards.post_contact_arm_racket_ready.weight = 0.48
+[export_onnx]     rewards.post_contact_arm_racket_ready.params = {'command_name': 'racket_target', 'outcome': 'contact', 'arm_pos_std': 0.32, 'arm_ori_std': 0.74, 'racket_vel_std': 0.62, 'arm_body_names': ['right_shoulder_roll_Link', 'right_elbow_Link', 'right_wrist_yaw_Link'], 'include_hold': True, 'early_prestrike_window_steps': 0, 'start_step': 0, 'warmup_steps': 3000, 'start_scale': 0.25}
+[export_onnx]     rewards.post_net_arm_racket_ready.weight = 0.72
+[export_onnx]     rewards.post_net_arm_racket_ready.params = {'command_name': 'racket_target', 'outcome': 'net_cross', 'arm_pos_std': 0.32, 'arm_ori_std': 0.74, 'racket_vel_std': 0.62, 'arm_body_names': ['right_shoulder_roll_Link', 'right_elbow_Link', 'right_wrist_yaw_Link'], 'include_hold': True, 'early_prestrike_window_steps': 0, 'start_step': 0, 'warmup_steps': 5000, 'start_scale': 0.2}
+[export_onnx]     rewards.post_return_arm_racket_ready.weight = 0.92
+[export_onnx]     rewards.post_return_arm_racket_ready.params = {'command_name': 'racket_target', 'outcome': 'opponent_bounce', 'arm_pos_std': 0.32, 'arm_ori_std': 0.74, 'racket_vel_std': 0.62, 'arm_body_names': ['right_shoulder_roll_Link', 'right_elbow_Link', 'right_wrist_yaw_Link'], 'include_hold': True, 'early_prestrike_window_steps': 0, 'start_step': 1500, 'warmup_steps': 7000, 'start_scale': 0.15}
+[export_onnx]     rewards.post_strike_base_ang_vel.weight = 0.9
+[export_onnx]     rewards.post_strike_base_ang_vel.params = {'command_name': 'racket_target', 'std': 1.25, 'include_hold': True, 'early_prestrike_window_steps': 0, 'start_step': 0, 'warmup_steps': 1600, 'start_scale': 0.35}
+[export_onnx]     rewards.post_strike_lower_body_action_rate.weight = -0.012
+[export_onnx]     rewards.post_strike_lower_body_action_rate.params = {'command_name': 'racket_target', 'joint_names': ['waist_yaw_joint', 'waist_roll_joint', 'waist_pitch_joint', 'left_hip_pitch_joint', 'left_hip_roll_joint', 'left_hip_yaw_joint', 'left_knee_joint', 'left_ankle_pitch_joint', 'left_ankle_roll_joint', 'right_hip_pitch_joint', 'right_hip_roll_joint', 'right_hip_yaw_joint', 'right_knee_joint', 'right_ankle_pitch_joint', 'right_ankle_roll_joint'], 'include_hold': True, 'early_prestrike_window_steps': 0, 'start_step': 0, 'warmup_steps': 1200, 'start_scale': 0.2}
+[export_onnx]     commands.racket_target.strike_window_s = 0.1
+[export_onnx]     rewards.soft_ball_contact.params = {'command_name': 'racket_target', 'pos_std': 0.18, 'approach_speed': 0.1, 'approach_std': 0.75, 'normal_speed': 0.0, 'normal_std': 0.75, 'window_s': 0.18}
+[export_onnx]     episode_length_s = 45.0
+[export_onnx]     commands.racket_target.deploy_ready_hold_prob = 1.0
+[export_onnx]     commands.racket_target.deploy_ready_reach = [0.4, 0.2, -0.05]
+[export_onnx]     commands.racket_target.deploy_ready_velocity_w = [0.0, 0.0, 0.0]
+[export_onnx]     commands.racket_target.deploy_ready_normal_w = [1.0, 0.0, 0.0]
+[export_onnx]     commands.racket_target.deploy_ready_time_to_strike = 1.0
+[export_onnx]     commands.motion.stand_start_pose_range = {'x': [-0.025, 0.025], 'y': [-0.025, 0.025], 'z': [-0.005, 0.005], 'roll': [-0.08, 0.08], 'pitch': [-0.14, 0.14], 'yaw': [-0.04, 0.04]}
+[export_onnx]     commands.motion.stand_start_velocity_range = {'x': [-0.16, 0.16], 'y': [-0.1, 0.1], 'z': [-0.04, 0.04], 'roll': [-0.32, 0.32], 'pitch': [-0.52, 0.52], 'yaw': [-0.16, 0.16]}
+[export_onnx]     commands.motion.stand_start_joint_position_range = [-0.025, 0.025]
+[export_onnx]     rewards.no_command_ready_balance.weight = 0.35
+[export_onnx]     rewards.no_command_ready_balance.params = {'command_name': 'racket_target', 'pitch_std': 0.1, 'roll_std': 0.12, 'lin_vel_std': 0.16, 'ang_vel_std': 0.44, 'height_std': 0.085, 'station_std': 0.17, 'min_feet_contact': 0.99, 'start_step': 0, 'warmup_steps': 900, 'start_scale': 0.3}
+[export_onnx]     commands.motion.stand_episode_prob = 0.25
+[export_onnx]     commands.motion.stand_episode_hold_steps = 100000
+[export_onnx]     commands.motion.core_clip_count = 1
+[export_onnx]     commands.racket_target.functional_ready_joint_names = ['left_shoulder_pitch_joint', 'left_shoulder_roll_joint', 'left_shoulder_yaw_joint', 'left_elbow_joint', 'left_wrist_roll_joint', 'left_wrist_pitch_joint', 'left_wrist_yaw_joint', 'right_shoulder_pitch_joint', 'right_shoulder_roll_joint', 'right_shoulder_yaw_joint', 'right_elbow_joint', 'right_wrist_roll_joint', 'right_wrist_pitch_joint', 'right_wrist_yaw_joint']
+[export_onnx]     commands.racket_target.functional_ready_joint_positions = [-0.246565, 0.618356, 0.026664, 0.333463, -0.591667, -0.344093, 0.64294, -1.1244, -0.2678, 0.441, 0.7927, 0.8667, -0.1428, -0.2384]
+[export_onnx]     commands.racket_target.functional_ready_joint_std = 0.22
+[export_onnx]     commands.racket_target.active_ready_required_consecutive_steps = 10
+[export_onnx]     commands.racket_target.active_ready_score_threshold = 0.62
+[export_onnx]     commands.racket_target.active_ready_max_height_error = 0.08
+[export_onnx]     commands.racket_target.active_ready_max_upright_error = 0.18
+[export_onnx]     commands.racket_target.active_ready_max_base_lin_vel = 0.18
+[export_onnx]     commands.racket_target.active_ready_max_base_ang_vel = 0.55
+[export_onnx]     commands.racket_target.active_ready_min_feet_contact = 0.99
+[export_onnx]     commands.racket_target.cycle_v2_enabled = True
+[export_onnx]     commands.racket_target.cycle_v2_required_outcome = contact
+[export_onnx]     commands.racket_target.cycle_v2_count_no_command_as_visible = True
+[export_onnx]     commands.racket_target.cycle_v2_visible_deadline_steps = 100
+[export_onnx]     commands.racket_target.cycle_v2_total_deadline_steps = 140
+[export_onnx]     commands.racket_target.cycle_v2_fail_on_strike_without_ready = True
+[export_onnx]     commands.racket_target.cycle_v2_fail_unresolved_on_resample = True
+[export_onnx]     commands.racket_target.cycle_v2_ready_mode = core_hard_soft
+[export_onnx]     commands.racket_target.cycle_v2_use_functional_ready = True
+[export_onnx]     commands.racket_target.cycle_v2_required_consecutive_ready_steps = 10
+[export_onnx]     commands.racket_target.cycle_v2_ready_threshold = 0.62
+[export_onnx]     commands.racket_target.cycle_v2_max_height_error = 0.08
+[export_onnx]     commands.racket_target.cycle_v2_max_upright_error = 0.18
+[export_onnx]     commands.racket_target.cycle_v2_max_base_lin_vel = 0.18
+[export_onnx]     commands.racket_target.cycle_v2_max_base_ang_vel = 0.55
+[export_onnx]     commands.racket_target.cycle_v2_min_feet_contact = 0.99
+[export_onnx]     commands.racket_target.cycle_v2_require_healthy_impact = True
+[export_onnx]     terminations.cycle_v2_ready_timeout = None
+[export_onnx]     rewards.motion_global_anchor_pos.params = {'command_name': 'motion', 'std': 0.3, 'hold_scale': 0.0}
+[export_onnx]     rewards.motion_global_anchor_ori.params = {'command_name': 'motion', 'std': 0.4, 'hold_scale': 0.0}
+[export_onnx]     rewards.motion_body_pos.params = {'command_name': 'motion', 'std': 0.3, 'body_names': ['pelvis_link', 'left_hip_roll_Link', 'left_knee_Link', 'left_ankle_roll_Link', 'right_hip_roll_Link', 'right_knee_Link', 'right_ankle_roll_Link', 'torso_Link', 'left_shoulder_roll_Link', 'left_elbow_Link', 'left_wrist_yaw_Link', 'right_shoulder_roll_Link', 'right_elbow_Link'], 'hold_scale': 0.0}
+[export_onnx]     rewards.motion_body_ori.params = {'command_name': 'motion', 'std': 0.4, 'body_names': ['pelvis_link', 'left_hip_roll_Link', 'left_knee_Link', 'left_ankle_roll_Link', 'right_hip_roll_Link', 'right_knee_Link', 'right_ankle_roll_Link', 'torso_Link', 'left_shoulder_roll_Link', 'left_elbow_Link', 'left_wrist_yaw_Link', 'right_shoulder_roll_Link', 'right_elbow_Link'], 'hold_scale': 0.0}
+[export_onnx]     rewards.motion_body_lin_vel.params = {'command_name': 'motion', 'std': 1.0, 'body_names': ['pelvis_link', 'left_hip_roll_Link', 'left_knee_Link', 'left_ankle_roll_Link', 'right_hip_roll_Link', 'right_knee_Link', 'right_ankle_roll_Link', 'torso_Link', 'left_shoulder_roll_Link', 'left_elbow_Link', 'left_wrist_yaw_Link', 'right_shoulder_roll_Link', 'right_elbow_Link'], 'hold_scale': 0.0}
+[export_onnx]     rewards.motion_body_ang_vel.params = {'command_name': 'motion', 'std': 3.14, 'body_names': ['pelvis_link', 'left_hip_roll_Link', 'left_knee_Link', 'left_ankle_roll_Link', 'right_hip_roll_Link', 'right_knee_Link', 'right_ankle_roll_Link', 'torso_Link', 'left_shoulder_roll_Link', 'left_elbow_Link', 'left_wrist_yaw_Link', 'right_shoulder_roll_Link', 'right_elbow_Link'], 'hold_scale': 0.0}
+[export_onnx]     rewards.functional_no_command_ready.weight = 1.3
+[export_onnx]     rewards.functional_no_command_ready.params = {'command_name': 'racket_target', 'start_step': 0, 'warmup_steps': 1200, 'start_scale': 0.45}
+[export_onnx]     rewards.no_command_forehand_joint_anchor.weight = 0.35
+[export_onnx]     rewards.no_command_forehand_joint_anchor.params = {'command_name': 'racket_target', 'start_step': 0, 'warmup_steps': 1200, 'start_scale': 0.35}
+[export_onnx]     rewards.active_ready_sustained_bonus.weight = 5.0
+[export_onnx]     rewards.cycle_v2_ready_success_bonus.weight = 5.0
+[export_onnx]     rewards.cycle_v2_ready_success_bonus.params = {'command_name': 'racket_target', 'tier_multipliers': [1.0, 1.25, 1.5], 'start_step': 0, 'warmup_steps': 1200, 'start_scale': 0.3}
+[export_onnx]     rewards.cycle_v2_ready_fail.weight = -2.4
+[export_onnx]     rewards.cycle_v2_streak_bonus.weight = 6.0
+[export_onnx]     rewards.cycle_v2_streak_bonus.params = {'command_name': 'racket_target', 'min_streak': 4, 'min_ability_level': 0.0, 'start_step': 0, 'warmup_steps': 1800, 'start_scale': 0.2}
+[export_onnx]     rewards.phase_action_overflow.weight = -0.06
+[export_onnx]     rewards.health_gated_soft_ball_contact.weight = 7.0
+[export_onnx]     rewards.health_gated_soft_ball_contact.params = {'command_name': 'racket_target', 'minimum_health_multiplier': 0.55, 'final_minimum_health_multiplier': 0.35, 'pos_std': 0.18, 'approach_speed': 0.1, 'approach_std': 0.75, 'normal_speed': 0.0, 'normal_std': 0.75, 'window_s': 0.18, 'swing_side': 0.0, 'start_step': 0, 'warmup_steps': 1200, 'start_scale': 0.65}
+[export_onnx]     rewards.health_gated_ball_contact.weight = 3.0
+[export_onnx]     rewards.health_gated_ball_contact.params = {'command_name': 'racket_target', 'minimum_health_multiplier': 0.55, 'final_minimum_health_multiplier': 0.35, 'start_step': 0, 'warmup_steps': 1200, 'start_scale': 0.65}
+[export_onnx]     rewards.health_gated_net_cross.weight = 1.4
+[export_onnx]     rewards.health_gated_net_cross.params = {'command_name': 'racket_target', 'minimum_health_multiplier': 0.55, 'final_minimum_health_multiplier': 0.35, 'start_step': 0, 'warmup_steps': 2000, 'start_scale': 0.4}
+[export_onnx]     rewards.health_gated_opponent_bounce.weight = 1.5
+[export_onnx]     rewards.health_gated_opponent_bounce.params = {'command_name': 'racket_target', 'minimum_health_multiplier': 0.55, 'final_minimum_health_multiplier': 0.35, 'start_step': 1000, 'warmup_steps': 3000, 'start_scale': 0.2}
+[export_onnx]     commands.racket_target.functional_ready_joint_tolerances = [0.35, 0.3, 0.35, 0.35, 0.45, 0.3, 0.4, 0.2, 0.18, 0.2, 0.18, 0.3, 0.15, 0.2]
+[export_onnx]     commands.racket_target.post_contact_ready_enabled = True
+[export_onnx]     commands.racket_target.post_contact_ready_torso_x_min = -0.035
+[export_onnx]     commands.racket_target.post_contact_ready_torso_x_max = 0.14
+[export_onnx]     commands.racket_target.post_contact_ready_torso_x_std = 0.06
+[export_onnx]     commands.racket_target.post_contact_ready_max_torso_ang_vel = 0.6
+[export_onnx]     commands.racket_target.post_contact_ready_max_height_error = 0.08
+[export_onnx]     commands.racket_target.post_contact_ready_max_base_lin_vel = 0.18
+[export_onnx]     commands.racket_target.post_contact_ready_max_base_ang_vel = 0.55
+[export_onnx]     commands.racket_target.post_contact_ready_max_com_x = 0.11
+[export_onnx]     commands.racket_target.post_contact_ready_max_com_y = 0.13
+[export_onnx]     commands.racket_target.post_contact_ready_min_feet_contact = 0.99
+[export_onnx]     commands.racket_target.post_contact_ready_max_station_error = 0.22
+[export_onnx]     commands.racket_target.post_contact_ready_max_racket_speed = 0.9
+[export_onnx]     commands.racket_target.post_contact_ready_min_arm_score = 0.45
+[export_onnx]     commands.racket_target.post_contact_ready_required_consecutive_steps = 10
+[export_onnx]     commands.racket_target.post_contact_ready_deadline_steps = 70
+[export_onnx]     commands.racket_target.post_contact_ready_progress_clip = 0.035
+[export_onnx]     commands.racket_target.cycle_v2_max_racket_speed = 0.9
+[export_onnx]     commands.racket_target.cycle_v2_min_arm_score = 0.45
+[export_onnx]     rewards.post_contact_directional_recovery.weight = 0.45
+[export_onnx]     rewards.post_contact_directional_recovery.params = {'command_name': 'racket_target', 'start_step': 0, 'warmup_steps': 900, 'start_scale': 0.35}
+[export_onnx]     rewards.post_contact_ready_region.weight = 1.1
+[export_onnx]     rewards.post_contact_ready_region.params = {'command_name': 'racket_target', 'start_step': 0, 'warmup_steps': 900, 'start_scale': 0.35}
+[export_onnx]     rewards.post_contact_ready_success_bonus.weight = 4.0
+[export_onnx]     rewards.post_contact_ready_success_bonus.params = {'command_name': 'racket_target', 'start_step': 0, 'warmup_steps': 1200, 'start_scale': 0.25}
+[export_onnx]     rewards.post_contact_ready_fail.weight = -2.0
+[export_onnx]     rewards.post_contact_ready_fail.params = {'command_name': 'racket_target', 'start_step': 0, 'warmup_steps': 900, 'start_scale': 0.3}
+[export_onnx]     rewards.deferred_recovery_outcome_bonus.weight = 6.0
+[export_onnx]     rewards.robust_contact_net_margin.weight = 0.65
+[export_onnx]     rewards.robust_contact_net_margin.params = {'command_name': 'racket_target', 'pos_std': 0.17, 'approach_speed': 0.1, 'approach_std': 0.75, 'normal_speed': 0.0, 'normal_std': 0.75, 'window_s': 0.18, 'restitution_range': [0.5, 0.7], 'tangent_retain_range': [0.45, 0.75], 'min_forward_speed': 2.7, 'forward_std': 0.35, 'min_clearance': 0.05, 'clearance_std': 0.06, 'swing_side': 1.0, 'minimum_health_multiplier': 0.0, 'final_minimum_health_multiplier': 0.0, 'start_step': 0, 'warmup_steps': 1200, 'start_scale': 0.2}
+[export_onnx]     rewards.deferred_recovery_outcome_bonus.params = {'command_name': 'racket_target', 'tier_multipliers': [0.4, 1.0, 1.3], 'start_step': 0, 'warmup_steps': 1500, 'start_scale': 0.2}
+[export_onnx]     commands.racket_target.post_contact_ready_curriculum_enabled = True
+[export_onnx]     commands.racket_target.post_contact_ready_curriculum_start_level = 1
+[export_onnx]     commands.racket_target.post_contact_ready_curriculum_max_torso_ang_vel = [0.9, 0.84, 0.78, 0.72, 0.68, 0.64, 0.6]
+[export_onnx]     commands.racket_target.post_contact_ready_curriculum_max_base_lin_vel = [0.22, 0.21, 0.2, 0.195, 0.19, 0.185, 0.18]
+[export_onnx]     commands.racket_target.post_contact_ready_curriculum_max_base_ang_vel = [1.0, 0.9, 0.82, 0.75, 0.68, 0.61, 0.55]
+[export_onnx]     commands.racket_target.post_contact_ready_curriculum_max_racket_speed = [1.2, 1.12, 1.05, 1.0, 0.95, 0.925, 0.9]
+[export_onnx]     commands.racket_target.post_contact_ready_curriculum_min_feet_contact = [0.9, 0.93, 0.95, 0.965, 0.98, 0.985, 0.99]
+[export_onnx]     commands.racket_target.post_contact_ready_curriculum_required_consecutive_steps = [3, 4, 5, 6, 7, 8, 10]
+[export_onnx]     commands.racket_target.post_contact_ready_curriculum_deadline_steps = [90, 88, 85, 82, 80, 75, 70]
+[export_onnx]     commands.racket_target.post_contact_ready_curriculum_advance_success_thresholds = [0.45, 0.45, 0.48, 0.5, 0.52, 0.55]
+[export_onnx]     commands.racket_target.post_contact_ready_curriculum_min_resolved_events = [16384, 1000000000, 1000000000, 1000000000, 1000000000, 1000000000]
+[export_onnx]     commands.racket_target.post_contact_ready_curriculum_shadow_success_thresholds = [0.12, 0.12, 0.1, 0.1, 0.08, 0.08]
+[export_onnx]     commands.racket_target.post_contact_ready_curriculum_required_advance_checks = 8
+[export_onnx]     commands.racket_target.post_contact_ready_curriculum_min_targeted_attempt_ema = 0.5
+[export_onnx]     commands.racket_target.post_contact_ready_curriculum_min_return_success_ema = 0.4
+[export_onnx]     commands.racket_target.post_contact_ready_curriculum_min_completed_swings = 8192
+[export_onnx]     commands.racket_target.post_contact_ready_curriculum_ema_rate = 0.05
+[export_onnx]     commands.racket_target.post_contact_ready_curriculum_hit_ema_rate = 0.05
+[export_onnx]     rewards.pre_strike_station.params = {'command_name': 'racket_target', 'station_std': 0.08, 'stop_window_s': 0.1}
+[export_onnx]     rewards.prestrike_station_progress.weight = 0.25
+[export_onnx]     rewards.prestrike_station_progress.params = {'command_name': 'racket_target', 'speed_scale': 0.2, 'arrival_radius': 0.04, 'stop_window_s': 0.1, 'include_no_command_ready': False, 'start_step': 0, 'warmup_steps': 600, 'start_scale': 0.3}
+[export_onnx]     rewards.feet_contact_slip.weight = -0.06
+[export_onnx]     commands.racket_target.strike_phase_per_clip = (0.4,)
+[export_onnx]     commands.racket_target.swing_side_per_clip = (1.0,)
+[export_onnx]     commands.racket_target.mount_normal_sign_per_clip = (1.0,)
+[export_onnx]     commands.racket_target.racket_pos_range_per_clip = expanded from swing_side_per_clip
+[export_onnx]     commands.racket_target.racket_vel_range_per_clip = expanded from swing_side_per_clip
+[export_onnx]     commands.racket_target.racket_pos_range_per_clip = from motion metadata
+Free Memory: 119289
+| Total Page/Swap (MB): 8191 | Free Page/Swap: 7149
+|---------------------------------------------------------------------------------------------|
+2026-07-31 11:12:25 [2,886ms] [Warning] [gpu.foundation.plugin] IOMMU is enabled.
+2026-07-31 11:12:25 [2,886ms] [Warning] [gpu.foundation.plugin] Detected IOMMU is enabled. Running CUDA peer-to-peer bandwidth and latency validation.
+Unidirectional P2P=Enabled Bandwidth (P2P Writes) Matrix (GB/s)
+   D\D     0 
+     0 1525.88 
+P2P=Enabled Latency (P2P Writes) Matrix (us)
+   GPU     0 
+     0   2.08 
+
+   CPU     0 
+     0   1.34 
+2026-07-31 11:12:26 [4,535ms] [Warning] [isaaclab.envs.manager_based_env] Seed not set for the environment. The environment creation may not be deterministic.
+2026-07-31 11:12:26 [4,563ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-07-31 11:12:26 [4,563ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-07-31 11:12:26 [4,565ms] [Error] [gpu.foundation.plugin] DriverShaderCacheManager::init() called without a shutdown()!
+2026-07-31 11:12:26 [4,616ms] [Warning] [gpu.foundation.plugin] Skipping NVIDIA GPU due CUDA being in bad state: NVIDIA GeForce RTX 5090
+2026-07-31 11:12:26 [4,616ms] [Warning] [gpu.foundation.plugin] Please restart your system if CUDA is known to work in your system.
+2026-07-31 11:12:26 [4,616ms] [Warning] [gpu.foundation.plugin] Skipping NVIDIA GPU due CUDA being in bad state: NVIDIA GeForce RTX 5090
+2026-07-31 11:12:26 [4,616ms] [Warning] [gpu.foundation.plugin] Please restart your system if CUDA is known to work in your system.
+
+|---------------------------------------------------------------------------------------------|
+| Driver Version: 580.105.08    | Graphics API: Vulkan
+|=============================================================================================|
+| GPU | Name                             | Active | LDA | GPU Memory | Vendor-ID | LUID       |
+|     |                                  |        |     |            | Device-ID | UUID       |
+|     |                                  |        |     |            | Bus-ID    |            |
+|---------------------------------------------------------------------------------------------|
+| 0   | NVIDIA GeForce RTX 5090          | Yes: 0 |     | 32607   MB | 10de      | 0          |
+|     |                                  |        |     |            | 2b85      | c2a01bc3.. |
+|     |                                  |        |     |            | 1         |            |
+|---------------------------------------------------------------------------------------------|
+| 1   | NVIDIA GeForce RTX 5090          |        |     | 32607   MB | 10de      | 0          |
+|     |                                  |        |     |            | 2b85      | 837a84cc.. |
+|     |                                  |        |     |            | 7         |            |
+|=============================================================================================|
+| OS: 24.04.2 LTS (Noble Numbat) ubuntu, Version: 24.04.2, Kernel: 6.17.0-35-generic
+| Processor: Intel(R) Core(TM) i9-14900K
+| Bare Metal Cores: 24 | Bare Metal Logical Cores: 48
+| Available Cores:  32 
+|---------------------------------------------------------------------------------------------|
+| Total Memory (MB): 128491 | Free Memory: 119005
+| Total Page/Swap (MB): 8191 | Free Page/Swap: 7149
+|---------------------------------------------------------------------------------------------|
+Unidirectional P2P=Enabled Bandwidth (P2P Writes) Matrix (GB/s)
+   D\D     0 
+     0 1405.32 
+P2P=Enabled Latency (P2P Writes) Matrix (us)
+   GPU     0 
+     0   2.08 
+
+   CPU     0 
+     0   1.25 
+2026-07-31 11:12:27 [4,953ms] [Warning] [gpu.foundation.plugin] IOMMU is enabled.
+2026-07-31 11:12:27 [4,953ms] [Warning] [gpu.foundation.plugin] Detected IOMMU is enabled. Running CUDA peer-to-peer bandwidth and latency validation.
+Unidirectional P2P=Enabled Bandwidth (P2P Writes) Matrix (GB/s)
+   D\D     0 
+     0 1400.13 
+P2P=Enabled Latency (P2P Writes) Matrix (us)
+   GPU     0 
+     0   2.08 
+
+   CPU     0 
+     0   1.20 
+2026-07-31 11:12:27 [5,098ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-07-31 11:12:27 [5,098ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-07-31 11:12:27 [5,111ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-07-31 11:12:27 [5,111ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-07-31 11:12:27 [5,117ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-07-31 11:12:27 [5,117ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-07-31 11:12:27 [5,122ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-07-31 11:12:27 [5,122ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-07-31 11:12:27 [5,123ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-07-31 11:12:27 [5,123ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-07-31 11:12:27 [5,124ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-07-31 11:12:27 [5,124ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-07-31 11:12:27 [5,335ms] [Warning] [omni.graph.visualization.nodes._impl.extension] No Viewport Window to add omni.graph.visualization.nodes-2.1.1 scene to
+2026-07-31 11:12:27 [5,370ms] [Warning] [isaacsim.asset.importer.urdf] The path 0000014503_A3T2.5-URDF-std-pingpang-0409 is not a valid usd path, modifying to a_0000014503_A3T2_5_URDF_std_pingpang_0409
+2026-07-31 11:12:27 [5,371ms] [Error] [isaacsim.asset.importer.urdf] *** Could not parse xyz string '0.0' 
+2026-07-31 11:12:27 [5,371ms] [Error] [isaacsim.asset.importer.urdf] *** xyz not specified for axis
+2026-07-31 11:12:27 [5,371ms] [Error] [isaacsim.asset.importer.urdf] *** Could not parse xyz string '' 
+2026-07-31 11:12:27 [5,371ms] [Error] [isaacsim.asset.importer.urdf] *** xyz not specified for axis
+2026-07-31 11:12:27 [5,371ms] [Error] [isaacsim.asset.importer.urdf] *** Could not parse xyz string '' 
+2026-07-31 11:12:27 [5,371ms] [Error] [isaacsim.asset.importer.urdf] *** xyz not specified for axis
+2026-07-31 11:12:27 [5,371ms] [Error] [isaacsim.asset.importer.urdf] *** Could not parse xyz string '' 
+2026-07-31 11:12:27 [5,371ms] [Error] [isaacsim.asset.importer.urdf] *** xyz not specified for axis
+2026-07-31 11:12:27 [5,371ms] [Error] [isaacsim.asset.importer.urdf] *** Could not parse xyz string '0.0' 
+2026-07-31 11:12:27 [5,371ms] [Error] [isaacsim.asset.importer.urdf] *** xyz not specified for axis
+2026-07-31 11:12:27 [5,371ms] [Error] [isaacsim.asset.importer.urdf] *** Could not parse xyz string '0.0' 
+2026-07-31 11:12:27 [5,371ms] [Error] [isaacsim.asset.importer.urdf] *** xyz not specified for axis
+[INFO]: Base environment:
+	Environment device    : cuda:0
+	Environment seed      : None
+	Physics step-size     : 0.005
+	Rendering step-size   : 0.02
+	Environment step-size : 0.02
+[INFO]: Time taken for scene creation : 2.743527 seconds
+[INFO]: Scene manager:  <class InteractiveScene>
+	Number of environments: 1
+	Environment spacing   : 2.5
+	Source prim name      : /World/envs/env_0
+	Global prim paths     : ['/World/ground']
+	Replicate physics     : True
+[INFO]: Starting the simulation. This may take a few seconds. Please wait...
+[INFO]: Time taken for simulation start : 0.417364 seconds
+[INFO] Command Manager:  <CommandManager> contains 2 active terms.
++---------------------------------------------+
+|             Active Command Terms            |
++-------+---------------+---------------------+
+| Index | Name          |         Type        |
++-------+---------------+---------------------+
+|   0   | motion        |    MotionCommand    |
+|   1   | racket_target | RacketTargetCommand |
++-------+---------------+---------------------+
+
+[INFO] Event Manager:  <EventManager> contains 2 active terms.
++---------------------------------------+
+| Active Event Terms in Mode: 'startup' |
++---------+-----------------------------+
+|  Index  | Name                        |
++---------+-----------------------------+
+|    0    | physics_material            |
+|    1    | base_com                    |
+|    2    | link_mass                   |
+|    3    | joint_default_pos           |
++---------+-----------------------------+
++-------------------------------------+
+| Active Event Terms in Mode: 'reset' |
++--------------+----------------------+
+|    Index     | Name                 |
++--------------+----------------------+
+|      0       | pd_gains             |
++--------------+----------------------+
+
+[INFO] Recorder Manager:  <RecorderManager> contains 0 active terms.
++-----------------------+
+| Active Recorder Terms |
++------------+----------+
+|   Index    | Name     |
++------------+----------+
++------------+----------+
+
+[INFO] Action Manager:  <ActionManager> contains 1 active terms.
++---------------------------------+
+| Active Action Terms (shape: 31) |
++-------+-----------+-------------+
+| Index | Name      |   Dimension |
++-------+-----------+-------------+
+|   0   | joint_pos |          31 |
++-------+-----------+-------------+
+
+[INFO] Observation Manager: <ObservationManager> contains 2 groups.
++-------------------------------------------------------------+
+| Active Observation Terms in Group: 'policy' (shape: (114,)) |
++----------+--------------------------------------+-----------+
+|  Index   | Name                                 |   Shape   |
++----------+--------------------------------------+-----------+
+|    0     | base_ang_vel                         |    (3,)   |
+|    1     | joint_pos                            |   (31,)   |
+|    2     | joint_vel                            |   (31,)   |
+|    3     | last_action                          |   (31,)   |
+|    4     | projected_gravity                    |    (3,)   |
+|    5     | base_forward_xy                      |    (2,)   |
+|    6     | fixed_station_error_xy               |    (2,)   |
+|    7     | racket_target_rel_base               |    (3,)   |
+|    8     | racket_target_vel_w                  |    (3,)   |
+|    9     | time_to_strike                       |    (1,)   |
+|    10    | swing_side                           |    (1,)   |
+|    11    | racket_target_normal_w               |    (3,)   |
++----------+--------------------------------------+-----------+
++-------------------------------------------------------------+
+| Active Observation Terms in Group: 'critic' (shape: (324,)) |
++----------+--------------------------------------+-----------+
+|  Index   | Name                                 |   Shape   |
++----------+--------------------------------------+-----------+
+|    0     | base_ang_vel                         |    (3,)   |
+|    1     | joint_pos                            |   (31,)   |
+|    2     | joint_vel                            |   (31,)   |
+|    3     | last_action                          |   (31,)   |
+|    4     | projected_gravity                    |    (3,)   |
+|    5     | base_forward_xy                      |    (2,)   |
+|    6     | fixed_station_error_xy               |    (2,)   |
+|    7     | racket_target_rel_base               |    (3,)   |
+|    8     | racket_target_vel_w                  |    (3,)   |
+|    9     | time_to_strike                       |    (1,)   |
+|    10    | swing_side                           |    (1,)   |
+|    11    | base_lin_vel                         |    (3,)   |
+|    12    | motion_command                       |   (62,)   |
+|    13    | motion_anchor_pos_b                  |    (3,)   |
+|    14    | motion_anchor_ori_b                  |    (6,)   |
+|    15    | robot_body_pos_b                     |   (42,)   |
+|    16    | robot_body_ori_b                     |   (84,)   |
+|    17    | racket_pos_b                         |    (3,)   |
+|    18    | racket_lin_vel_w                     |    (3,)   |
+|    19    | racket_normal_w                      |    (3,)   |
+|    20    | racket_target_normal_w               |    (3,)   |
+|    21    | episode_time_left                    |    (1,)   |
++----------+--------------------------------------+-----------+
+
+[INFO] Termination Manager:  <TerminationManager> contains 7 active terms.
++---------------------------------+
+|     Active Termination Terms    |
++-------+--------------+----------+
+| Index | Name         | Time Out |
++-------+--------------+----------+
+|   0   | time_out     |   True   |
+|   1   | base_too_low |  False   |
+|   2   | base_tilted  |  False   |
+|   3   | anchor_pos   |  False   |
+|   4   | anchor_ori   |  False   |
+|   5   | ee_body_pos  |  False   |
+|   6   | table_touch  |  False   |
++-------+--------------+----------+
+
+[INFO] Reward Manager:  <RewardManager> contains 95 active terms.
++------------------------------------------------------------+
+|                    Active Reward Terms                     |
++-------+-------------------------------------------+--------+
+| Index | Name                                      | Weight |
++-------+-------------------------------------------+--------+
+|   0   | motion_global_anchor_pos                  |    0.5 |
+|   1   | motion_anchor_height                      |    0.0 |
+|   2   | motion_global_anchor_ori                  |    0.5 |
+|   3   | motion_body_pos                           |    1.0 |
+|   4   | motion_body_ori                           |    1.0 |
+|   5   | motion_body_lin_vel                       |    1.0 |
+|   6   | motion_body_ang_vel                       |    1.0 |
+|   7   | undesired_contacts                        |   -0.1 |
+|   8   | feet_contact_slip                         |  -0.06 |
+|   9   | table_no_touch                            |    0.0 |
+|   10  | alive                                     |    0.1 |
+|   11  | upright                                   |   -1.0 |
+|   12  | imitation                                 |    1.0 |
+|   13  | phase_lower_body_motion_prior             |    0.0 |
+|   14  | racket_wrist_motion_pos                   |    0.3 |
+|   15  | racket_wrist_motion_ori                   |   0.18 |
+|   16  | racket_position                           |    4.5 |
+|   17  | backhand_racket_position                  |    0.0 |
+|   18  | racket_velocity                           |    2.4 |
+|   19  | racket_velocity_projection                |    2.2 |
+|   20  | impact_forward_lift                       |    2.5 |
+|   21  | impact_outgoing_velocity                  |    4.6 |
+|   22  | planner_racket_task_space_crossfade       |    0.0 |
+|   23  | exact_impact_planner_task_space_alignment |    0.0 |
+|   24  | exact_impact_racket_velocity_alignment    |    0.0 |
+|   25  | exact_impact_outgoing_velocity_alignment  |    0.0 |
+|   26  | blade_direction                           |    2.4 |
+|   27  | prestrike_blade_direction                 |    0.0 |
+|   28  | soft_ball_contact                         |    0.0 |
+|   29  | backhand_soft_ball_contact                |    0.0 |
+|   30  | contact_net_margin                        |    0.0 |
+|   31  | robust_contact_net_margin                 |   0.65 |
+|   32  | balanced_soft_ball_contact                |    0.0 |
+|   33  | balanced_ball_contact                     |    0.0 |
+|   34  | balanced_net_cross                        |    0.0 |
+|   35  | balanced_opponent_bounce                  |    0.0 |
+|   36  | health_gated_soft_ball_contact            |    7.0 |
+|   37  | health_gated_backhand_soft_ball_contact   |    0.0 |
+|   38  | health_gated_ball_contact                 |    3.0 |
+|   39  | health_gated_net_cross                    |    1.4 |
+|   40  | health_gated_opponent_bounce              |    1.5 |
+|   41  | healthy_trunk_support                     |    0.0 |
+|   42  | targeted_strike_attempt                   |    0.0 |
+|   43  | strike_inactivity                         |    0.0 |
+|   44  | ball_contact                              |    0.0 |
+|   45  | net_cross                                 |    0.0 |
+|   46  | opponent_bounce                           |    0.0 |
+|   47  | pre_strike_station                        |    1.2 |
+|   48  | follow_through_recovery                   |   1.48 |
+|   49  | recovery_health                           |   1.82 |
+|   50  | next_ball_readiness                       |   2.12 |
+|   51  | next_swing_ready_bonus                    |   2.35 |
+|   52  | no_command_ready_stability                |    0.0 |
+|   53  | next_prestrike_reachable                  |    0.0 |
+|   54  | post_contact_recovery_ready               |    1.9 |
+|   55  | post_net_recovery_ready                   |    0.0 |
+|   56  | post_return_recovery_ready                |    0.0 |
+|   57  | post_contact_arm_racket_ready             |   0.48 |
+|   58  | post_net_arm_racket_ready                 |   0.72 |
+|   59  | post_return_arm_racket_ready              |   0.92 |
+|   60  | cycle_contact_ready                       |    0.0 |
+|   61  | cycle_net_ready                           |   1.85 |
+|   62  | cycle_return_ready                        |   3.35 |
+|   63  | cycle_success_bonus                       |    0.0 |
+|   64  | cycle_v2_ready_success_bonus              |    5.0 |
+|   65  | cycle_v2_streak_bonus                     |    6.0 |
+|   66  | cycle_v2_ready_fail                       |   -2.4 |
+|   67  | post_strike_base_ang_vel                  |    0.9 |
+|   68  | no_command_ready_balance                  |   0.35 |
+|   69  | functional_no_command_ready               |    1.3 |
+|   70  | no_command_forehand_joint_anchor          |   0.35 |
+|   71  | active_ready_sustained_bonus              |    5.0 |
+|   72  | post_contact_directional_recovery         |   0.45 |
+|   73  | post_contact_ready_region                 |    1.1 |
+|   74  | post_contact_ready_success_bonus          |    4.0 |
+|   75  | post_contact_ready_fail                   |   -2.0 |
+|   76  | deferred_recovery_outcome_bonus           |    6.0 |
+|   77  | phase_action_overflow                     |  -0.06 |
+|   78  | strike_balance                            |    0.0 |
+|   79  | torso_com_balance                         |    0.0 |
+|   80  | torso_com_recovery_balance                |    0.0 |
+|   81  | one_sided_trunk_waist_strike              |    0.0 |
+|   82  | one_sided_trunk_waist_recovery            |    0.0 |
+|   83  | prestrike_station_progress                |   0.25 |
+|   84  | station_relocation_arrival_bonus          |    0.0 |
+|   85  | station_relocation_settle_bonus           |    0.0 |
+|   86  | lower_body_support                        |    0.0 |
+|   87  | post_strike_lower_body_action_rate        | -0.012 |
+|   88  | termination_penalty                       |  -12.0 |
+|   89  | action_rate                               | -0.004 |
+|   90  | phase_action_rate                         |  -0.46 |
+|   91  | phase_action_rate_waist                   |    0.0 |
+|   92  | phase_action_rate_upper                   |    0.0 |
+|   93  | phase_action_rate_legs                    |    0.0 |
+|   94  | joint_limit                               |  -10.0 |
++-------+-------------------------------------------+--------+
+
+[INFO] Curriculum Manager:  <CurriculumManager> contains 0 active terms.
++-------------------------+
+| Active Curriculum Terms |
++-------------+-----------+
+|    Index    | Name      |
++-------------+-----------+
++-------------+-----------+
+
+[INFO]: Completed setting up the environment...
+[export_onnx] joint-order gate: using canonical->articulation permutation [2, 5, 8, 11, 16, 12, 17, 21, 23, 25, 27, 29, 13, 18, 22, 24, 26, 28, 30, 0, 3, 6, 9, 14, 19, 1, 4, 7, 10, 15, 20]
+/mnt/ssd/zxl/IsaacLab/source/isaaclab/isaaclab/envs/mdp/events.py:501: UserWarning: To copy construct from a tensor, it is recommended to use sourceTensor.detach().clone() or sourceTensor.detach().clone().requires_grad_(True), rather than torch.tensor(sourceTensor).
+  actuator_joint_indices = torch.tensor(actuator.joint_indices, device=asset.device)
+/mnt/ssd/zxl/HOPE_latest_20260721/hope_training/whole_body_tracking/source/whole_body_tracking/whole_body_tracking/utils/exporter.py:149: UserWarning: # 'dynamic_axes' is not recommended when dynamo=True, and may lead to 'torch._dynamo.exc.UserError: Constraints violated.' Supply the 'dynamic_shapes' argument instead if export is unsuccessful.
+  torch.onnx.export(
+W0731 19:12:30.460000 2990417 site-packages/torch/onnx/_internal/exporter/_compat.py:133] Setting ONNX exporter to use operator set version 18 because the requested opset_version 11 is a lower version than we have implementations for. Automatic version conversion will be performed, which may not be successful at converting to the requested version. If version conversion is unsuccessful, the opset version of the exported model will be kept at 18. Please consider setting opset_version >=18 to leverage latest ONNX features
+/home/zxl/miniconda3/envs/zxl-pace/lib/python3.10/copyreg.py:101: FutureWarning: `isinstance(treespec, LeafSpec)` is deprecated, use `isinstance(treespec, TreeSpec) and treespec.is_leaf()` instead.
+  return cls.__new__(cls, *args)
+Actor MLP: Sequential(
+  (0): Linear(in_features=114, out_features=512, bias=True)
+  (1): ELU(alpha=1.0)
+  (2): Linear(in_features=512, out_features=256, bias=True)
+  (3): ELU(alpha=1.0)
+  (4): Linear(in_features=256, out_features=128, bias=True)
+  (5): ELU(alpha=1.0)
+  (6): Linear(in_features=128, out_features=31, bias=True)
+)
+Critic MLP: Sequential(
+  (0): Linear(in_features=324, out_features=512, bias=True)
+  (1): ELU(alpha=1.0)
+  (2): Linear(in_features=512, out_features=256, bias=True)
+  (3): ELU(alpha=1.0)
+  (4): Linear(in_features=256, out_features=128, bias=True)
+  (5): ELU(alpha=1.0)
+  (6): Linear(in_features=128, out_features=1, bias=True)
+)
+[export_onnx] wrote /mnt/ssd/zxl/HOPE_latest_20260721/analysis/m25991_actuator_robust_ab_20260731/eval/original/exported/hope_pingpong.onnx
+[export_onnx] wrote /mnt/ssd/zxl/HOPE_latest_20260721/analysis/m25991_actuator_robust_ab_20260731/eval/original/exported/policy_manifest.json
+2026-07-31 11:12:31 [9,094ms] [Warning] [onnxscript.version_converter] The model version conversion is not supported by the onnxscript version converter and fallback is enabled. The model will be converted using the onnx C API (target version: 11).
+2026-07-31 11:12:31 [9,098ms] [Warning] [onnxscript.version_converter] Failed to convert the model to the target version 11 using the ONNX C API. The model was not modified
+Traceback (most recent call last):
+  File "/home/zxl/miniconda3/envs/zxl-pace/lib/python3.10/site-packages/onnxscript/version_converter/__init__.py", line 137, in call
+    converted_proto = _c_api_utils.call_onnx_api(
+  File "/home/zxl/miniconda3/envs/zxl-pace/lib/python3.10/site-packages/onnxscript/version_converter/_c_api_utils.py", line 65, in call_onnx_api
+    result = func(proto)
+  File "/home/zxl/miniconda3/envs/zxl-pace/lib/python3.10/site-packages/onnxscript/version_converter/__init__.py", line 132, in _partial_convert_version
+    return onnx.version_converter.convert_version(
+  File "/home/zxl/miniconda3/envs/zxl-pace/lib/python3.10/site-packages/onnx/version_converter.py", line 39, in convert_version
+    converted_model_str = C.convert_version(model_str, target_version)
+RuntimeError: /project/onnx/version_converter/adapters/no_previous_version.h:24: adapt: Assertion `false` failed: No Previous Version of CastLike exists

@@ -1,0 +1,3 @@
+[hope] training env ready.
+[hope]   isaac_py -> /home/zxl/miniconda3/envs/zxl-pace/bin/python
+[hope]   run:  isaac_py scripts/train.py task=HOPEPingPong algo=ppo headless=true

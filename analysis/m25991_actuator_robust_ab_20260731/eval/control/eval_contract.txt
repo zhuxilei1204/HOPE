@@ -1,0 +1,16 @@
+label=control
+checkpoint=/mnt/ssd/zxl/HOPE_latest_20260721/hope_training/whole_body_tracking/logs/rsl_rl/hope_pingpong/2026-07-31_18-47-24_M25991_ACTUATOR_AB_CONTROL_4096x500_20260731/model_26490.pt
+checkpoint_sha256=f9ad549ae37debef030b9b8bf006bd00117b8e2d20e7b2e182222671574884a3
+task=HOPEPingPongM25991ReplayControlV1
+manifest=/mnt/ssd/zxl/HOPE_latest_20260721/hope_training/motions/model19495_forehand_active_ready_20260729/manifest.tsv
+planner=/mnt/ssd/zxl/HOPE_latest_20260721/analysis/external_alignment_packages_20260731/package1/real_robot_planner_rl_alignment_20260731/01_planner_V4_A4_plane_recorded/snapshot/hope_planner.yaml
+planner_code=/mnt/ssd/zxl/HOPE_latest_20260721/analysis/external_alignment_packages_20260731/package1/real_robot_planner_rl_alignment_20260731/01_planner_V4_A4_plane_recorded/snapshot/hope_planner_code
+seed=17
+isaac_serves=10
+mujoco_serves=40
+side_mode=forehand
+station_mode=dynamic-from-manifest
+dynamic_station_clip_x=0.0,0.0
+dynamic_station_clip_y=-0.10,0.10
+incoming_trajectory=one-bounce
+planner_x_hit=0.20
